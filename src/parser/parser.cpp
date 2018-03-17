@@ -507,18 +507,11 @@ parser::parser(
                 
                 // a parameter is simply a variable declared inside a the function parameters list
                 variable param(* param_tok, is_mutable);
-
                 // if we match a colon then we can expect the parameter type instance
-                if(match(COLON)) {
-                    type_instance param_type_instance = parse_type_instance();
-                    param.set_type_instance(param_type_instance);
-                }
-                // else we have an abstract type                
-                else {
-                    std::string namespace_name("*");
-                    type_instance star_type_instance(star_tok, namespace_name);
-                    param.set_type_instance(star_type_instance);
-                }
+                consume(COLON, "Expected a colon in anticipation of the function parameter type.");
+                type_instance param_type_instance = parse_type_instance();
+                param.set_type_instance(param_type_instance);
+
                 // we are done parsing the parameter, we add it to the function
                 function_decl -> add_param(param);
             } while(match(COMMA));

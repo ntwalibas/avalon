@@ -516,15 +516,6 @@ parser::parser(
                 function_decl -> add_param(param);
             } while(match(COMMA));
         }
-        else {
-            std::string namespace_name("*");
-            std::shared_ptr<token>& paren_tok = lookback();
-            token param_tok = create_token(IDENTIFIER, "__param__", paren_tok -> get_line(), paren_tok -> get_column());
-            variable param(param_tok, false);
-            type_instance star_type_instance(star_tok, namespace_name); // it should be VOID here!
-            param.set_type_instance(star_type_instance);
-            function_decl -> add_param(param);
-        }
 
         consume(RIGHT_PAREN, "Expected a closing parenthesis after function parameters.");
     }

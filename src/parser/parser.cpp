@@ -1606,12 +1606,6 @@ parser::parser(
             }
             return instance;
         }
-        // if we match a star, we have a generic type instance
-        else if(match(MUL)) {
-            std::shared_ptr<token>& instance_tok = lookback();
-            type_instance instance(* instance_tok, namespace_name);
-            return instance;
-        }
         // anything else is wrong
         else {
             throw parsing_error(true, lookback(), "Expected a valid type instance.");

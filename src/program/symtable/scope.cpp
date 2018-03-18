@@ -4,6 +4,8 @@
 #include <vector>
 
 /* AST */
+#include "program/ast/decl/variable.hpp"
+#include "program/ast/decl/function.hpp"
 #include "program/ast/decl/type.hpp"
 /* Symbol table */
 #include "program/symtable/exceptions/symbol_already_declared.hpp"
@@ -197,6 +199,38 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
      */
     bool scope::function_exists(const std::string& ns_name, const std::string& function_name) {
         return m_dtable.function_exists(ns_name, function_name);
+    }
+
+    /**
+     * add_variable
+     * given a namespace and a variable declaration, add the later to the former
+     */
+    void scope::add_variable(const std::string& ns_name, std::shared_ptr<variable>& variable_decl) {
+        m_dtable.insert_variable(ns_name, variable_decl);
+    }
+
+    /**
+     * get_variable
+     * given a namespace and a variable name, return the corresponding variable declaration if it exists in that namespace
+     */
+    std::shared_ptr<variable>& scope::get_variable(const std::string& ns_name, const std::string& variable_name) {
+        return m_dtable.get_variable(ns_name, variable_name);
+    }
+
+    /**
+     * variable_exists
+     * given a namespace and a variable declaration, find if it already exists in this namespace
+     */
+    bool scope::variable_exists(const std::string& ns_name, std::shared_ptr<variable>& variable_decl) {
+        return m_dtable.variable_exists(ns_name, variable_decl);
+    }
+
+    /**
+     * variable_exists
+     * given a namespace and a variable name, find if there is a variabl declaration for it in this namespace
+     */
+    bool scope::variable_exists(const std::string& ns_name, const std::string& variable_name) {
+        return m_dtable.variable_exists(ns_name, variable_name);
     }
 
     /**

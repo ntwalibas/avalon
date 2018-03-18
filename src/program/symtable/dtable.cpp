@@ -11,6 +11,7 @@
 #include "program/symtable/exceptions/symbol_not_found.hpp"
 #include "program/symtable/exceptions/invalid_symbol.hpp"
 #include "program/ast/decl/function.hpp"
+#include "program/ast/decl/variable.hpp"
 #include "program/symtable/dtable.hpp"
 #include "program/ast/decl/type.hpp"
 
@@ -43,7 +44,7 @@ dsymbols::dsymbols() {
             throw symbol_already_declared("There already exist a locally defined type with the same name and arity.");
         
         m_types.insert(std::make_pair(type_key, type_decl));
-        m_declarations.insert(std::make_pair(name, TYPE_DECL));
+        m_declarations.emplace(name, TYPE_DECL);
     }
 
     /**
@@ -147,7 +148,7 @@ dsymbols::dsymbols() {
                 throw symbol_can_collide("This function can collide with another function.");
 
         m_functions.emplace(std::make_pair(name, function_decl -> get_params().size()), function_decl);
-        m_declarations.insert(std::make_pair(name, FUNCTION_DECL));
+        m_declarations.emplace(name, FUNCTION_DECL);
     }
 
     /**
@@ -203,6 +204,62 @@ dsymbols::dsymbols() {
         return false;
     }
 
+    /**
+     * insert_variable
+     * add a new variable declaration to this table
+     */
+    void dsymbols::insert_variable(std::shared_ptr<variable>& variable_decl) {
+        const std::string& name = variable_decl -> get_name();
+
+        // we make sure no other type of declaration has the same name as this variable declaration
+        try {
+            declaration_type decl_type = m_declarations.at(name);
+            if(decl_type != VARIABLE_DECL)
+                throw symbol_can_collide("There already exists another declaration with the name given to this variable.");
+        } catch(std::out_of_range err){
+        }
+
+        if(m_variables.count(name) > 0)
+            throw symbol_already_declared("This variable declaration already exists.");
+
+        m_variables.emplace(name, variable_decl);
+        m_declarations.emplace(name, FUNCTION_DECL);
+    }
+
+    /**
+     * get_variable
+     * given a variable name, return the corresponding variable declaration
+     */
+    std::shared_ptr<variable>& dsymbols::get_variable(const std::string& name) {
+        try {
+            return m_variables.at(name);
+        } catch(std::out_of_range err) {
+            throw symbol_not_found("No variable declaration with the given name was found.");
+        }
+    }
+
+    /**
+     * variable_exists
+     * given a variable declaration, find if it already exists in this table
+     */
+    bool dsymbols::variable_exists(std::shared_ptr<variable>& variable_decl) {
+        if(m_variables.count(variable_decl -> get_name()) > 0)
+            return true;
+        else
+            return false;
+    }
+
+    /**
+     * variable_exists
+     * given a variable name, find if there is a variabl declaration for it in this table
+     */
+    bool dsymbols::variable_exists(const std::string& name) {
+        if(m_variables.count(name) > 0)
+            return true;
+        else
+            return false;
+    }
+
 
 /**
  * the constructor expects nothing
@@ -229,7 +286,7 @@ dtable::dtable() {
             // if we don't have a symbol table attached to the given namespace, we create an entry for it
             dsymbols decl_symbols;
             decl_symbols.insert_type(type_decl);            
-            m_symbols.insert(std::make_pair(ns_name, decl_symbols));
+            m_symbols.emplace(ns_name, decl_symbols);
         }
     }
 
@@ -343,7 +400,7 @@ dtable::dtable() {
             // if we don't have a symbol table attached to the given namespace, we create an entry for it
             dsymbols decl_symbols;
             decl_symbols.insert_function(function_decl);            
-            m_symbols.insert(std::make_pair(ns_name, decl_symbols));
+            m_symbols.emplace(ns_name, decl_symbols);
         }
     }
 
@@ -395,6 +452,68 @@ dtable::dtable() {
         try {
             dsymbols& decl_symbols = m_symbols.at(ns_name);
             return decl_symbols.function_exists(function_name);
+        } catch(std::out_of_range err) {
+            return false;
+        }
+    }
+
+    /**
+     * insert_variable
+     * given a namespace and a variable declaration, add the later to the former
+     */
+    void dtable::insert_variable(const std::string& ns_name, std::shared_ptr<variable>& variable_decl) {
+        // we try to find if there already exists a symbol table attached to the current namespace and use it
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            try {
+                decl_symbols.insert_variable(variable_decl);
+            } catch(symbol_already_declared err) {
+                throw symbol_already_declared("There already exists another variable with the same name declared in this namespace.");
+            } catch(symbol_can_collide err) {
+                throw symbol_can_collide("There already exist another declaration (type or function) with the same name in this namespace.");
+            }
+        } catch(std::out_of_range err) {
+            // if we don't have a symbol table attached to the given namespace, we create an entry for it
+            dsymbols decl_symbols;
+            decl_symbols.insert_variable(variable_decl);
+            m_symbols.emplace(ns_name, decl_symbols);
+        }
+    }
+
+    /**
+     * get_variable
+     * given a namespace and a variable name, return the corresponding variable declaration if it exists in that namespace
+     */
+    std::shared_ptr<variable>& dtable::get_variable(const std::string& ns_name, const std::string& variable_name) {
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            return decl_symbols.get_variable(variable_name);
+        } catch(std::out_of_range err) {
+            throw symbol_not_found("No variable declaration with the given name was found in the given namespace because the namespace doesn't exist.");
+        }
+    }
+
+    /**
+     * variable_exists
+     * given a namespace and a variable declaration, find if it already exists in this namespace
+     */
+    bool dtable::variable_exists(const std::string& ns_name, std::shared_ptr<variable>& variable_decl) {
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            return decl_symbols.variable_exists(variable_decl);
+        } catch(std::out_of_range err) {
+            return false;
+        }
+    }
+
+    /**
+     * variable_exists
+     * given a namespace and a variable name, find if there is a variabl declaration for it in this namespace
+     */
+    bool dtable::variable_exists(const std::string& ns_name, const std::string& variable_name) {
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            return decl_symbols.variable_exists(variable_name);
         } catch(std::out_of_range err) {
             return false;
         }

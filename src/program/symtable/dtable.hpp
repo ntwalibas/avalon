@@ -9,14 +9,12 @@
 #include <vector>
 #include <map>
 
-//#include "program/ast/decl/function.hpp"
-//#include "program/ast/decl/type.hpp"
-
 
 namespace avalon {
     /* forward declarations */
     class type;
     class function;
+    class variable;
     class type_instance;
 
     enum declaration_type {
@@ -113,6 +111,33 @@ namespace avalon {
          */
         bool function_exists(const std::string& name);
 
+
+        /*** VARIABLE DECLARATIONS ***/
+
+        /**
+         * insert_variable
+         * add a new variable declaration to this table
+         */
+        void insert_variable(std::shared_ptr<variable>& variable_decl);
+
+        /**
+         * get_variable
+         * given a variable name, return the corresponding variable declaration
+         */
+        std::shared_ptr<variable>& get_variable(const std::string& name);
+
+        /**
+         * variable_exists
+         * given a variable declaration, find if it already exists in this table
+         */
+        bool variable_exists(std::shared_ptr<variable>& variable_decl);
+
+        /**
+         * variable_exists
+         * given a variable name, find if there is a variabl declaration for it in this table
+         */
+        bool variable_exists(const std::string& name);
+
     private:
         /*
          * map of the names of all declarations in the current scope
@@ -126,10 +151,15 @@ namespace avalon {
          */
         std::map<std::pair<std::string,std::size_t>, std::shared_ptr<type> > m_types;
 
-        /**
+        /*
          * a map of all functions declared in the program
          */        
         std::multimap<std::pair<std::string,std::size_t>, std::shared_ptr<function> > m_functions;
+
+        /*
+         * map of variable names and variable declarations stored in this table
+         */
+        std::map<std::string, std::shared_ptr<variable> > m_variables;
     };
 
 
@@ -220,6 +250,33 @@ namespace avalon {
          * given a namespace and a function name, find if the namespace contains a function with that name
          */
         bool function_exists(const std::string& ns_name, const std::string& function_name);
+
+
+        /*** VARIABLE DECLARATIONS ***/
+
+        /**
+         * insert_variable
+         * given a namespace and a variable declaration, add the later to the former
+         */
+        void insert_variable(const std::string& ns_name, std::shared_ptr<variable>& variable_decl);
+
+        /**
+         * get_variable
+         * given a namespace and a variable name, return the corresponding variable declaration if it exists in that namespace
+         */
+        std::shared_ptr<variable>& get_variable(const std::string& ns_name, const std::string& variable_name);
+
+        /**
+         * variable_exists
+         * given a namespace and a variable declaration, find if it already exists in this namespace
+         */
+        bool variable_exists(const std::string& ns_name, std::shared_ptr<variable>& variable_decl);
+
+        /**
+         * variable_exists
+         * given a namespace and a variable name, find if there is a variabl declaration for it in this namespace
+         */
+        bool variable_exists(const std::string& ns_name, const std::string& variable_name);
     
     private:
         /*

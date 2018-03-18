@@ -5,8 +5,6 @@
 #include <vector>
 #include <unordered_map>
 
-/* AST */
-#include "program/ast/decl/type.hpp"
 /* Symbol table */
 #include "program/symtable/dtable.hpp"
 #include "program/symtable/ctable.hpp"
@@ -14,6 +12,12 @@
 
 
 namespace avalon {
+    /* forward declarations */
+    class type;
+    class function;
+    class variable;
+    class type_instance;
+    
     class scope {
     public:
         /**
@@ -32,6 +36,8 @@ namespace avalon {
          * returns the symbol table of type constructors found in this scope
          */
         ctable& get_ctable();
+
+        /*** TYPE DECLARATIONS ***/
 
         /**
          * add_type
@@ -117,6 +123,9 @@ namespace avalon {
          */
         bool record_constructor_exists(const std::string& ns_name, const std::string& cons_name, std::size_t arity);
 
+        
+        /*** FUNCTION DECLARATIONS ***/
+
         /**
          * add_function
          * given a namespace and a function declaration, add the declaration to the scope
@@ -146,6 +155,33 @@ namespace avalon {
          * given a namespace and a function name, find if the namespace contains a function with that name
          */
         bool function_exists(const std::string& ns_name, const std::string& function_name);
+
+
+        /*** VARIABLE DECLARATIONS ***/
+
+        /**
+         * add_variable
+         * given a namespace and a variable declaration, add the later to the former
+         */
+        void add_variable(const std::string& ns_name, std::shared_ptr<variable>& variable_decl);
+
+        /**
+         * get_variable
+         * given a namespace and a variable name, return the corresponding variable declaration if it exists in that namespace
+         */
+        std::shared_ptr<variable>& get_variable(const std::string& ns_name, const std::string& variable_name);
+
+        /**
+         * variable_exists
+         * given a namespace and a variable declaration, find if it already exists in this namespace
+         */
+        bool variable_exists(const std::string& ns_name, std::shared_ptr<variable>& variable_decl);
+
+        /**
+         * variable_exists
+         * given a namespace and a variable name, find if there is a variabl declaration for it in this namespace
+         */
+        bool variable_exists(const std::string& ns_name, const std::string& variable_name);
 
         /**
          * set_parent

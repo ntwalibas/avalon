@@ -205,13 +205,13 @@ type::type(token tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_t
 /*
  * type instance
  */
-type_instance::type_instance(token tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_namespace(namespace_name), m_type(nullptr), m_return_type_instance(nullptr), m_is_parametrized(false) {
+type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_namespace(namespace_name), m_type(nullptr), m_return_type_instance(nullptr), m_is_parametrized(false) {
 }
 
 /**
  * this constructor expects the token with source code information, the type that buils this instance and the namespace where to find that type
  */
-type_instance::type_instance(token tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_namespace(namespace_name), m_type(ty), m_return_type_instance(nullptr), m_is_parametrized(false)  {
+type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_namespace(namespace_name), m_type(ty), m_return_type_instance(nullptr), m_is_parametrized(false)  {
 }
     
     /**

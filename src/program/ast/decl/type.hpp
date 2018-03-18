@@ -249,12 +249,12 @@ namespace avalon {
         /**
          * this constructor expects the token with source code information and the namespace where to find the type
          */
-        type_instance(token tok, const std::string& namespace_name);
+        type_instance(token& tok, const std::string& namespace_name);
         
         /**
          * this constructor expects the token with source code information and the type that buils this instance
          */
-        type_instance(token tok, std::shared_ptr<type>& ty, const std::string& namespace_name);
+        type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name);
 
         /**
          * set_name

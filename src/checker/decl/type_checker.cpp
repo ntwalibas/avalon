@@ -36,7 +36,7 @@ namespace avalon {
             instance_type = l_scope -> get_type(ns_name, instance);
             // the type instance has a type that builds it,
             // we make sure the parameters it depends on are also valid
-            for(auto instance_param : instance_params) {
+            for(auto& instance_param : instance_params) {
                 try {
                     bool instance_param_in_abstract = type_instance_checker::check(instance_param, l_scope, ns_name, standins);
                     if(instance_param_in_abstract == true)

@@ -9,6 +9,7 @@
 #include "program/ast/decl/type.hpp"
 /* Symbol table */
 #include "program/symtable/exceptions/symbol_already_declared.hpp"
+#include "program/symtable/exceptions/symbol_can_collide.hpp"
 #include "program/symtable/exceptions/symbol_not_found.hpp"
 #include "program/symtable/dtable.hpp"
 #include "program/symtable/ctable.hpp"
@@ -118,6 +119,14 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
      * add a new default constructor into this symbol table
      */
     void scope::add_default_constructor(const std::string& ns_name, default_constructor& def_cons) {        
+        // make sure there are no function declarations with the same name as this constructor
+        if(m_dtable.function_exists(ns_name, def_cons.get_name()))
+            throw symbol_can_collide("A constructor cannot have share the same name as a function already declared in this scope.");
+
+        // make sure there are no variable declarations with the same name as this constructor
+        if(m_dtable.variable_exists(ns_name, def_cons.get_name()))
+            throw symbol_can_collide("A constructor cannot have share the same name as a variable already declared in this scope.");
+
         m_ctable.insert_default_constructor(ns_name, def_cons);
     }
 
@@ -126,6 +135,14 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
      * add a new record constructor into this symbol table
      */
     void scope::add_record_constructor(const std::string& ns_name, record_constructor& rec_cons) {
+        // make sure there are no function declarations with the same name as this constructor
+        if(m_dtable.function_exists(ns_name, rec_cons.get_name()))
+            throw symbol_can_collide("A constructor cannot have share the same name as a function already declared in this scope.");
+
+        // make sure there are no variable declarations with the same name as this constructor
+        if(m_dtable.variable_exists(ns_name, rec_cons.get_name()))
+            throw symbol_can_collide("A constructor cannot have share the same name as a variable already declared in this scope.");
+
         m_ctable.insert_record_constructor(ns_name, rec_cons);
     }
 

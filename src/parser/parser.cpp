@@ -473,8 +473,7 @@ parser::parser(
     void parser::parse_parameters_constraints(std::shared_ptr<function>& function_decl) {
         do {
             std::shared_ptr<token>& constraint_tok = consume(IDENTIFIER, "Expected the function constraint name.");
-            parameter_constraint constraint(* constraint_tok);
-            function_decl -> add_constraint(constraint);
+            function_decl -> add_constraint(* constraint_tok);
         } while(match(COMMA));
     }
 

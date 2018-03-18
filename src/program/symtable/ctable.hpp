@@ -51,15 +51,27 @@ namespace avalon {
 
         /**
          * default_constructor_exists
-         * given a type name and its arity, find if an existing default constructor matches the same
+         * given a constructor name and its arity, find if an existing default constructor matches the same
          */
         bool default_constructor_exists(const std::string& name, std::size_t arity);
 
         /**
          * record_constructor_exists
-         * given a type name and its arity, find if an existing record constructor matches the same
+         * given a constructor name and its arity, find if an existing record constructor matches the same
          */
         bool record_constructor_exists(const std::string& name, std::size_t arity);
+
+        /**
+         * default_constructor_exists
+         * given a constructor name, find if an existing default constructor matches the same
+         */
+        bool default_constructor_exists(const std::string& name);
+
+        /**
+         * record_constructor_exists
+         * given a constructor name, find if an existing record constructor matches the same
+         */
+        bool record_constructor_exists(const std::string& name);
 
     private:
         /*
@@ -102,15 +114,27 @@ namespace avalon {
 
         /**
          * default_constructor_exists
-         * given a type name and its arity, find if an existing default constructor matches the same
+         * given a constructor name and its arity, find if an existing default constructor matches the same
          */
         bool default_constructor_exists(const std::string& ns_name, const std::string& cons_name, std::size_t arity);
 
         /**
          * record_constructor_exists
-         * given a type name and its arity, find if an existing record constructor matches the same
+         * given a constructor name and its arity, find if an existing record constructor matches the same
          */
         bool record_constructor_exists(const std::string& ns_name, const std::string& cons_name, std::size_t arity);
+
+        /**
+         * default_constructor_exists
+         * given a constructor name, find if an existing default constructor matches the same
+         */
+        bool default_constructor_exists(const std::string& ns_name, const std::string& cons_name);
+
+        /**
+         * record_constructor_exists
+         * given a constructor name, find if an existing record constructor matches the same
+         */
+        bool record_constructor_exists(const std::string& ns_name, const std::string& cons_name);
 
     private:
         /*

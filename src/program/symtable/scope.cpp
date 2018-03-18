@@ -198,6 +198,18 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
      * given a namespace and a function declaration, add the declaration to the scope
      */
     void scope::add_function(const std::string& ns_name, std::shared_ptr<function>& function_decl) {
+        // make sure that this function shares not the same name with a namespace
+        if(m_namespaces.count(function_decl -> get_name()) > 0)
+            throw symbol_can_collide("This function has the same name as an existing namespace. This is not allowed.");
+
+        // make sure the function doesn't share the same name with a default constructor
+        if(m_ctable.default_constructor_exists(ns_name, function_decl -> get_name()))
+            throw symbol_can_collide("This function has the same name as an existing default constructor. This is not allowed.");
+
+        // make sure the function doesn't share the same name with a record constructor
+        if(m_ctable.record_constructor_exists(ns_name, function_decl -> get_name()))
+            throw symbol_can_collide("This function has the same name as an existing record constructor. This is not allowed.");
+        
         m_dtable.insert_function(ns_name, function_decl);
     }
 

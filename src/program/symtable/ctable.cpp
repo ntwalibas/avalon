@@ -70,7 +70,7 @@ csymbols::csymbols() {
 
     /**
      * default_constructor_exists
-     * given a type name and its arity, find if an existing default constructor matches the same
+     * given a constructor name and its arity, find if an existing default constructor matches the same
      */
     bool csymbols::default_constructor_exists(const std::string& name, std::size_t arity) {
         std::pair<std::string, std::size_t> cons_key(name, arity);
@@ -82,7 +82,7 @@ csymbols::csymbols() {
 
     /**
      * record_constructor_exists
-     * given a type name and its arity, find if an existing record constructor matches the same
+     * given a constructor name and its arity, find if an existing record constructor matches the same
      */
     bool csymbols::record_constructor_exists(const std::string& name, std::size_t arity) {
         std::pair<std::string, std::size_t> cons_key(name, arity);
@@ -90,6 +90,32 @@ csymbols::csymbols() {
             return true;
         else
             return false;
+    }
+
+    /**
+     * default_constructor_exists
+     * given a constructor name, find if an existing default constructor matches the same
+     */
+    bool csymbols::default_constructor_exists(const std::string& name) {
+        for(auto& def_cons : m_def_constructors) {
+            if(def_cons.first.first == name)
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * record_constructor_exists
+     * given a constructor name, find if an existing record constructor matches the same
+     */
+    bool csymbols::record_constructor_exists(const std::string& name) {
+        for(auto& rec_cons : m_rec_constructors) {
+            if(rec_cons.first.first == name)
+                return true;
+        }
+
+        return false;
     }
 
 
@@ -196,6 +222,32 @@ ctable::ctable() {
         try {
             csymbols& cons_symbols = m_symbols.at(ns_name);
             return cons_symbols.record_constructor_exists(cons_name, arity);
+        } catch(std::out_of_range err) {
+            return false;
+        }
+    }
+
+    /**
+     * default_constructor_exists
+     * given a constructor name, find if an existing default constructor matches the same
+     */
+    bool ctable::default_constructor_exists(const std::string& ns_name, const std::string& cons_name) {
+        try {
+            csymbols& cons_symbols = m_symbols.at(ns_name);
+            return cons_symbols.default_constructor_exists(cons_name);
+        } catch(std::out_of_range err) {
+            return false;
+        }
+    }
+
+    /**
+     * record_constructor_exists
+     * given a constructor name, find if an existing record constructor matches the same
+     */
+    bool ctable::record_constructor_exists(const std::string& ns_name, const std::string& cons_name) {
+        try {
+            csymbols& cons_symbols = m_symbols.at(ns_name);
+            return cons_symbols.record_constructor_exists(cons_name);
         } catch(std::out_of_range err) {
             return false;
         }

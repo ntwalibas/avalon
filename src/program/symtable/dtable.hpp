@@ -9,10 +9,16 @@
 #include <vector>
 #include <map>
 
-#include "program/ast/decl/type.hpp"
+//#include "program/ast/decl/function.hpp"
+//#include "program/ast/decl/type.hpp"
 
 
 namespace avalon {
+    /* forward declarations */
+    class type;
+    class function;
+    class type_instance;
+
     enum declaration_type {
         TYPE_DECL,
         FUNCTION_DECL,
@@ -26,6 +32,8 @@ namespace avalon {
          * the constructor expects nothing
          */
         dsymbols();
+
+        /*** TYPE DECLARATIONS ***/
 
         /**
          * insert_type
@@ -69,6 +77,42 @@ namespace avalon {
          */
         bool type_exists(const std::string& name, std::size_t arity);
 
+        
+        /*** FUNCTION DECLARATIONS ***/
+
+        /**
+         * insert_function
+         * given a function,
+         * this function checks if a similar function exists and throws the following exception:
+         * throws "symbol_can_collide" if the new function doesn't exactly match an existing one
+         * but we cannot choose at compile between this new function and an existing one.
+         */
+        void insert_function(std::shared_ptr<function>& function_decl);
+
+        /**
+         * get_functions
+         * given a function name and the arity, return a vector of possible functions
+         */
+        std::vector<std::shared_ptr<function> > get_functions(const std::string& name, size_t arity);
+
+        /**
+         * function_exists
+         * given a function declaration, find if it already exists in the symbol table
+         */
+        bool function_exists(std::shared_ptr<function>& function_decl);
+
+        /**
+         * function_exists
+         * given a function name and its arity, find if there is any function that fit those two criteria
+         */
+        bool function_exists(const std::string& name, size_t arity);
+
+        /**
+         * function_exists
+         * given a name, find if there is any function by that in name in the symbol table
+         */
+        bool function_exists(const std::string& name);
+
     private:
         /*
          * map of the names of all declarations in the current scope
@@ -81,6 +125,11 @@ namespace avalon {
          * map of all the type declarations in the current scope
          */
         std::map<std::pair<std::string,std::size_t>, std::shared_ptr<type> > m_types;
+
+        /**
+         * a map of all functions declared in the program
+         */        
+        std::multimap<std::pair<std::string,std::size_t>, std::shared_ptr<function> > m_functions;
     };
 
 
@@ -138,6 +187,39 @@ namespace avalon {
          * given a type name and its arity, find if an existing type declaration matches them within the namespace
          */
         bool type_exists(const std::string& type_name, std::size_t arity);
+
+        
+        /*** FUNCTION DECLARATIONS ***/
+
+        /**
+         * insert_function
+         * given a namespace and a function declaration, insert the last in the symbol table
+         */
+        void insert_function(const std::string& ns_name, std::shared_ptr<function>& function_decl);
+
+        /**
+         * get_functions
+         * given a namespace, a function name and its arity, return all functions in that namespace with the same name and arity
+         */
+        std::vector<std::shared_ptr<function> > get_functions(const std::string& ns_name, const std::string& function_name, size_t arity);
+
+        /**
+         * function_exists
+         * given a namespace and a function declaration, find if that function declaration already exists in that namespace
+         */
+        bool function_exists(const std::string& ns_name, std::shared_ptr<function>& function_decl);
+
+        /**
+         * function_exists
+         * given a namespace, a function name and its arity, find if we have a function with that name and arity in the current namespace
+         */
+        bool function_exists(const std::string& ns_name, const std::string& function_name, size_t arity);
+
+        /**
+         * function_exists
+         * given a namespace and a function name, find if the namespace contains a function with that name
+         */
+        bool function_exists(const std::string& ns_name, const std::string& function_name);
     
     private:
         /*

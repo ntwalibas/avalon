@@ -160,6 +160,46 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
     }
 
     /**
+     * add_function
+     * given a namespace and a function declaration, add the declaration to the scope
+     */
+    void scope::add_function(const std::string& ns_name, std::shared_ptr<function>& function_decl) {
+        m_dtable.insert_function(ns_name, function_decl);
+    }
+
+    /**
+     * get_functions
+     * given a namespace, a function name and its arity, return all functions in that namespace with the same name and arity
+     */
+    std::vector<std::shared_ptr<function> > scope::get_functions(const std::string& ns_name, const std::string& function_name, size_t arity) {
+        return m_dtable.get_functions(ns_name, function_name, arity);
+    }
+
+    /**
+     * function_exists
+     * given a namespace and a function declaration, find if that function declaration already exists in that namespace
+     */
+    bool scope::function_exists(const std::string& ns_name, std::shared_ptr<function>& function_decl) {
+        return m_dtable.function_exists(ns_name, function_decl);
+    }
+
+    /**
+     * function_exists
+     * given a namespace, a function name and its arity, find if we have a function with that name and arity in the current namespace
+     */
+    bool scope::function_exists(const std::string& ns_name, const std::string& function_name, size_t arity) {
+        return m_dtable.function_exists(ns_name, function_name, arity);
+    }
+
+    /**
+     * function_exists
+     * given a namespace and a function name, find if the namespace contains a function with that name
+     */
+    bool scope::function_exists(const std::string& ns_name, const std::string& function_name) {
+        return m_dtable.function_exists(ns_name, function_name);
+    }
+
+    /**
      * set_parent
      * sets the parent of this scope
      */

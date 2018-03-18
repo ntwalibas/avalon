@@ -118,6 +118,36 @@ namespace avalon {
         bool record_constructor_exists(const std::string& ns_name, const std::string& cons_name, std::size_t arity);
 
         /**
+         * add_function
+         * given a namespace and a function declaration, add the declaration to the scope
+         */
+        void add_function(const std::string& ns_name, std::shared_ptr<function>& function_decl);
+
+        /**
+         * get_functions
+         * given a namespace, a function name and its arity, return all functions in that namespace with the same name and arity
+         */
+        std::vector<std::shared_ptr<function> > get_functions(const std::string& ns_name, const std::string& function_name, size_t arity);
+
+        /**
+         * function_exists
+         * given a namespace and a function declaration, find if that function declaration already exists in that namespace
+         */
+        bool function_exists(const std::string& ns_name, std::shared_ptr<function>& function_decl);
+
+        /**
+         * function_exists
+         * given a namespace, a function name and its arity, find if we have a function with that name and arity in the current namespace
+         */
+        bool function_exists(const std::string& ns_name, const std::string& function_name, size_t arity);
+
+        /**
+         * function_exists
+         * given a namespace and a function name, find if the namespace contains a function with that name
+         */
+        bool function_exists(const std::string& ns_name, const std::string& function_name);
+
+        /**
          * set_parent
          * sets the parent of this scope
          */

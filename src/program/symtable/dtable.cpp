@@ -10,6 +10,7 @@
 #include "program/symtable/exceptions/symbol_can_collide.hpp"
 #include "program/symtable/exceptions/symbol_not_found.hpp"
 #include "program/symtable/exceptions/invalid_symbol.hpp"
+#include "program/ast/decl/function.hpp"
 #include "program/symtable/dtable.hpp"
 #include "program/ast/decl/type.hpp"
 
@@ -33,15 +34,16 @@ dsymbols::dsymbols() {
             declaration_type decl_type = m_declarations.at(name);
             if(decl_type != TYPE_DECL)
                 throw symbol_can_collide("There already exists another declaration with the name given to this type.");
-        } catch(std::out_of_range err){            
+        } catch(std::out_of_range err){
         }
 
         // no other declaration shares the given name, we leave to the type to handle the rest
         std::pair<std::string, std::size_t> type_key(name, type_decl -> get_params().size());
         if(m_types.count(type_key) > 0)
             throw symbol_already_declared("There already exist a locally defined type with the same name and arity.");
-        else
-            m_types.insert(std::make_pair(type_key, type_decl));
+        
+        m_types.insert(std::make_pair(type_key, type_decl));
+        m_declarations.insert(std::make_pair(name, TYPE_DECL));
     }
 
     /**
@@ -50,13 +52,12 @@ dsymbols::dsymbols() {
      */
     std::vector<std::shared_ptr<type> > dsymbols::get_types(const std::string& name) {
         std::vector<std::shared_ptr<type> > type_decls;
-        std::pair<std::string, std::size_t> lower_limit(name, 0), upper_limit(name, SIZE_MAX);
-
-        auto lower_bound = m_types.lower_bound(lower_limit),
-             upper_bound = m_types.lower_bound(upper_limit);
-        for(auto it = lower_bound; it != upper_bound; ++it)
-            type_decls.push_back(it -> second);
         
+        for(auto& ty : m_types) {
+            if(ty.first.first == name)
+                type_decls.push_back(ty.second);
+        }
+
         return type_decls;
     }
 
@@ -120,6 +121,86 @@ dsymbols::dsymbols() {
             return true;
         else
             return false;
+    }
+
+    /**
+     * insert_function
+     * given a function,
+     * this function checks if a similar function exists and throws the following exception:
+     * throws "symbol_can_collide" if the new function doesn't exactly match an existing one
+     * but we cannot choose at compile between this new function and an existing one.
+     */
+    void dsymbols::insert_function(std::shared_ptr<function>& function_decl) {
+        const std::string& name = function_decl -> get_name();
+
+        // we make sure no other type of declaration has the same name as this function declaration
+        try {
+            declaration_type decl_type = m_declarations.at(name);
+            if(decl_type != FUNCTION_DECL)
+                throw symbol_already_declared("There already exists another declaration with the name given to this function.");
+        } catch(std::out_of_range err){
+        }
+
+        std::vector<std::shared_ptr<function> > fun_decls = get_functions(name, function_decl -> get_params().size());
+        for(auto& fun_decl : fun_decls)
+            if(function_decl -> collides_with(* fun_decl))
+                throw symbol_can_collide("This function can collide with another function.");
+
+        m_functions.emplace(std::make_pair(name, function_decl -> get_params().size()), function_decl);
+        m_declarations.insert(std::make_pair(name, FUNCTION_DECL));
+    }
+
+    /**
+     * get_functions
+     * given a function name and the arity, return a vector of possible functions
+     */
+    std::vector<std::shared_ptr<function> > dsymbols::get_functions(const std::string& name, size_t arity) {
+        std::vector<std::shared_ptr<function> > functions;
+        
+        auto range = m_functions.equal_range(std::make_pair(name, arity));
+        for(auto it = range.first; it != range.second; ++it)
+                functions.push_back(it -> second);
+
+        return functions;
+    }
+
+    /**
+     * function_exists
+     * given a function declaration, find if it already exists in the symbol table
+     */
+    bool dsymbols::function_exists(std::shared_ptr<function>& function_decl) {
+        std::vector<std::shared_ptr<function> > fun_decls = get_functions(function_decl -> get_name(), function_decl -> get_params().size());
+        
+        for(auto& fun_decl : fun_decls) {
+            if(* fun_decl == * function_decl)
+                return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * function_exists
+     * given a function name and its arity, find if there is any function that fit those two criteria
+     */
+    bool dsymbols::function_exists(const std::string& name, size_t arity) {
+        if(m_functions.count(std::make_pair(name, arity)) > 0)
+            return true;
+
+        return false;
+    }
+
+    /**
+     * function_exists
+     * given a name, find if there is any function by that in name in the symbol table
+     */
+    bool dsymbols::function_exists(const std::string& name) {
+        for(auto& fun : m_functions) {
+            if(fun.first.first == name)
+                return true;
+        }
+
+        return false;
     }
 
 
@@ -241,5 +322,81 @@ dtable::dtable() {
                 return true;
         }
         return false;
+    }
+
+    /**
+     * insert_function
+     * given a namespace and a function declaration, insert the last in the symbol table
+     */
+    void dtable::insert_function(const std::string& ns_name, std::shared_ptr<function>& function_decl) {
+        // we try to find if there already exists a symbol table attached to the current namespace and use it
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            try {
+                decl_symbols.insert_function(function_decl);
+            } catch(symbol_can_collide err) {
+                throw symbol_can_collide("There already exist another function with the same name, parameters and return type in the current namespace.");
+            } catch(symbol_already_declared err) {
+                throw symbol_already_declared("There already exist another declaration (type or variable) with the nsame name as this function.");
+            }
+        } catch(std::out_of_range err) {
+            // if we don't have a symbol table attached to the given namespace, we create an entry for it
+            dsymbols decl_symbols;
+            decl_symbols.insert_function(function_decl);            
+            m_symbols.insert(std::make_pair(ns_name, decl_symbols));
+        }
+    }
+
+    /**
+     * get_functions
+     * given a namespace, a function name and its arity, return all functions in that namespace with the same name and arity
+     */
+    std::vector<std::shared_ptr<function> > dtable::get_functions(const std::string& ns_name, const std::string& function_name, size_t arity) {
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            return decl_symbols.get_functions(function_name, arity);
+        } catch(std::out_of_range err) {
+            std::vector<std::shared_ptr<function> > fun_decls;
+            return fun_decls;
+        }
+    }
+
+    /**
+     * function_exists
+     * given a namespace and a function declaration, find if that function declaration already exists in that namespace
+     */
+    bool dtable::function_exists(const std::string& ns_name, std::shared_ptr<function>& function_decl) {
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            return decl_symbols.function_exists(function_decl);
+        } catch(std::out_of_range err) {
+            return false;
+        }
+    }
+
+    /**
+     * function_exists
+     * given a namespace, a function name and its arity, find if we have a function with that name and arity in the current namespace
+     */
+    bool dtable::function_exists(const std::string& ns_name, const std::string& function_name, size_t arity) {
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            return decl_symbols.function_exists(function_name, arity);
+        } catch(std::out_of_range err) {
+            return false;
+        }
+    }
+
+    /**
+     * function_exists
+     * given a namespace and a function name, find if the namespace contains a function with that name
+     */
+    bool dtable::function_exists(const std::string& ns_name, const std::string& function_name) {
+        try {
+            dsymbols& decl_symbols = m_symbols.at(ns_name);
+            return decl_symbols.function_exists(function_name);
+        } catch(std::out_of_range err) {
+            return false;
+        }
     }
 }

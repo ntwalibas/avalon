@@ -2,6 +2,7 @@
 #define AVALON_PROGRAM_AST_DECL_FUNCTION_HPP_
 
 #include <memory>
+#include <vector>
 #include <map>
 
 #include "program/ast/stmt/block_stmt.hpp"
@@ -60,13 +61,13 @@ namespace avalon {
          * add_constraint
          * add a constraint to the function
          */
-        void add_constraint(parameter_constraint constraint);
+        void add_constraint(token& constraint);
 
         /**
          * get_constraints
-         * returns the map of constraints indexed by the name of the constraint
+         * returns the vector of all constraints
          */
-        const std::map<std::string, parameter_constraint>& get_constraints();
+        std::vector<token>& get_constraints();
 
         /**
          * add_param
@@ -76,26 +77,20 @@ namespace avalon {
 
         /**
          * get_params
-         * returns a map of parameters indexed by their names
+         * returns a vector of parameters
          */
-        std::map<std::string, variable>& get_params();
-
-        /**
-         * get_params_as_vector
-         * returns a map of parameters indexed by their names
-         */
-        std::vector<type_instance>& get_params_as_vector();
+        std::vector<std::pair<std::string, variable> >& get_params();
+        const std::vector<std::pair<std::string, variable> >& get_params() const;
 
         /**
          * set_return_type_instance
          * i a return type instance was specified, we set it here
          */
-        void set_return_type_instance(type_instance return_type_instance);
+        void set_return_type_instance(type_instance& return_type_instance);
 
         /**
          * get_return_type_instance
-         * if a return type instance was specified, we return it.
-         * else, we throw a "type_error".
+         * we return the return type instance of this function
          */
         type_instance get_return_type_instance() const;
 
@@ -110,35 +105,6 @@ namespace avalon {
          * return the body of the function
          */
         block_stmt& get_body();
-
-        /**
-         * set_is_parametrized
-         * if the any of the function parameters is parametrized,
-         * this function marks the functions as parametrized as well
-         */
-        void set_is_parametrized(bool is_parametrized);
-
-        /**
-         * is_parametrized
-         * returns true if this function is parametrized, false otherwise.
-         */
-        bool is_parametrized() const;
-
-        /**
-         * is_abstract
-         * if the function's parameters don't rely on any concrete type but only on abstract types,
-         * we use this function to set this flag on or return the flag
-         */
-        void is_abstract(bool abstract);
-        bool is_abstract() const;
-
-        /**
-         * is_concrete
-         * if the function's parameters rely only on concrete type,
-         * we use this function to set this flag on or return the flag
-         */
-        void is_concrete(bool concrete);
-        bool is_concrete() const;
 
         /**
          * collides_with
@@ -212,46 +178,24 @@ namespace avalon {
         std::shared_ptr<scope> m_scope;
 
         /*
-         * map of parameters' constraints index by their names this function depends on
+         * vector of type parameters if this type was parametrized
          */
-        std::map<std::string, parameter_constraint> m_constraints;
+        std::vector<token> m_constraints;
 
         /*
          * map of this function parameters' indexed by their names
          */
-        std::map<std::string, variable> m_params;
+        std::vector<std::pair<std::string, variable> > m_params;
 
         /*
-         * a vector of parameters' types
-         */
-        std::vector<type_instance> m_params_vector;
-
-        /*
-         * the return type of this function if any was specified
+         * the return type of this function
          */
         std::shared_ptr<type_instance> m_return_type_instance;
-
-        /*
-         * the functional type created by this function declaration
-         */
-        std::shared_ptr<type_instance> m_instance;
 
         /*
          * the body of the function
          */
         block_stmt m_body;
-
-        /*
-         * if any of the function's parameters is parametrized, we mark the function as parametrized as well.
-         * even though we allow parametric types, if two functions can collide parameters wise, we require that
-         * the return types not be parametric.
-         */
-        bool m_is_parametrized;
-
-        /*
-         * flag set to true if the function depends entirely on abstract types
-         */
-        bool m_is_abstract;
 
         /*
          * whether this type is available for public use outside of the namespace where it was declared
@@ -269,44 +213,45 @@ namespace avalon {
          */
         bool m_terminates;
     };
+    
+    /**
+     * operator==
+     * compares two functions for equality
+     */
+    inline bool operator==(const function& lhs, const function& rhs) {
+        const std::vector<std::pair<std::string, variable> >& lhs_params = lhs.get_params();
+        const std::vector<std::pair<std::string, variable> >& rhs_params = rhs.get_params();
 
+        // if both functions have different names, they are not equal
+        if(lhs.get_name() != rhs.get_name())
+            return false;
 
-    class parameter_constraint {
-    public:
-        /**
-         * the constructor expects the token with parameter constraint source information
-         */
-        parameter_constraint(token tok);
+        // if they admit a different number of parameters, they are not equal
+        if(lhs_params.size() != rhs_params.size())
+            return false;
 
-        /**
-         * set_name
-         * updates the name of this parameter constraint
-         */
-        void set_name(const std::string& name);
+        // if any of their parameters have different type instances, they are not equal
+        auto lhs_it = lhs_params.begin(), lhs_end = lhs_params.end();
+        auto rhs_it = rhs_params.begin(), rhs_end = rhs_params.end();
+        for(; lhs_it != lhs_end && rhs_it != rhs_end; ++lhs_it, ++rhs_it) {
+            if(type_instance_strong_compare(lhs_it -> second.get_type_instance(), rhs_it -> second.get_type_instance()) == false)
+                return false;
+        }
 
-        /**
-         * get_name
-         * returns the name of the parameter constraint
-         */
-        const std::string& get_name() const;
+        // if their return types are not the same, they are not equal
+        if(type_instance_strong_compare(lhs.get_return_type_instance(), rhs.get_return_type_instance()) == false)
+            return false;
 
-        /**
-         * get_token
-         * returns a token with parameter constraint source information
-         */
-        const token& get_token() const;
-
-    private:
-        /*
-         * the name of the parameter constraint
-         */
-        std::string m_name;
-
-        /*
-         * the token with source file information about the parameter constraint
-         */
-        token m_tok;
-    };
+        return true;
+    }
+    
+    /**
+     * operator!=
+     * compares two functions for inequality
+     */
+    inline bool operator!=(const function& lhs, const function& rhs) {
+        return !(lhs == rhs);
+    }
 }
 
 #endif

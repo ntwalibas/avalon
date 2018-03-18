@@ -448,19 +448,11 @@ parser::parser(
         // parse function parameters
         parse_parameters(function_decl);
 
-        // parse the return type if any
-        if(match(RETURN_TYPE)) {
-            type_instance return_type_instance = parse_type_instance();
-            function_decl -> set_return_type_instance(return_type_instance);
-            consume(NEWLINE, "Expected a new line after the function return type.");
-        }
-        else {
-            // if no return type was specified, then the user intends to return any value
-            std::string namespace_name("*"); // we use the global namespace as a placeholder here for "any" namespace
-            type_instance star_type_instance(star_tok, namespace_name);
-            function_decl -> set_return_type_instance(star_type_instance);
-            consume(NEWLINE, "Expected a new line after the function parameter list.");
-        }
+        // parse the return type
+        consume(RETURN_TYPE, "Expected the return type of the function.");
+        type_instance return_type_instance = parse_type_instance();
+        function_decl -> set_return_type_instance(return_type_instance);
+        consume(NEWLINE, "Expected a new line after the function return type.");
 
         // get the function body
         block_stmt body = block_statement(parent_scope); 

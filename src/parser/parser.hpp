@@ -498,13 +498,6 @@ namespace avalon {
         std::shared_ptr<token>& consume(token_type type, const std::string& message);
 
         /**
-         * create_token
-         * creates a new token.
-         * this function is needed to create a token expected by the AST but not present in the token stream.
-         */
-        token create_token(token_type type, const std::string& lexeme, std::size_t line, std::size_t column);
-
-        /**
          * parsing_error
          * contructs and returns a parse_error exception
          */

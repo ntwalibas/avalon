@@ -22,6 +22,13 @@ namespace avalon {
  */
 scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
 }
+    
+    /**
+     * add_namespace
+     */
+    void scope::add_namespace(const std::string& namespace_name) {
+        m_namespaces.emplace(namespace_name, namespace_name);
+    }
 
     /**
      * get_dtable
@@ -118,7 +125,11 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
      * add_default_constructor
      * add a new default constructor into this symbol table
      */
-    void scope::add_default_constructor(const std::string& ns_name, default_constructor& def_cons) {        
+    void scope::add_default_constructor(const std::string& ns_name, default_constructor& def_cons) {
+        // make sure there are no namespaces that share the same with this constructor
+        if(m_namespaces.count(def_cons.get_name()) > 0)
+            throw symbol_can_collide("A constructor cannot have share the same name as a namespace available in this scope.");
+
         // make sure there are no function declarations with the same name as this constructor
         if(m_dtable.function_exists(ns_name, def_cons.get_name()))
             throw symbol_can_collide("A constructor cannot have share the same name as a function already declared in this scope.");
@@ -135,6 +146,10 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
      * add a new record constructor into this symbol table
      */
     void scope::add_record_constructor(const std::string& ns_name, record_constructor& rec_cons) {
+        // make sure there are no namespaces that share the same with this constructor
+        if(m_namespaces.count(rec_cons.get_name()) > 0)
+            throw symbol_can_collide("A constructor cannot have share the same name as a namespace available in this scope.");
+
         // make sure there are no function declarations with the same name as this constructor
         if(m_dtable.function_exists(ns_name, rec_cons.get_name()))
             throw symbol_can_collide("A constructor cannot have share the same name as a function already declared in this scope.");

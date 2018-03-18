@@ -140,7 +140,12 @@ checker::checker(gtable& gtab, const std::string& source_path, error& error_hand
      */
     void checker::check_namespace(std::shared_ptr<decl>& declaration, program& prog) {
         std::shared_ptr<ns> namespace_decl = std::static_pointer_cast<ns>(declaration);
+        std::shared_ptr<scope>& l_scope = prog.get_scope();
 
+        // we add the namespace to the scope
+        l_scope -> add_namespace(namespace_decl -> get_name());
+
+        // we validate all declarations inside the namespace
         std::vector<std::shared_ptr<decl> >& declarations = namespace_decl -> get_declarations();
         for(auto& declaration : declarations)
             check_top_declaration(declaration, prog, namespace_decl -> get_name());
@@ -205,6 +210,8 @@ checker::checker(gtable& gtab, const std::string& source_path, error& error_hand
             if(declaration -> is_namespace()) {
                 std::shared_ptr<ns> namespace_decl = std::static_pointer_cast<ns>(declaration);
                 namespace_decls.push_back(namespace_decl);
+                // we add all namespaces to the "to" scope
+                to_scope -> add_namespace(namespace_decl -> get_name());
             }
         }
 

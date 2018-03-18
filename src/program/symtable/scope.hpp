@@ -2,8 +2,9 @@
 #define AVALON_PROGRAM_SYMTABLE_SCOPE_HPP_
 
 #include <cstddef>
+#include <memory>
 #include <vector>
-#include <unordered_map>
+#include <map>
 
 /* Symbol table */
 #include "program/symtable/dtable.hpp"
@@ -24,6 +25,11 @@ namespace avalon {
          * the constructor expects nothing
          */
         scope();
+
+        /**
+         * add_namespace
+         */
+        void add_namespace(const std::string& namespace_name);
 
         /**
          * get_dtable
@@ -220,6 +226,11 @@ namespace avalon {
         std::size_t get_end_line();
 
     private:
+        /*
+         * a map of namespaces available to this scope
+         */
+        std::map<std::string, std::string> m_namespaces;
+
         /*
          * declarations declared within this scope.
          */

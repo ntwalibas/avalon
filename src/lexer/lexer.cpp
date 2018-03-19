@@ -134,6 +134,8 @@ lexer::lexer(
     m_keywords["not in"]       = NOT_IN;
     m_keywords["is"]           = IS;
     m_keywords["is not"]       = IS_NOT;
+    m_keywords["next in"]      = NEXT_IN;
+    m_keywords["prev in"]      = PREV_IN;
 
     // the rest
     m_keywords["return"]       = RETURN;
@@ -880,7 +882,11 @@ lexer::lexer(
         std::string identifier = m_source.substr(m_start, m_current - m_start);
         
         // try to see if we got 'not in' or 'is not' as keyword
-        if(identifier == std::string("not") || identifier == std::string("is")) {
+        if(identifier == std::string("not")     ||
+           identifier == std::string("is")      ||
+           identifier == std::string("next")    ||
+           identifier == std::string("prev")
+        ) {
             std::string next_token = "";
             unsigned int how_far = 1;
 

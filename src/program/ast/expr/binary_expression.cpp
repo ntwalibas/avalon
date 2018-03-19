@@ -12,7 +12,7 @@ namespace avalon {
      * - the left operand to the binary operator
      * - and the right operand to the binary operator
      */
-    binary_expression::binary_expression(token& tok, binary_expression_type expr_type, std::shared_ptr<expr> lval, std::shared_ptr<expr> rval) : m_tok(tok), m_expr_type(expr_type), m_lval(lval), m_rval(rval) {
+    binary_expression::binary_expression(token& tok, binary_expression_type expr_type, std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval) : m_tok(tok), m_expr_type(expr_type), m_lval(lval), m_rval(rval) {
     }
 
     /**

@@ -40,6 +40,8 @@ namespace avalon {
         "LESS_EQUAL",
         "IN",
         "NOT_IN",
+        "NEXT_IN",
+        "PREV_IN",
         "IS",
         "IS_NOT",
         "MINUS",

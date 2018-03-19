@@ -1155,6 +1155,8 @@ parser::parser(
         while(
             match(IN)           ||
             match(NOT_IN)       ||
+            match(NEXT_IN)      ||
+            match(PREV_IN)      ||
             match(IS)           ||
             match(IS_NOT)       ||
             match(LESS)         ||
@@ -1173,6 +1175,12 @@ parser::parser(
                 break;
             case NOT_IN:
                 expr = std::make_shared<binary_expression>(* op, NOT_IN_EXPR, lval, rval);
+                break;
+            case NEXT_IN:
+                expr = std::make_shared<binary_expression>(* op, NEXT_IN_EXPR, lval, rval);
+                break;
+            case PREV_IN:
+                expr = std::make_shared<binary_expression>(* op, PREV_IN_EXPR, lval, rval);
                 break;
             case IS:
                 expr = std::make_shared<binary_expression>(* op, IS_EXPR, lval, rval);

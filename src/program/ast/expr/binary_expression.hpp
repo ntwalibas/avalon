@@ -21,6 +21,8 @@ namespace avalon {
         MINUS_EXPR,
         NOT_IN_EXPR,
         IS_NOT_EXPR,
+        NEXT_IN_EXPR,
+        PREV_IN_EXPR,
         GREATER_EXPR,
         SUBSCRIPT_EXPR,
         NOT_EQUAL_EXPR,
@@ -44,7 +46,7 @@ namespace avalon {
          * - the left operand to the binary operator
          * - and the right operand to binary operator
          */
-        binary_expression(token& tok, binary_expression_type expr_type, std::shared_ptr<expr> lval, std::shared_ptr<expr> rval);
+        binary_expression(token& tok, binary_expression_type expr_type, std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval);
 
         /**
          * get_token

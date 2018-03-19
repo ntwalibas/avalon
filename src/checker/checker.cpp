@@ -15,6 +15,9 @@
 #include "program/ast/decl/decl.hpp"
 #include "program/ast/decl/type.hpp"
 #include "program/ast/decl/import.hpp"
+#include "program/ast/decl/function.hpp"
+#include "program/ast/decl/variable.hpp"
+#include "program/ast/decl/statement.hpp"
 /* Symbol table */
 #include "program/symtable/exceptions/symbol_already_declared.hpp"
 #include "program/symtable/gtable.hpp"
@@ -153,22 +156,20 @@ checker::checker(gtable& gtab, const std::string& source_path, error& error_hand
 
     /**
      * check_top_declaration
-     * given a top declaration (type, variable or function), find which is it and dispatch the checking to the appropriate function
+     * given a top declaration (type, variable, function or statement), find which is it and dispatch the checking to the appropriate function
      */
     void checker::check_top_declaration(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
         if(declaration -> is_type()) {
             check_type(declaration, prog, namespace_name);
         }
         else if(declaration -> is_function()) {
-            //check_function(declaration, prog, namespace_name);
-            throw std::runtime_error("[compiler error] Function declarations are not checked yet.");
+            check_function(declaration, prog, namespace_name);
         }
         else if(declaration -> is_variable()) {
-            //check_variable(declaration, prog, namespace_name);
-            throw std::runtime_error("[compiler error] Variable declarations are not checked yet.");
+            check_variable(declaration, prog, namespace_name);
         }
         else {
-            throw std::runtime_error("Only type, function and variable declarations are expected to occur within a namespace.");
+            check_statement(declaration, prog, namespace_name);
         }
     }
 
@@ -192,6 +193,30 @@ checker::checker(gtable& gtab, const std::string& source_path, error& error_hand
         import_type(type_decl, l_scope, namespace_name);
     }
 
+    /**
+     * check_function
+     * given a declaration, check if it is a valid function
+     */
+    void checker::check_function(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
+        std::shared_ptr<function> function_decl = std::static_pointer_cast<function>(declaration);
+        
+    }
+
+    /**
+     * check_variable
+     * given a declaration, check if it is a valid variable
+     */
+    void checker::check_variable(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
+        std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(declaration);
+    }
+
+    /**
+     * check_statement
+     * given a declaration, check if it is a valid statement
+     */
+    void checker::check_statement(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
+        std::shared_ptr<statement> statement_decl = std::static_pointer_cast<statement>(declaration);
+    }
 
     /**
      * importer
@@ -225,13 +250,10 @@ checker::checker(gtable& gtab, const std::string& source_path, error& error_hand
                         import_type(type_decl, to_scope, namespace_decl -> get_name());
                 }
                 else if(l_declaration -> is_function()) {
-                    throw std::runtime_error("[compiler error] Function declarations cannot be imported yet.");
+                    //throw std::runtime_error("[compiler error] Function declarations cannot be imported yet.");
                 }
                 else if(l_declaration -> is_variable()) {
-                    throw std::runtime_error("[compiler error] Variable declarations cannot be imported yet.");
-                }
-                else {
-                    throw std::runtime_error("[compiler error] Only top declarations (type, function or variable) can be imported.");
+                    //throw std::runtime_error("[compiler error] Variable declarations cannot be imported yet.");
                 }
             }
         }

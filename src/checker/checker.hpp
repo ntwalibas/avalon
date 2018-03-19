@@ -114,7 +114,7 @@ namespace avalon {
 
         /**
          * check_top_declaration
-         * given a top declaration (type, variable or function), find which is it and dispatch the checking to the appropriate function
+         * given a top declaration (type, variable, function or statement), find which is it and dispatch the checking to the appropriate function
          */
         void check_top_declaration(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name);
 
@@ -123,6 +123,24 @@ namespace avalon {
          * given a declaration, check if it is a valid type
          */
         void check_type(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name);
+
+        /**
+         * check_function
+         * given a declaration, check if it is a valid function
+         */
+        void check_function(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name);
+
+        /**
+         * check_variable
+         * given a declaration, check if it is a valid variable
+         */
+        void check_variable(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name);
+
+        /**
+         * check_statement
+         * given a declaration, check if it is a valid statement
+         */
+        void check_statement(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name);
 
         /**
          * the source file currently being checked

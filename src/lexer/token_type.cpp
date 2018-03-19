@@ -65,7 +65,7 @@ namespace avalon {
         "NAMESPACE",
         "PUBLIC",
         "PRIVATE",
-        "TYPE"
+        "TYPE",
         "FUNCTION",
         "VAR",
         "VAL",
@@ -94,9 +94,8 @@ namespace avalon {
 
     std::ostream& operator<<(std::ostream& os, const token_type& type) {
         if(type != AVL_EOF)
-            os << std::string(token_type_to_string[type]);
+            return os << std::string(token_type_to_string[type]);
         else
-            os << "";
-        return os;
+            return os << "";
     }
 }

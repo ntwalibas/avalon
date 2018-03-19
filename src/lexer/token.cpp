@@ -25,7 +25,7 @@ token::token(
     // we remove new lines, carriage returns and empty spaces in lexemes to facilitate display
     m_lexeme.erase(std::remove(m_lexeme.begin(), m_lexeme.end(), '\n'), m_lexeme.end());
     m_lexeme.erase(std::remove(m_lexeme.begin(), m_lexeme.end(), '\r'), m_lexeme.end());
-    m_lexeme.erase(std::remove(m_lexeme.begin(), m_lexeme.end(), ' '), m_lexeme.end());
+    //m_lexeme.erase(std::remove(m_lexeme.begin(), m_lexeme.end(), ' '), m_lexeme.end());
 }
 
     /**
@@ -73,7 +73,7 @@ token::token(
      * a friend function that allows us to print a token in std::cout
      */
     std::ostream& operator<<(std::ostream& os, const token& tok) {
-        os << tok.get_type() << " " << tok.get_lexeme() << " on line " << tok.get_line() << ", column " << tok.get_column();
+        os << tok.get_type() << " <" << tok.get_lexeme() << "> on line " << tok.get_line() << ", column " << tok.get_column();
         return os;
     }
 

@@ -38,10 +38,10 @@ namespace avalon {
         LESS_EQUAL,         // <=
         IN,                 // in
         NOT_IN,             // not in
-        IS,                 // is
-        IS_NOT,             // is not
         NEXT_IN,            // next in
         PREV_IN,            // previously in
+        IS,                 // is
+        IS_NOT,             // is not
         MINUS,              // -
         RETURN_TYPE,        // ->
         NS_LEFT_PAREN,      // -(

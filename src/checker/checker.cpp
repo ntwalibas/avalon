@@ -151,16 +151,8 @@ checker::checker(gtable& gtab, const std::string& source_path, error& error_hand
         // we validate all declarations inside the namespace
         std::vector<std::shared_ptr<decl> >& declarations = namespace_decl -> get_declarations();
         for(auto& declaration : declarations) {
-            // we don't allow import declarations inside namespaces
-            if(declaration -> is_import()) {
-                throw checking_error(true, namespace_decl -> get_token(), "Import declarations must be outside namespace declarations.");
-            }
-            // we don't allow other namespace declarations inside namespaces
-            else if(declaration -> is_namespace()) {
-                throw checking_error(true, namespace_decl -> get_token(), "Nested namespace declarations are not allowed.");
-            }
-            // we don't allow statement declarations inside namespaces
-            else if(declaration -> is_statement()) {
+            // we don't allow statement declarations directly inside namespaces
+            if(declaration -> is_statement()) {
                 throw checking_error(true, namespace_decl -> get_token(), "Statement declarations are not allowed inside namespace declarations.");
             }
             else {

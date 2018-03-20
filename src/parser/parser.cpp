@@ -452,6 +452,7 @@ parser::parser(
         consume(RETURN_TYPE, "Expected the return type of the function.");
         type_instance return_type_instance = parse_type_instance();
         function_decl -> set_return_type_instance(return_type_instance);
+        consume(COLON, "Excepted a colon after the function's return type.");
         consume(NEWLINE, "Expected a new line after the function return type.");
 
         // get the function body

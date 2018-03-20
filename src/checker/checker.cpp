@@ -153,7 +153,7 @@ checker::checker(gtable& gtab, const std::string& source_path, error& error_hand
         for(auto& declaration : declarations) {
             // we don't allow statement declarations directly inside namespaces
             if(declaration -> is_statement()) {
-                throw checking_error(true, namespace_decl -> get_token(), "Statement declarations are not allowed inside namespace declarations.");
+                throw checking_error(false, namespace_decl -> get_token(), "Statement declarations are not allowed inside namespace declarations.");
             }
             else {
                 check_top_declaration(declaration, prog, namespace_decl -> get_name());

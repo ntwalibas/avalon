@@ -3,8 +3,8 @@
 #include <string>
 
 #include "checker/lax/decl/function/header_checker.hpp"
-#include "checker/lax/decl/type_checker.hpp"
 #include "checker/exceptions/invalid_type.hpp"
+#include "checker/lax/decl/type_checker.hpp"
 #include "program/ast/decl/function.hpp"
 #include "program/symtable/scope.hpp"
 #include "program/ast/decl/type.hpp"
@@ -26,7 +26,7 @@ namespace avalon {
         for(auto& param : params) {
             type_instance param_type_instance = param.second.get_type_instance();
             try {
-                type_instance_checker::check(param_type_instance, l_scope, ns_name, constraints);
+                type_instance_checker::complex_check(param_type_instance, l_scope, ns_name, constraints);
                 // if the type instance checked out, we replace the one on the parameter with the updated on
                 param.second.set_type_instance(param_type_instance);
             } catch(invalid_type err) {
@@ -37,7 +37,7 @@ namespace avalon {
         // we make sure the function's return type instance is valid
         type_instance return_type_instance = function_decl -> get_return_type_instance();
         try {
-            type_instance_checker::check(return_type_instance, l_scope, ns_name, constraints);
+            type_instance_checker::complex_check(return_type_instance, l_scope, ns_name, constraints);
             // if the type instance checked out, we replace the previous return type instance
             function_decl -> set_return_type_instance(return_type_instance);
         } catch(invalid_type err) {

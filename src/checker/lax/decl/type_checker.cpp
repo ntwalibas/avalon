@@ -22,11 +22,11 @@
 
 namespace avalon {
     /**
-     * check
-     * given a type instance, a scope and a namespace
-     * this function validates that the type instance is valid
+     * simple_check
+     * given a type instance, the scope were it was found, the namespace of the object that holds it and a list of possible standins,
+     * this function checks to see if that type instance exists in that scope in the given namespace or among the standins.
      */
-    bool type_instance_checker::check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
+    bool type_instance_checker::simple_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
         std::vector<type_instance>& instance_params = instance.get_params();
         std::shared_ptr<type> instance_type = nullptr;
         bool is_abstract = false;
@@ -38,7 +38,7 @@ namespace avalon {
             // we make sure the parameters it depends on are also valid
             for(auto& instance_param : instance_params) {
                 try {
-                    bool instance_param_in_abstract = type_instance_checker::check(instance_param, l_scope, ns_name, standins);
+                    bool instance_param_in_abstract = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
                     if(instance_param_in_abstract == true)
                         instance.is_parametrized(true);
                 } catch(invalid_type err) {
@@ -68,9 +68,54 @@ namespace avalon {
         return is_abstract;
     }
 
-    bool type_instance_checker::check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+    /**
+     * complex_check
+     * given a type instance, the scope were it was found, the namespace of the object that holds it and a list of possible standins,
+     * these functions check to see if that type instance has a type builder that live in that scope in one the possible namespaces:
+     * - the holder object namespace
+     * - the global namespace
+     * - the type instance attached namespace
+     */
+    bool type_instance_checker::complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
+        const std::string& l_ns_name = instance.get_namespace();
+        bool is_abstract = false;
+
+        // if the type instance namespace is "*" then it means the type instance exists either:
+        // - in the current namespace where the object that holds it is declared (this is given to us as a parameter)
+        // - or in the global namespace
+        if(l_ns_name == "*") {
+            try {
+                // first we search the type instance holder object namespace
+                is_abstract = type_instance_checker::simple_check(instance, l_scope, ns_name, standins);
+            } catch(invalid_type err) {
+                // we could not find the type instance in the holder namespace, we try the global namespace
+                try {
+                    is_abstract = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
+                } catch(invalid_type err) {
+                    throw err;
+                }
+            }
+        }
+        else {
+            try {
+                // the type instance carries an identified namespace, we use that.
+                is_abstract = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
+                // if the type instance is abstract, we raise an error because abstract type instances
+                // are not allowed to be constrainted to a namespace
+                if(is_abstract) {
+                    throw invalid_type(instance.get_token(), "An abstract type instance cannot be constrainted to a namespace.");
+                }
+            } catch(invalid_type err) {
+                throw err;
+            }
+        }
+
+        return is_abstract;
+    }
+
+    bool type_instance_checker::complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::vector<token> standins;
-        return type_instance_checker::check(instance, l_scope, ns_name, standins);
+        return complex_check(instance, l_scope, ns_name, standins);
     }
 
 
@@ -93,39 +138,13 @@ namespace avalon {
             const std::string& l_ns_name = cons_param.get_namespace();
             std::shared_ptr<type> instance_type = nullptr;
 
-            // if the type instance registered namespace is star,
-            // then we must look for the type instance within the current namespace,
-            // and if that fails we search the global namespace
-            if(l_ns_name == "*") {
-                try {
-                    bool is_abstract = type_instance_checker::check(cons_param, l_scope, ns_name, type_params);
-                    if(is_abstract == false)
-                        instance_type = cons_param.get_type();
-                } catch(invalid_type err) {
-                    // we could not find the type instance in the local namespace, we try the global namespace
-                    try {
-                        bool is_abstract = type_instance_checker::check(cons_param, l_scope, l_ns_name, type_params);
-                        if(is_abstract == false)
-                            instance_type = cons_param.get_type();
-                    } catch(invalid_type err) {
-                        throw invalid_constructor("This constructor depends on a type that does not exist either in the local namespace or the global namespace.");
-                    }
-                }
-            }
-            else {
-                try {
-                    bool is_abstract = type_instance_checker::check(cons_param, l_scope, l_ns_name, type_params);
-                    if(is_abstract == false) {
-                        instance_type = cons_param.get_type();
-                    }
-                    // so the parameter is abstract and the namespace was provided,
-                    // we disallow this because we don't allow for parametrized types to be constrained within a namespace
-                    else {
-                        throw invalid_constructor("This constructor relies on a type parameter that's bound to a namespace. This is not allowed.");
-                    }
-                } catch(invalid_type err) {
-                    throw invalid_constructor("This constructor depends on a type that could not be found in the given namespace.");
-                }
+            // validate the constructor parameter
+            try {
+                bool is_abstract = type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
+                if(is_abstract == false)
+                    instance_type = cons_param.get_type();
+            } catch(invalid_type err) {
+                throw invalid_constructor("This constructor depends on a type that does not exist either in the attached namespace or the local namespace or the global namespace.");
             }
 
             // we have the type instance type builder, we check if it is the same as that which this constructor builds
@@ -151,42 +170,20 @@ namespace avalon {
         for(auto& cons_param : cons_params) {
             const std::string& l_ns_name = cons_param.second.get_namespace();
             std::shared_ptr<type> instance_type = nullptr;
-            
-            // if the type instance registered namespace is star,
-            // then we must look for the type instance within the current namespace,
-            // and if that fails we search the global namespace
-            if(l_ns_name == "*") {
-                try {
-                    bool is_abstract = type_instance_checker::check(cons_param.second, l_scope, ns_name, type_params);
-                    if(is_abstract == false)
-                        instance_type = cons_param.second.get_type();
-                    // if all went well and we got an abstract type, 
-                } catch(invalid_type err) {
-                    // we could not find the type instance in the local namespace, we try the global namespace
-                    try {
-                        bool is_abstract = type_instance_checker::check(cons_param.second, l_scope, l_ns_name, type_params);
-                        if(is_abstract == false)
-                            instance_type = cons_param.second.get_type();
-                    } catch(invalid_type err) {
-                        throw invalid_constructor("This constructor depends on a type that does not exist either in the local namespace or the global namespace.");
-                    }
-                }
+
+            // validate the constructor parameter
+            try {
+                bool is_abstract = type_instance_checker::complex_check(cons_param.second, l_scope, ns_name, type_params);
+                if(is_abstract == false)
+                    instance_type = cons_param.second.get_type();
+            } catch(invalid_type err) {
+                throw invalid_constructor("This constructor depends on a type that does not exist either in the attached namespace or the local namespace or the global namespace.");
             }
-            else {
-                try {
-                    bool is_abstract = type_instance_checker::check(cons_param.second, l_scope, l_ns_name, type_params);
-                    if(is_abstract == false) {
-                        instance_type = cons_param.second.get_type();
-                    }
-                    // so the parameter is abstract and the namespace was provided,
-                    // we disallow this because we don't allow for parametrized types to be constrained within a namespace
-                    else {
-                        throw invalid_constructor("This constructor relies on a type parameter that's bound to a namespace. This is not allowed.");
-                    }
-                } catch(invalid_type err) {
-                    throw invalid_constructor("This constructor depends on a type that could not be found in the given namespace.");
-                }
-            }
+
+            // we have the type instance type builder, we check if it is the same as that which this constructor builds
+            // if they are the same, then we can judge this constructor to be temporarily valid
+            if((ns_name == l_ns_name) & (instance_type != nullptr && * instance_type == * type_decl))
+                continue;
 
             // if the type instance type builder is invalid, so it is the constructor
             if(instance_type != nullptr && instance_type -> is_valid(INVALID))

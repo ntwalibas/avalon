@@ -13,12 +13,22 @@ namespace avalon {
     class type_instance_checker {
     public:
         /**
-         * check
-         * given a type instance, a scope and a namespace
-         * this function validates that the type instance is valid
+         * simple_check
+         * given a type instance, the scope were it was found, the namespace of the object that holds it and a list of possible standins,
+         * this function checks to see if that type instance exists in that scope in the given namespace or among the standins.
          */
-        static bool check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins);
-        static bool check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        static bool simple_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins);
+
+        /**
+         * complex_check
+         * given a type instance, the scope were it was found, the namespace of the object that holds it and a list of possible standins,
+         * these functions check to see if that type instance has a type builder that live in that scope in one the possible namespaces:
+         * - the holder object namespace
+         * - the global namespace
+         * - the type instance attached namespace
+         */
+        static bool complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins);
+        static bool complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
     };
 
 

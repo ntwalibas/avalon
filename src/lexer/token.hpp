@@ -305,6 +305,21 @@ namespace avalon {
      * Predefined tokens
      */
     extern token star_tok;
+    extern token void_type_tok;
+    extern token unit_type_tok;
+    extern token bool_type_tok;
+    extern token int_type_tok;
+    extern token dec_type_tok;
+    extern token float_type_tok;
+    extern token string_type_tok;
+    extern token tuple_type_tok;
+
+    /**
+     * constructor tokens
+     */
+    extern token unit_cons_tok;
+    extern token true_cons_tok;
+    extern token false_cons_tok;
 }
 
 #endif

@@ -269,4 +269,23 @@ avl_string::avl_string(
  * Predefined tokens
  */
 token star_tok(MUL, "__star__", 0, 0, "__bit__");
+
+/**
+ * type tokens
+ */
+token void_type_tok(avalon::TYPE, "void", 0, 0, "__bit__");
+token unit_type_tok(avalon::TYPE, "unit", 0, 0, "__bit__");
+token bool_type_tok(avalon::TYPE, "bool", 0, 0, "__bit__");
+token int_type_tok(avalon::TYPE, "int", 0, 0, "__bit__");
+token dec_type_tok(avalon::TYPE, "dec", 0, 0, "__bit__");
+token float_type_tok(avalon::TYPE, "flaot", 0, 0, "__bit__");
+token string_type_tok(avalon::TYPE, "string", 0, 0, "__bit__");
+token tuple_type_tok(avalon::TYPE, "tuple", 0, 0, "__bit__");
+
+/**
+ * constructor tokens
+ */
+token unit_cons_tok(avalon::IDENTIFIER, "Unit", 0, 0, "__bic__");
+token true_cons_tok(avalon::IDENTIFIER, "True", 0, 0, "__bic__");
+token false_cons_tok(avalon::IDENTIFIER, "False", 0, 0, "__bic__");
 }

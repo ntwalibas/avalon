@@ -12,6 +12,8 @@
 #include "lexer/token.hpp"
 
 /* AST */
+#include "program/ast/decl/function.hpp"
+#include "program/ast/decl/variable.hpp"
 #include "program/ast/decl/decl.hpp"
 #include "program/ast/decl/type.hpp"
 #include "program/ast/program.hpp"
@@ -130,6 +132,12 @@ namespace avalon {
          * Given a namespace name and a function declaration, insert the function into the given scope
          */
         void import_function(std::shared_ptr<function>& function_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name);
+
+        /**
+         * import_variable
+         * Given a namespace name and a variable declaration, insert the variable into the given scope
+         */
+        void import_variable(std::shared_ptr<variable>& variable_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name);
 
         /**
          * checking_error

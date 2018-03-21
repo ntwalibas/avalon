@@ -25,6 +25,7 @@
 
 /* Checker */
 #include "checker/lax/decl/function/function_checker.hpp"
+#include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_function.hpp"
 #include "checker/lax/decl/variable_checker.hpp"
 #include "checker/exceptions/invalid_import.hpp"
@@ -236,6 +237,18 @@ namespace avalon {
      */
     void lax_checker::check_variable(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
         std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(declaration);
+        std::shared_ptr<scope>& l_scope = prog.get_scope();
+        variable_checker v_checker;
+
+        // check the variable
+        try {
+            v_checker.check(variable_decl, l_scope, namespace_name);
+        } catch(invalid_variable err) {
+            throw checking_error(true, err.get_token(), err.what());
+        }
+
+        // run side effects: add the variable declaration to the program scope
+        import_variable(variable_decl, l_scope, namespace_name);
     }
 
     /**
@@ -277,7 +290,10 @@ namespace avalon {
                     }
                 }
                 else if(l_declaration -> is_variable()) {
-                    //throw std::runtime_error("[compiler error] Variable declarations cannot be imported yet.");
+                    std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(l_declaration);
+                    if(variable_decl -> is_public()) {
+                        import_variable(variable_decl, to_scope, namespace_decl -> get_name());
+                    }
                 }
             }
         }
@@ -304,6 +320,18 @@ namespace avalon {
             scp -> add_function(namespace_name, function_decl);
         } catch(symbol_already_declared err) {
             throw checking_error(true, function_decl -> get_token(), err.what());
+        }
+    }
+
+    /**
+     * import_variable
+     * Given a namespace name and a variable declaration, insert the variable into the given scope
+     */
+    void lax_checker::import_variable(std::shared_ptr<variable>& variable_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name) {
+        try {
+            scp -> add_variable(namespace_name, variable_decl);
+        } catch(symbol_already_declared err) {
+            throw checking_error(true, variable_decl -> get_token(), err.what());
         }
     }
 

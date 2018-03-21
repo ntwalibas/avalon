@@ -126,6 +126,12 @@ namespace avalon {
         void import_type(std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name);
 
         /**
+         * import_function
+         * Given a namespace name and a function declaration, insert the function into the given scope
+         */
+        void import_function(std::shared_ptr<function>& function_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name);
+
+        /**
          * checking_error
          * contructs and returns a check_error exception
          */

@@ -24,11 +24,14 @@
 #include "program/symtable/scope.hpp"
 
 /* Checker */
-#include "checker/lax/decl/import_checker.hpp"
-#include "checker/lax/lax_checker.hpp"
-#include "checker/lax/decl/type_checker.hpp"
+#include "checker/lax/decl/function/function_checker.hpp"
+#include "checker/exceptions/invalid_function.hpp"
+#include "checker/lax/decl/variable_checker.hpp"
 #include "checker/exceptions/invalid_import.hpp"
 #include "checker/exceptions/invalid_type.hpp"
+#include "checker/lax/decl/import_checker.hpp"
+#include "checker/lax/decl/type_checker.hpp"
+#include "checker/lax/lax_checker.hpp"
 
 
 namespace avalon {
@@ -213,7 +216,18 @@ namespace avalon {
      */
     void lax_checker::check_function(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
         std::shared_ptr<function> function_decl = std::static_pointer_cast<function>(declaration);
-        
+        function_checker f_checker;
+
+        // check the function
+        try {
+            f_checker.check(function_decl, prog, namespace_name);
+        } catch(invalid_function err) {
+            throw checking_error(true, err.get_token(), err.what());
+        }
+
+        // run side effects: add the function declaration to the program scope
+        std::shared_ptr<scope>& l_scope = prog.get_scope();
+        import_function(function_decl, l_scope, namespace_name);
     }
 
     /**
@@ -252,11 +266,15 @@ namespace avalon {
             for(auto& l_declaration : l_declarations) {
                 if(l_declaration -> is_type()) {
                     std::shared_ptr<type> type_decl = std::static_pointer_cast<type>(l_declaration);
-                    if(type_decl -> is_public())
+                    if(type_decl -> is_public()) {
                         import_type(type_decl, to_scope, namespace_decl -> get_name());
+                    }
                 }
                 else if(l_declaration -> is_function()) {
-                    //throw std::runtime_error("[compiler error] Function declarations cannot be imported yet.");
+                    std::shared_ptr<function> function_decl = std::static_pointer_cast<function>(l_declaration);
+                    if(function_decl -> is_public()) {
+                        import_function(function_decl, to_scope, namespace_decl -> get_name());
+                    }
                 }
                 else if(l_declaration -> is_variable()) {
                     //throw std::runtime_error("[compiler error] Variable declarations cannot be imported yet.");
@@ -274,6 +292,18 @@ namespace avalon {
             scp -> add_type(namespace_name, type_decl);
         } catch(symbol_already_declared err) {
             throw checking_error(true, type_decl -> get_token(), err.what());
+        }
+    }
+
+    /**
+     * import_function
+     * Given a namespace name and a function declaration, insert the function into the given scope
+     */
+    void lax_checker::import_function(std::shared_ptr<function>& function_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name) {
+        try {
+            scp -> add_function(namespace_name, function_decl);
+        } catch(symbol_already_declared err) {
+            throw checking_error(true, function_decl -> get_token(), err.what());
         }
     }
 

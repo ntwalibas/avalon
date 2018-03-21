@@ -13,6 +13,7 @@
 #include "program/ast/program.hpp"
 
 /* Checker */
+#include "checker/check_error.hpp"
 #include "checker/checker.hpp"
 
 /* Importer */

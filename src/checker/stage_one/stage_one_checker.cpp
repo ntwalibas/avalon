@@ -31,6 +31,26 @@
 #include "checker/exceptions/invalid_type.hpp"
 
 
+/**
+ * type tokens
+ */
+static avalon::token void_type_tok(avalon::TYPE, "void", 0, 0, "__bit__");
+static avalon::token unit_type_tok(avalon::TYPE, "unit", 0, 0, "__bit__");
+static avalon::token bool_type_tok(avalon::TYPE, "bool", 0, 0, "__bit__");
+static avalon::token int_type_tok(avalon::TYPE, "int", 0, 0, "__bit__");
+static avalon::token dec_type_tok(avalon::TYPE, "dec", 0, 0, "__bit__");
+static avalon::token float_type_tok(avalon::TYPE, "flaot", 0, 0, "__bit__");
+static avalon::token string_type_tok(avalon::TYPE, "string", 0, 0, "__bit__");
+static avalon::token tuple_type_tok(avalon::TYPE, "tuple", 0, 0, "__bit__");
+
+/**
+ * constructor tokens
+ */
+static avalon::token unit_cons_tok(avalon::IDENTIFIER, "Unit", 0, 0, "__bic__");
+static avalon::token true_cons_tok(avalon::IDENTIFIER, "True", 0, 0, "__bic__");
+static avalon::token false_cons_tok(avalon::IDENTIFIER, "False", 0, 0, "__bic__");
+
+
 namespace avalon {
     /**
      * the constructor expects:
@@ -39,6 +59,41 @@ namespace avalon {
      * - the error handler to use in order to display errors
      */
     stage_one_checker::stage_one_checker(gtable& gtab, const std::string& source_path, error& error_handler) : m_source_path(source_path), m_error_handler(error_handler), m_gtable(gtab) {
+        /* we create built-in types to be made available to all programs being checked */
+        // void type
+        std::shared_ptr<type> void_type = std::make_shared<type>(void_type_tok, VALID);
+        m_bits.push_back(void_type);
+
+        // unit type
+        std::shared_ptr<type> unit_type = std::make_shared<type>(unit_type_tok, VALID);
+        default_constructor unit_cons(unit_cons_tok, unit_type);
+        m_bits.push_back(unit_type);
+
+        // bool type
+        std::shared_ptr<type> bool_type = std::make_shared<type>(bool_type_tok, VALID);
+        default_constructor true_cons(true_cons_tok, bool_type);
+        default_constructor false_cons(false_cons_tok, bool_type);
+        m_bits.push_back(bool_type);
+
+        // integer type
+        std::shared_ptr<type> int_type = std::make_shared<type>(int_type_tok, VALID);
+        m_bits.push_back(int_type);
+
+        // decimal type
+        std::shared_ptr<type> dec_type = std::make_shared<type>(dec_type_tok, VALID);
+        m_bits.push_back(dec_type);
+
+        // floating point type
+        std::shared_ptr<type> float_type = std::make_shared<type>(float_type_tok, VALID);
+        m_bits.push_back(float_type);
+
+        // string type
+        std::shared_ptr<type> string_type = std::make_shared<type>(string_type_tok, VALID);
+        m_bits.push_back(string_type);
+
+        // tuple type
+        std::shared_ptr<type> tuple_type = std::make_shared<type>(tuple_type_tok, VALID);
+        m_bits.push_back(tuple_type);
     }
 
     /**
@@ -115,6 +170,10 @@ namespace avalon {
     void stage_one_checker::check_namespace(std::shared_ptr<decl>& declaration, program& prog) {
         std::shared_ptr<ns> namespace_decl = std::static_pointer_cast<ns>(declaration);
         std::shared_ptr<scope>& l_scope = prog.get_scope();
+
+        // first, we "import" built-in types in the current program
+        for(auto& bit : m_bits)
+            import_type(bit, l_scope, "*");
 
         // we add the namespace to the scope
         l_scope -> add_namespace(namespace_decl -> get_name());

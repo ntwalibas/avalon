@@ -2,6 +2,7 @@
 #define AVALON_CHECKER_STAGE_ONE_CHECKER_HPP_
 
 #include <memory>
+#include <vector>
 #include <string>
 
 /* Error display */
@@ -12,6 +13,7 @@
 
 /* AST */
 #include "program/ast/decl/decl.hpp"
+#include "program/ast/decl/type.hpp"
 #include "program/ast/program.hpp"
 /* Symbol table */
 #include "program/symtable/gtable.hpp"
@@ -105,6 +107,11 @@ namespace avalon {
          * the program we return that may eventually contain the main program
          */
         program m_prog;
+
+        /*
+         * vector of default types to be made available throughout the program
+         */
+        std::vector<std::shared_ptr<type> > m_bits;
 
         /**
          * import_declarations

@@ -68,6 +68,11 @@ namespace avalon {
         return is_abstract;
     }
 
+    bool type_instance_checker::check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::vector<token> standins;
+        return type_instance_checker::check(instance, l_scope, ns_name, standins);
+    }
+
 
     /**
      * check

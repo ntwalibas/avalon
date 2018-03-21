@@ -18,6 +18,7 @@ namespace avalon {
          * this function validates that the type instance is valid
          */
         static bool check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins);
+        static bool check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
     };
 
 

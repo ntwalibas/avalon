@@ -10,7 +10,7 @@
 #include "program/symtable/gtable.hpp"
 
 /* Checker */
-#include "checker/stage_one/stage_one_checker.hpp"
+#include "checker/lax/lax_checker.hpp"
 #include "checker/checker.hpp"
 
 
@@ -31,7 +31,7 @@ namespace avalon {
      * returns the program that may contan the __main__ function.
      */
     program checker::check() {
-        stage_one_checker checker_one(m_gtable, m_source_path, m_error_handler);
+        lax_checker checker_one(m_gtable, m_source_path, m_error_handler);
         try {
             program prog = checker_one.check();
             init_stage_two(prog);

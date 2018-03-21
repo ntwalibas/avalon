@@ -24,9 +24,9 @@
 #include "program/symtable/scope.hpp"
 
 /* Checker */
-#include "checker/stage_one/decl/import_checker.hpp"
-#include "checker/stage_one/stage_one_checker.hpp"
-#include "checker/stage_one/decl/type_checker.hpp"
+#include "checker/lax/decl/import_checker.hpp"
+#include "checker/lax/lax_checker.hpp"
+#include "checker/lax/decl/type_checker.hpp"
 #include "checker/exceptions/invalid_import.hpp"
 #include "checker/exceptions/invalid_type.hpp"
 
@@ -38,7 +38,7 @@ namespace avalon {
      * - the path to the source containing the program we are validating
      * - the error handler to use in order to display errors
      */
-    stage_one_checker::stage_one_checker(gtable& gtab, const std::string& source_path, error& error_handler) : m_source_path(source_path), m_error_handler(error_handler), m_gtable(gtab) {
+    lax_checker::lax_checker(gtable& gtab, const std::string& source_path, error& error_handler) : m_source_path(source_path), m_error_handler(error_handler), m_gtable(gtab) {
         /* we create built-in types to be made available to all programs being checked */
         // void type
         std::shared_ptr<type> void_type = std::make_shared<type>(void_type_tok, VALID);
@@ -82,7 +82,7 @@ namespace avalon {
      * it validates that all programs found in the gtable are correct.
      * returns the program that may contan the __main__ function.
      */
-    program stage_one_checker::check() {
+    program lax_checker::check() {
         std::queue<std::string> checking_order = m_gtable.get_checking_order();
         while(!checking_order.empty()) {
             const std::string& fqn_name = checking_order.front();
@@ -101,7 +101,7 @@ namespace avalon {
      * check_program
      * given a program, check that all the declarations within it are correct
      */
-    void stage_one_checker::check_program(program& prog) {
+    void lax_checker::check_program(program& prog) {
         std::vector<std::shared_ptr<decl> >& declarations = prog.get_declarations();
         for(auto& declaration : declarations)
             check_declaration(declaration, prog);
@@ -111,7 +111,7 @@ namespace avalon {
      * check_declaration
      * given a declaration, determine which type it is and dispatch the checking to the appropriate function
      */
-    void stage_one_checker::check_declaration(std::shared_ptr<decl>& declaration, program& prog) {
+    void lax_checker::check_declaration(std::shared_ptr<decl>& declaration, program& prog) {
         if(declaration -> is_import()) {
             check_import(declaration, prog);
         }
@@ -127,7 +127,7 @@ namespace avalon {
      * check_import
      * given a declaration, check if it is a valid import declaration
      */
-    void stage_one_checker::check_import(std::shared_ptr<decl>& declaration, program& prog) {
+    void lax_checker::check_import(std::shared_ptr<decl>& declaration, program& prog) {
         const std::shared_ptr<import>& import_decl = std::static_pointer_cast<import>(declaration);
         import_checker i_checker;
         
@@ -147,7 +147,7 @@ namespace avalon {
      * check_namespace
      * given a declaration, check if it is a valid namespace
      */
-    void stage_one_checker::check_namespace(std::shared_ptr<decl>& declaration, program& prog) {
+    void lax_checker::check_namespace(std::shared_ptr<decl>& declaration, program& prog) {
         std::shared_ptr<ns> namespace_decl = std::static_pointer_cast<ns>(declaration);
         std::shared_ptr<scope>& l_scope = prog.get_scope();
 
@@ -175,7 +175,7 @@ namespace avalon {
      * check_top_declaration
      * given a top declaration (type, variable, function or statement), find which is it and dispatch the checking to the appropriate function
      */
-    void stage_one_checker::check_top_declaration(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
+    void lax_checker::check_top_declaration(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
         if(declaration -> is_type()) {
             check_type(declaration, prog, namespace_name);
         }
@@ -191,7 +191,7 @@ namespace avalon {
      * check_type
      * given a declaration, check if it is a valid type
      */
-    void stage_one_checker::check_type(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
+    void lax_checker::check_type(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
         std::shared_ptr<type> type_decl = std::static_pointer_cast<type>(declaration);
         type_checker t_checker;
 
@@ -211,7 +211,7 @@ namespace avalon {
      * check_function
      * given a declaration, check if it is a valid function
      */
-    void stage_one_checker::check_function(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
+    void lax_checker::check_function(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
         std::shared_ptr<function> function_decl = std::static_pointer_cast<function>(declaration);
         
     }
@@ -220,7 +220,7 @@ namespace avalon {
      * check_variable
      * given a declaration, check if it is a valid variable
      */
-    void stage_one_checker::check_variable(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
+    void lax_checker::check_variable(std::shared_ptr<decl>& declaration, program& prog, const std::string& namespace_name) {
         std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(declaration);
     }
 
@@ -228,7 +228,7 @@ namespace avalon {
      * importer
      * Given two programs, import all the declarations in "from" scope into "to" scope
      */
-    void stage_one_checker::import_declarations(program& from, program& to) {
+    void lax_checker::import_declarations(program& from, program& to) {
         // declarations defined in from with hope of find namespaces with declarations in them
         std::vector<std::shared_ptr<decl> >& declarations = from.get_declarations();
         std::vector<std::shared_ptr<ns> > namespace_decls;
@@ -269,7 +269,7 @@ namespace avalon {
      * import_type
      * Given a namespace name and a type declaration, insert the type into the given scope
      */
-    void stage_one_checker::import_type(std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name) {
+    void lax_checker::import_type(std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name) {
         try {
             scp -> add_type(namespace_name, type_decl);
         } catch(symbol_already_declared err) {
@@ -281,7 +281,7 @@ namespace avalon {
      * checking_error
      * contructs and returns an check_error exception
      */
-    check_error stage_one_checker::checking_error(bool fatal, const token& tok, const std::string& message) {
+    check_error lax_checker::checking_error(bool fatal, const token& tok, const std::string& message) {
         return check_error(m_error_handler, tok, fatal, message);
     }
 }

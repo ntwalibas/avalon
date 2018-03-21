@@ -2,8 +2,8 @@
 #include <vector>
 #include <string>
 
-#include "checker/stage_one/decl/function/header_checker.hpp"
-#include "checker/stage_one/decl/type_checker.hpp"
+#include "checker/lax/decl/function/header_checker.hpp"
+#include "checker/lax/decl/type_checker.hpp"
 #include "checker/exceptions/invalid_type.hpp"
 #include "program/ast/decl/function.hpp"
 #include "program/symtable/scope.hpp"

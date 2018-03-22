@@ -37,7 +37,7 @@ namespace avalon {
          * - the token with type information
          * - the validation state
          */
-        type(token tok, validation_state is_valid);
+        type(token& tok, validation_state is_valid);
 
         /**
          * set_name
@@ -439,7 +439,7 @@ namespace avalon {
          * - the token with the constructor name
          * - the type that this constructor contructs
          */
-        default_constructor(token tok, std::shared_ptr<type>& ty);
+        default_constructor(token& tok, std::shared_ptr<type>& ty);
 
         /**
          * set_type
@@ -533,7 +533,7 @@ namespace avalon {
          * - the token with the constructor name
          * - the type that this constructor contructs
          */
-        record_constructor(token tok, std::shared_ptr<type>& ty);
+        record_constructor(token& tok, std::shared_ptr<type>& ty);
 
         /**
          * set_type

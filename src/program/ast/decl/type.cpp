@@ -21,7 +21,7 @@ namespace avalon {
  * - the token with type information
  * - the validation state
  */
-type::type(token tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true) {
+type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true) {
 }
     /**
      * set_name
@@ -534,7 +534,7 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
  * - the token with the constructor name
  * - the type that this constructor contructs
  */
-default_constructor::default_constructor(token tok, std::shared_ptr<type>& ty) : m_name(tok.get_lexeme()), m_tok(tok), m_type(ty), m_is_parametrized(false) {
+default_constructor::default_constructor(token& tok, std::shared_ptr<type>& ty) : m_name(tok.get_lexeme()), m_tok(tok), m_type(ty), m_is_parametrized(false) {
 }
 
     /**
@@ -604,7 +604,7 @@ default_constructor::default_constructor(token tok, std::shared_ptr<type>& ty) :
     }
     
 
-record_constructor::record_constructor(token tok, std::shared_ptr<type>& ty) : m_name(tok.get_lexeme()), m_tok(tok), m_type(ty), m_is_parametrized(false) {
+record_constructor::record_constructor(token& tok, std::shared_ptr<type>& ty) : m_name(tok.get_lexeme()), m_tok(tok), m_type(ty), m_is_parametrized(false) {
 }
 
     /**

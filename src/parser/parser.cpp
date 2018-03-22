@@ -1530,7 +1530,7 @@ parser::parser(
                 fun_call_expr -> add_argument(star_tok, arg_value); // we use the general purpose underscore token in lieu of the actual argument name as we have none
             }
         } while(match(COMMA));
-        consume(LEFT_PAREN, "Expected a closing parenthesis after the function call arguments.");
+        consume(RIGHT_PAREN, "Expected a closing parenthesis after the function call arguments.");
 
         if(match(RETURN_TYPE)) {
             type_instance return_type_instance = parse_type_instance();

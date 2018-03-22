@@ -25,13 +25,13 @@
 
 /* Checker */
 #include "checker/lax/decl/function/function_checker.hpp"
+#include "checker/lax/decl/variable/variable_checker.hpp"
+#include "checker/lax/decl/import/import_checker.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_function.hpp"
-#include "checker/lax/decl/variable_checker.hpp"
+#include "checker/lax/decl/type/type_checker.hpp"
 #include "checker/exceptions/invalid_import.hpp"
 #include "checker/exceptions/invalid_type.hpp"
-#include "checker/lax/decl/import_checker.hpp"
-#include "checker/lax/decl/type_checker.hpp"
 #include "checker/lax/lax_checker.hpp"
 
 

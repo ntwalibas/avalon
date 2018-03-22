@@ -9,7 +9,7 @@
 #include "program/symtable/scope.hpp"
 
 /* Checker */
-#include "checker/lax/decl/import_checker.hpp"
+#include "checker/lax/decl/import/import_checker.hpp"
 #include "checker/exceptions/invalid_import.hpp"
 
 

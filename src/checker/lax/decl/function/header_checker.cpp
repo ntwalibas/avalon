@@ -3,8 +3,8 @@
 #include <string>
 
 #include "checker/lax/decl/function/header_checker.hpp"
+#include "checker/lax/decl/type/type_checker.hpp"
 #include "checker/exceptions/invalid_type.hpp"
-#include "checker/lax/decl/type_checker.hpp"
 #include "program/ast/decl/function.hpp"
 #include "program/symtable/scope.hpp"
 #include "program/ast/decl/type.hpp"

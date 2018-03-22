@@ -16,8 +16,8 @@
 
 /* Checker */
 #include "checker/exceptions/invalid_constructor.hpp"
+#include "checker/lax/decl/type/type_checker.hpp"
 #include "checker/exceptions/invalid_type.hpp"
-#include "checker/lax/decl/type_checker.hpp"
 
 
 namespace avalon {

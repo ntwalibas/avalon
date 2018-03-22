@@ -1486,7 +1486,7 @@ parser::parser(
             }
             else {
                 std::shared_ptr<grouped_expression> grouped_expr = std::make_shared<grouped_expression>(* left_paren, inner_expression);
-                consume(RIGHT_BRACKET, "Expected a closing parenthesis after grouped expression.");
+                consume(RIGHT_PAREN, "Expected a closing parenthesis after grouped expression.");
                 l_expression = grouped_expr;
             }
         }

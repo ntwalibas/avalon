@@ -284,9 +284,6 @@ lexer::lexer(
                 if(match('-')) { // single line comment
                     single_comment();
                 }
-                else if(match('/')) { // multiline comment
-                    multi_comment();
-                }
                 else if(match('>')) {
                     add_token(RETURN_TYPE);
                 }
@@ -344,8 +341,13 @@ lexer::lexer(
                 }
                 break;                
             case '(':
-                add_token(LEFT_PAREN);
-                m_parens_levels++;
+                if(match('-')) {
+                    multi_comment();
+                }
+                else {
+                    add_token(LEFT_PAREN);
+                    m_parens_levels++;
+                }                
                 break;
             case ')':
                 if(match('-')) {
@@ -501,13 +503,13 @@ lexer::lexer(
         
         while(!is_at_end()) {
             // try to match a new nested comment
-            if(peek() == '-' && peek_next() == '/') {
+            if(peek() == '(' && peek_next() == '-') {
                 nesting_levels++;
                 advance();
                 advance();
             }
             // try to match a closed comment
-            else if(peek() == '/' && peek_next() == '-') {
+            else if(peek() == '-' && peek_next() == ')') {
                 advance();
                 advance();
 

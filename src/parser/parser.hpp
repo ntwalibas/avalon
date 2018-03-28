@@ -154,17 +154,27 @@ namespace avalon {
 
         /**
          * parse_default_constructor
-         * this function parses a default constructors, makes sure it unique within this parsing unit,
-         * adds it to the type declaration and add it to the constructor symbol table.
+         * this function parses a default constructor.
          */
         void parse_default_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl);
 
         /**
          * parse_record_constructor
-         * this function parses a record constructors, makes sure it unique within this parsing unit,
-         * adds it to the type declaration and add it to the constructor symbol table.
+         * this function parses a record constructor.
          */
         void parse_record_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl);
+
+        /**
+         * parse_list_constructor
+         * this function parses a list constructor.
+         */
+        void parse_list_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl);
+
+        /**
+         * parse_map_constructor
+         * this function parses a map constructor.
+         */
+        void parse_map_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl);
 
         /**
          * function_declaration

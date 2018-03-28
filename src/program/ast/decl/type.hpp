@@ -14,6 +14,8 @@
 namespace avalon {
     class type;
     class type_instance;
+    class map_constructor;
+    class list_constructor;
     class record_constructor;
     class default_constructor;
 
@@ -70,6 +72,18 @@ namespace avalon {
         void add_constructor(record_constructor& rec_constructor);
 
         /**
+         * add_constructor
+         * add a list constructor to this type
+         */
+        void add_constructor(list_constructor& list_constructor);
+
+        /**
+         * add_constructor
+         * add a map constructor to this type
+         */
+        void add_constructor(map_constructor& map_constructor);
+
+        /**
          * get_default_constructors
          * returns a vector of all default constructors that build this type
          */
@@ -104,6 +118,18 @@ namespace avalon {
          * given a record constructor name and arity, find it there is one that builds this type
          */
         record_constructor& get_record_constructor(const std::string& name, std::size_t arity);
+
+        /**
+         * get_list_constructor
+         * given a list constructor name, find it there is one that builds this type
+         */
+        list_constructor& get_list_constructor(const std::string& name);
+
+        /**
+         * get_map_constructor
+         * given a map constructor name, find it there is one that builds this type
+         */
+        map_constructor& get_map_constructor(const std::string& name);
 
         /**
          * add_type_param
@@ -197,7 +223,17 @@ namespace avalon {
         /*
          * map of all record constructors that build this type
          */
-        std::map<std::pair<std::string,std::size_t>,record_constructor> m_rec_constructors;
+        std::map<std::pair<std::string,std::size_t>, record_constructor> m_rec_constructors;
+
+        /*
+         * map of all list constructors that build this type
+         */
+        std::map<std::string, list_constructor> m_list_constructors;
+
+        /*
+         * map of all map constructors that build this type
+         */
+        std::map<std::string, map_constructor> m_map_constructors;
 
         /*
          * vector of type parameters if this type was parametrized
@@ -518,13 +554,6 @@ namespace avalon {
         bool m_is_parametrized;
     };
 
-    /**
-     * rank_default_constructor
-     * given two constructors and vector of instances,
-     * we find out which one of those two constructors is closest to the instances.
-     */
-    int rank_default_constructors(default_constructor cons_one, default_constructor cons_two, std::vector<type_instance> instances);
-
 
     class record_constructor {
     public:
@@ -626,12 +655,197 @@ namespace avalon {
         bool m_is_parametrized;
     };
 
-    /**
-     * rank_record_constructor
-     * given two constructors and vector of instances,
-     * we find out which one of those two constructors is closest to the instances.
-     */
-    int rank_record_constructors(record_constructor cons_one, record_constructor cons_two, std::vector<type_instance> instances);
+
+    class list_constructor {
+    public:
+        /**
+         * the constructor expects:
+         * - the token with the constructor name
+         * - the type that this constructor contructs
+         * - the type instance that this constructor depends on
+         */
+        list_constructor(token& tok, std::shared_ptr<type>& ty, type_instance& param);
+
+        /**
+         * set_type
+         * changes the name of the constructor.
+         */
+        void set_name(const std::string& name);
+
+        /**
+         * get_name
+         * returns a string with the name of the constructor
+         */
+        const std::string& get_name() const;
+
+        /**
+         * get_token
+         * returns the token that contains the name of this constructor.
+         */
+        const token& get_token() const;
+
+        /**
+         * get_type
+         * returns the type that this constructor creates
+         */
+        std::shared_ptr<type>& get_type();
+        
+        /**
+         * add_param
+         * set type instance this constructor depends on
+         */
+        void add_param(type_instance& param);
+
+        /**
+         * get_param
+         * return the type instance this list constructor depends on
+         */
+        type_instance& get_param();
+
+        /**
+         * set_is_parametrized
+         * if the constructor relies on an unknown type,
+         * we use this function to set this flag on.
+         */
+        void set_is_parametrized(bool is_parametrized);
+
+        /**
+         * is_parametrized
+         * returns true if the constructor relies on an abstract type.
+         */
+        bool is_parametrized();
+
+    private:
+        /*
+         * name of the constructor
+         */
+        std::string m_name;
+
+        /*
+         * token that contains the following relevant information
+         */
+        token m_tok;
+
+        /*
+         * the type that this contructor creates
+         */
+        std::shared_ptr<type> m_type;
+
+        /*
+         * the type instance this list constructor depends on
+         */
+        type_instance m_param;
+
+        /*
+         * flag set to true if the constructor depends on an abstract type
+         */
+        bool m_is_parametrized;
+    };
+
+
+    class map_constructor {
+    public:
+        /**
+         * the constructor expects:
+         * - the token with the constructor name
+         * - the type that this constructor contructs
+         * - the type instance of the constructor key
+         * - the type instance of the constructor value
+         */
+        map_constructor(token& tok, std::shared_ptr<type>& ty, type_instance& param_key, type_instance& param_value);
+
+        /**
+         * set_type
+         * changes the name of the constructor.
+         */
+        void set_name(const std::string& name);
+
+        /**
+         * get_name
+         * returns a string with the name of the constructor
+         */
+        const std::string& get_name() const;
+
+        /**
+         * get_token
+         * returns the token that contains the name of this constructor.
+         */
+        const token& get_token() const;
+
+        /**
+         * get_type
+         * returns the type that this constructor creates
+         */
+        std::shared_ptr<type>& get_type();
+        
+        /**
+         * add_param_key
+         * set type instance this map constructor key
+         */
+        void add_param_key(type_instance& param);
+
+        /**
+         * get_param_key
+         * return the type instance this map constructor key
+         */
+        type_instance& get_param_key();
+        
+        /**
+         * add_param_value
+         * set type instance this map constructor value
+         */
+        void add_param_value(type_instance& param);
+
+        /**
+         * get_param_value
+         * return the type instance this map constructor value
+         */
+        type_instance& get_param_value();
+
+        /**
+         * set_is_parametrized
+         * if the constructor relies on an unknown type,
+         * we use this function to set this flag on.
+         */
+        void set_is_parametrized(bool is_parametrized);
+
+        /**
+         * is_parametrized
+         * returns true if the constructor relies on an abstract type.
+         */
+        bool is_parametrized();
+
+    private:
+        /*
+         * name of the constructor
+         */
+        std::string m_name;
+
+        /*
+         * token that contains the following relevant information
+         */
+        token m_tok;
+
+        /*
+         * the type that this contructor creates
+         */
+        std::shared_ptr<type> m_type;
+
+        /*
+         * the type instance of the map key
+         */
+        type_instance m_param_key;
+
+        /*
+         * the type instance of map value
+         */
+        type_instance m_param_value;
+
+        /*
+         * flag set to true if the constructor depends on an abstract type
+         */
+        bool m_is_parametrized;
+    };
 
     /**
      * mangle_constructor

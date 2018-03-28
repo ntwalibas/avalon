@@ -373,7 +373,17 @@ parser::parser(
                 }
 
                 // we are done building cunstructors, we expect a closing parenthesis
-                consume(RIGHT_PAREN, "Expected a closing parenthesis after constructor arguments.");
+                consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple constructor arguments.");
+            }
+            // if we have an opening bracket, we have a list constructor
+            else if(match(LEFT_BRACKET)) {
+                parse_list_constructor(constructor_tok, type_decl);
+                consume(RIGHT_BRACKET, "Expected a closing bracket after list constructor arguments.");
+            }
+            // if we have an opening brace, we have a map constructor
+            else if(match(LEFT_BRACE)) {
+                parse_map_constructor(constructor_tok, type_decl);
+                consume(RIGHT_BRACE, "Expected a closing brace after map constructor arguments.");
             }
             else {
                 parse_default_constructor(constructor_tok, type_decl);
@@ -392,13 +402,10 @@ parser::parser(
     void parser::parse_default_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl) {
         default_constructor def_constructor(* constructor_tok, type_decl);
 
-        // we look for constructor arguments only if it was signaled by a opening parenthesis (before we got here)
-        if(check_previous(LEFT_PAREN)) {
-            do {
-                type_instance param_type = parse_type_instance();
-                def_constructor.add_param(param_type);
-            } while(match(COMMA) && !is_at_end());
-        }
+        do {
+            type_instance param_type = parse_type_instance();
+            def_constructor.add_param(param_type);
+        } while(match(COMMA) && !is_at_end());
 
         // add the constructor to the type declaration
         type_decl -> add_constructor(def_constructor);
@@ -421,6 +428,28 @@ parser::parser(
 
         // add the constructor to the type declaration
         type_decl -> add_constructor(rec_constructor);
+    }
+
+    /**
+     * parse_list_constructor
+     * this function parses a list constructor.
+     */
+    void parser::parse_list_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl) {        
+        type_instance param = parse_type_instance();
+        list_constructor list_cons(* constructor_tok, type_decl, param);
+        type_decl -> add_constructor(list_cons);
+    }
+
+    /**
+     * parse_map_constructor
+     * this function parses a map constructor.
+     */
+    void parser::parse_map_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl) {
+        type_instance param_key = parse_type_instance();
+        consume(COLON, "Excepted a colon after the map constructor key.");
+        type_instance param_value = parse_type_instance();
+        map_constructor map_cons(* constructor_tok, type_decl, param_key, param_value);
+        type_decl -> add_constructor(map_cons);
     }
 
     /**

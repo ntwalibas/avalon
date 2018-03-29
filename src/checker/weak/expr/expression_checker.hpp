@@ -25,13 +25,13 @@ namespace avalon {
          */
         type_instance check(std::shared_ptr<expression_stmt> const & l_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
-    private:
         /**
          * check
          * determines the kind of expression we have then calls the appropriate checker
          */
         type_instance check(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
+    private:
         /**
          * check_underscore
          * returns an abstract type instance since underscore expression can never have a concrete type

@@ -159,7 +159,13 @@ namespace avalon {
                 if(is_parametrized == false)
                     instance_type = cons_param.get_type();
             } catch(invalid_type err) {
-                throw invalid_constructor("This constructor depends on a type that does not exist either in the attached namespace or the local namespace or the global namespace.");
+                throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+            }
+
+            // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
+            // we issue an error as this constructor cannot be used
+            if(instance_type != nullptr && (instance_type -> is_public() == false && type_decl -> is_public() == true)) {
+                throw invalid_constructor("This constructor depends on a type instance that's private while the type it builds is public. Both must be public or both must be private.");
             }
 
             // we have the type instance type builder, we check if it is the same as that which this constructor builds
@@ -194,7 +200,13 @@ namespace avalon {
                 if(is_parametrized == false)
                     instance_type = cons_param.second.get_type();
             } catch(invalid_type err) {
-                throw invalid_constructor("This constructor depends on a type that does not exist either in the attached namespace or the local namespace or the global namespace.");
+                throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+            }
+
+            // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
+            // we issue an error as this constructor cannot be used
+            if(instance_type != nullptr && (instance_type -> is_public() == false && type_decl -> is_public() == true)) {
+                throw invalid_constructor("This constructor depends on a type instance that's private while the type it builds is public. Both must be public or both must be private.");
             }
 
             // we have the type instance type builder, we check if it is the same as that which this constructor builds

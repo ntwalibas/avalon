@@ -22,15 +22,6 @@ namespace avalon {
             return false;
         }
         /** primary expressions **/
-        virtual bool is_tuple_expression() {
-            return false;
-        }
-        virtual bool is_list_expression() {
-            return false;
-        }
-        virtual bool is_map_expression() {
-            return false;
-        }
         virtual bool is_grouping_expression() {
             return false;
         }
@@ -40,6 +31,18 @@ namespace avalon {
         }
         /* call expressions */
         virtual bool is_call_expression() {
+            return false;
+        }
+        /* tuple expressions */
+        virtual bool is_tuple_expression() {
+            return false;
+        }
+        /* list expressions */
+        virtual bool is_list_expression() {
+            return false;
+        }
+        /* map expression */
+        virtual bool is_map_expression() {
             return false;
         }
         /* literal expressions */

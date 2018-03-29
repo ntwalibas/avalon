@@ -23,7 +23,7 @@ namespace avalon {
          * given an expression, this functions checks that it is a valid expression
          * and as a side effect it deduces the expression type instance and returns it.
          */
-        type_instance check(std::shared_ptr<expression_stmt>& l_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check(std::shared_ptr<expression_stmt> const & l_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
     private:
         /**

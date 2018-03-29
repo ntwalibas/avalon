@@ -2,6 +2,7 @@
 #include <vector>
 
 /* AST */
+#include "program/ast/stmt/expression_stmt.hpp"
 #include "program/ast/stmt/block_stmt.hpp"
 #include "program/ast/decl/statement.hpp"
 #include "program/ast/decl/variable.hpp"
@@ -12,8 +13,10 @@
 
 /* Checker */
 #include "checker/weak/decl/variable/variable_checker.hpp"
+#include "checker/weak/expr/expression_checker.hpp"
 #include "checker/weak/stmt/block_checker.hpp"
 /* Exceptions */
+#include "checker/exceptions/invalid_expression.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_block.hpp"
 
@@ -43,7 +46,7 @@ namespace avalon {
                 check_variable(block_decl, l_scope, ns_name);
             }
             else if(block_decl -> is_statement()) {
-                check_statement(block_decl);
+                check_statement(block_decl, l_scope, ns_name);
             }
             else {
                 throw invalid_block("Block statements must contain variable or statement declarations alone.");
@@ -78,39 +81,40 @@ namespace avalon {
      * check_statement
      * given a statement declaration, check if it is valid
      */
-    void block_checker::check_statement(std::shared_ptr<decl>& declaration) {
+    void block_checker::check_statement(std::shared_ptr<decl>& declaration, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<statement> const & stmt_decl = std::static_pointer_cast<statement>(declaration);
         std::shared_ptr<stmt>& l_stmt = stmt_decl -> get_statement();
         
-        if(l_stmt -> is_switch())
+        if(l_stmt -> is_switch()) {
             check_switch(l_stmt);
-
-        else if(l_stmt -> is_while())
+        }
+        else if(l_stmt -> is_while()) {
             check_while(l_stmt);
-
-        else if(l_stmt -> is_if())
+        }
+        else if(l_stmt -> is_if()) {
             check_if(l_stmt);
-
-        else if(l_stmt -> is_for())
+        }
+        else if(l_stmt -> is_for()) {
             check_for(l_stmt);
-
-        else if(l_stmt -> is_break())
+        }
+        else if(l_stmt -> is_break()) {
             check_break(l_stmt);
-
-        else if(l_stmt -> is_continue())
+        }
+        else if(l_stmt -> is_continue()) {
             check_continue(l_stmt);
-
-        else if(l_stmt -> is_pass())
+        }
+        else if(l_stmt -> is_pass()) {
             check_pass(l_stmt);
-
-        else if(l_stmt -> is_return())
+        }
+        else if(l_stmt -> is_return()) {
             check_return(l_stmt);
-
-        else if(l_stmt -> is_expression())
-            check_expression(l_stmt);
-
-        else
+        }
+        else if(l_stmt -> is_expression()) {
+            check_expression(l_stmt, l_scope, ns_name);
+        }
+        else {
             throw std::runtime_error("[compiler error] unexpected statement type in weak block checker.");
+        }
     }
 
     /**
@@ -181,7 +185,14 @@ namespace avalon {
      * check_expression
      * given a statement, check if it is a valid expression
      */
-    void block_checker::check_expression(std::shared_ptr<stmt>& a_statement) {
+    void block_checker::check_expression(std::shared_ptr<stmt>& a_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<expression_stmt> const & expr_stmt = std::static_pointer_cast<expression_stmt>(a_statement);
+        expression_checker expr_checker;
 
+        try {
+            expr_checker.check(expr_stmt, l_scope, ns_name);
+        } catch(invalid_expression err) {
+            throw err;
+        }
     }
 }

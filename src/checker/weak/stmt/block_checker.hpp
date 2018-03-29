@@ -38,7 +38,7 @@ namespace avalon {
          * check_statement
          * given a statement declaration, check if it is valid
          */
-        void check_statement(std::shared_ptr<decl>& declaration);
+        void check_statement(std::shared_ptr<decl>& declaration, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /*
          * number of declarations in the block
@@ -104,7 +104,7 @@ namespace avalon {
          * check_expression
          * given a statement, check if it is a valid expression
          */
-        void check_expression(std::shared_ptr<stmt>& a_statement);
+        void check_expression(std::shared_ptr<stmt>& a_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
     };
 }
 

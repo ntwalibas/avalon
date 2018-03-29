@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-#include "checker/lax/decl/function/body_checker.hpp"
+#include "checker/weak/decl/function/body_checker.hpp"
 #include "checker/exceptions/invalid_function.hpp"
 #include "program/ast/stmt/block_stmt.hpp"
 #include "program/ast/decl/function.hpp"

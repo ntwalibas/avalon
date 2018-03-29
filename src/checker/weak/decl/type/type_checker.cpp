@@ -16,7 +16,7 @@
 
 /* Checker */
 #include "checker/exceptions/invalid_constructor.hpp"
-#include "checker/lax/decl/type/type_checker.hpp"
+#include "checker/weak/decl/type/type_checker.hpp"
 #include "checker/exceptions/invalid_type.hpp"
 
 

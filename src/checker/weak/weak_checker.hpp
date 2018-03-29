@@ -23,7 +23,7 @@
 
 
 namespace avalon {
-    class lax_checker {
+    class weak_checker {
     public:
         /**
          * the constructor expects:
@@ -31,7 +31,7 @@ namespace avalon {
          * - the path to the source containing the program we are validating
          * - the error handler to use in order to display errors
          */
-        lax_checker(gtable& gtab, const std::string& source_path, error& error_handler);
+        weak_checker(gtable& gtab, const std::string& source_path, error& error_handler);
 
         /**
          * check

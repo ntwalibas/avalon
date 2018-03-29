@@ -1,9 +1,9 @@
 #include <memory>
 #include <string>
 
-#include "checker/lax/decl/variable/variable_checker.hpp"
+#include "checker/weak/decl/variable/variable_checker.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
-#include "checker/lax/decl/type/type_checker.hpp"
+#include "checker/weak/decl/type/type_checker.hpp"
 #include "checker/exceptions/invalid_type.hpp"
 #include "program/ast/decl/variable.hpp"
 #include "program/symtable/scope.hpp"

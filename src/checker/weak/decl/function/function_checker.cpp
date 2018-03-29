@@ -1,9 +1,9 @@
 #include <memory>
 #include <string>
 
-#include "checker/lax/decl/function/termination_checker.hpp"
-#include "checker/lax/decl/function/function_checker.hpp"
-#include "checker/lax/decl/function/header_checker.hpp"
+#include "checker/weak/decl/function/termination_checker.hpp"
+#include "checker/weak/decl/function/function_checker.hpp"
+#include "checker/weak/decl/function/header_checker.hpp"
 #include "checker/exceptions/invalid_function.hpp"
 #include "program/ast/decl/function.hpp"
 #include "program/ast/program.hpp"

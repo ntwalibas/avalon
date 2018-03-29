@@ -404,10 +404,12 @@ parser::parser(
     void parser::parse_default_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl) {
         default_constructor def_constructor(* constructor_tok, type_decl);
 
-        do {
-            type_instance param_type = parse_type_instance();
-            def_constructor.add_param(param_type);
-        } while(match(COMMA) && !is_at_end());
+        if(check_previous(LEFT_PAREN)) {
+            do {
+                type_instance param_type = parse_type_instance();
+                def_constructor.add_param(param_type);
+            } while(match(COMMA) && !is_at_end());
+        }        
 
         // add the constructor to the type declaration
         type_decl -> add_constructor(def_constructor);

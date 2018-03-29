@@ -50,7 +50,10 @@ namespace avalon {
         }
         else if(an_expression -> is_literal_expression()) {
             return check_literal(an_expression, l_scope, ns_name);
-        }        
+        }
+        else if(an_expression -> is_tuple_expression()) {
+            return check_tuple(an_expression, l_scope, ns_name);
+        }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in expression checker.");
         }

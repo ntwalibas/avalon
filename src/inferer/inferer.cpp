@@ -58,6 +58,11 @@ namespace avalon {
      */
     type_instance inferer::infer_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope) {
         std::shared_ptr<literal_expression> const & lit_expr = std::static_pointer_cast<literal_expression>(an_expression);
+
+        // if the expression already has a type instance set, we return that
+        if(lit_expr -> has_type_instance()) {
+            return lit_expr -> get_type_instance();
+        }
         
         if(lit_expr -> get_expression_type() == INTEGER_EXPR) {
             std::shared_ptr<type>& int_type = l_scope -> get_type("*", "int", 0);
@@ -94,12 +99,19 @@ namespace avalon {
      */
     type_instance inferer::infer_tuple(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
         std::shared_ptr<tuple_expression> const & tup_expr = std::static_pointer_cast<tuple_expression>(an_expression);
-        std::vector<std::shared_ptr<expr> >& elements = tup_expr -> get_elements();
+        
+        // if the expression already has a type instance set, we return that
+        if(tup_expr -> has_type_instance()) {
+            return tup_expr -> get_type_instance();
+        }
 
-        // the type instance of a tuple is made of the type instance of each of its elements
+        // we create a type and type instance out of the expression dynamically
         token tok = tup_expr -> get_token();
         std::shared_ptr<type> tup_type = std::make_shared<type>(tok, VALID);
         type_instance instance(tok, tup_type, "*");
+
+        // we fill in the type instance parameters
+        std::vector<std::shared_ptr<expr> >& elements = tup_expr -> get_elements();
         for(auto& element : elements) {
             type_instance el_instance = inferer::infer(element, l_scope, ns_name);
             instance.add_param(el_instance);

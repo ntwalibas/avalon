@@ -2,6 +2,7 @@
 
 #include "program/ast/expr/literal_expression.hpp"
 #include "program/ast/expr/expr.hpp"
+#include "program/ast/decl/type.hpp"
 #include "lexer/token.hpp"
 
 
@@ -18,6 +19,22 @@ namespace avalon {
      */
     const token& literal_expression::get_token() const {
         return m_tok;
+    }
+
+    /**
+     * set_type_instance
+     * sets the type instance of this expression
+     */
+    void literal_expression::set_type_instance(type_instance& instance) {
+        m_instance = instance;
+    }
+
+    /**
+     * get_type_instance
+     * returns the type instance of this expression
+     */
+    type_instance& literal_expression::get_type_instance() {
+        return m_instance;
     }
 
     /**

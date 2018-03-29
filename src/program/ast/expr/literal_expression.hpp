@@ -4,6 +4,7 @@
 #include <string>
 
 #include "program/ast/expr/expr.hpp"
+#include "program/ast/decl/type.hpp"
 #include "lexer/token.hpp"
 
 
@@ -27,6 +28,18 @@ namespace avalon {
          * returns a token with type source information
          */
         const token& get_token() const;
+
+        /**
+         * set_type_instance
+         * sets the type instance of this expression
+         */
+        void set_type_instance(type_instance& instance);
+
+        /**
+         * get_type_instance
+         * returns the type instance of this expression
+         */
+        type_instance& get_type_instance();
 
         /**
          * get_expression_type
@@ -53,6 +66,11 @@ namespace avalon {
          * the token with source code information
          */
         token m_tok;
+
+        /*
+         * type instance of this expression
+         */
+        type_instance m_instance;
 
         /*
          * the type of literal expression this is

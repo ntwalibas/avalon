@@ -58,21 +58,25 @@ namespace avalon {
         if(lit_expr -> get_expression_type() == INTEGER_EXPR) {
             std::shared_ptr<type>& int_type = l_scope -> get_type("*", "int", 0);
             type_instance int_type_instance(int_type_tok, int_type, "*");
+            lit_expr -> set_type_instance(int_type_instance);
             return int_type_instance;
         }
         else if(lit_expr -> get_expression_type() == DECIMAL_EXPR) {
             std::shared_ptr<type>& dec_type = l_scope -> get_type("*", "dec", 0);
             type_instance dec_type_instance(dec_type_tok, dec_type, "*");
+            lit_expr -> set_type_instance(dec_type_instance);
             return dec_type_instance;
         }
         else if(lit_expr -> get_expression_type() == FLOATING_POINT_EXPR) {
             std::shared_ptr<type>& float_type = l_scope -> get_type("*", "float", 0);
             type_instance float_type_instance(float_type_tok, float_type, "*");
+            lit_expr -> set_type_instance(float_type_instance);
             return float_type_instance;
         }
         else if(lit_expr -> get_expression_type() == STRING_EXPR) {
             std::shared_ptr<type>& string_type = l_scope -> get_type("*", "string", 0);
             type_instance string_type_instance(string_type_tok, string_type, "*");
+            lit_expr -> set_type_instance(string_type_instance);
             return string_type_instance;
         }
         else {

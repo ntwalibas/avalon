@@ -5,6 +5,7 @@
 /* Expressions */
 #include "program/ast/expr/underscore_expression.hpp"
 #include "program/ast/expr/literal_expression.hpp"
+#include "program/ast/expr/tuple_expression.hpp"
 #include "program/ast/expr/expr.hpp"
 
 /* Symbol table */
@@ -32,6 +33,9 @@ namespace avalon {
         else if(an_expression -> is_literal_expression()) {
             return inferer::infer_literal(an_expression, l_scope);
         }
+        else if(an_expression -> is_tuple_expression()) {
+            return inferer::infer_tuple(an_expression, l_scope, ns_name);
+        }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
         }
@@ -49,7 +53,7 @@ namespace avalon {
     }
 
     /**
-     * infer_underscore
+     * infer_literal
      * infers the type instance of a literal
      */
     type_instance inferer::infer_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope) {
@@ -82,5 +86,26 @@ namespace avalon {
         else {
             throw std::runtime_error("[compiler error] unexpected literal expression in inference engine.");
         }
+    }
+
+    /**
+     * infer_tuple
+     * infers the type instance of a tuple
+     */
+    type_instance inferer::infer_tuple(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<tuple_expression> const & tup_expr = std::static_pointer_cast<tuple_expression>(an_expression);
+        std::vector<std::shared_ptr<expr> >& elements = tup_expr -> get_elements();
+
+        // the type instance of a tuple is made of the type instance of each of its elements
+        token tok = tup_expr -> get_token();
+        std::shared_ptr<type> tup_type = std::make_shared<type>(tok, VALID);
+        type_instance instance(tok, tup_type, "*");
+        for(auto& element : elements) {
+            type_instance el_instance = inferer::infer(element, l_scope, ns_name);
+            instance.add_param(el_instance);
+        }
+
+        tup_expr -> set_type_instance(instance);
+        return instance;
     }
 }

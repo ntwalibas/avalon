@@ -1,12 +1,25 @@
 #include <stdexcept>
 #include <memory>
+#include <vector>
 #include <string>
 
-#include "checker/weak/expr/expression_checker.hpp"
-#include "program/ast/stmt/expression_stmt.hpp"
-#include "program/symtable/scope.hpp"
+/* Expressions */
+#include "program/ast/expr/tuple_expression.hpp"
 #include "program/ast/expr/expr.hpp"
+
+/* Statement */
+#include "program/ast/stmt/expression_stmt.hpp"
+
+/* Declarations */
 #include "program/ast/decl/type.hpp"
+
+/* Scope */
+#include "program/symtable/scope.hpp"
+
+/* Checker */
+#include "checker/weak/expr/expression_checker.hpp"
+
+/* Inferer */
 #include "inferer/inferer.hpp"
 
 
@@ -61,5 +74,21 @@ namespace avalon {
     type_instance expression_checker::check_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         type_instance literal_type_instance = inferer::infer(an_expression, l_scope, ns_name);
         return literal_type_instance;
+    }
+
+    /**
+     * check_tuple
+     * we validate all the expressions that occur within the tuple
+     */
+    type_instance expression_checker::check_tuple(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<tuple_expression> const & tup_expr = std::static_pointer_cast<tuple_expression>(an_expression);
+        std::vector<std::shared_ptr<expr> >& elements = tup_expr -> get_elements();
+
+        // we validate all the expressions that are in the tuple
+        for(auto& element : elements)
+            check(element, l_scope, ns_name);
+
+        // we derive the tuple type instance
+        return inferer::infer(an_expression, l_scope, ns_name);
     }
 }

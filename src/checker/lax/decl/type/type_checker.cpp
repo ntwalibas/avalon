@@ -29,13 +29,46 @@ namespace avalon {
     bool type_instance_checker::simple_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
         std::vector<type_instance>& instance_params = instance.get_params();
         std::shared_ptr<type> instance_type = nullptr;
-        bool is_abstract = false;
+        bool is_parametrized = false;
 
-        // we try to find if the type instance has an associated type that builds
-        try {
-            instance_type = l_scope -> get_type(ns_name, instance);
-            // the type instance has a type that builds it,
-            // we make sure the parameters it depends on are also valid
+        // we can only look for user defined type instances in the scope we have
+        if(instance.get_category() == USER) {
+            // we try to find if the type instance has an associated type that builds
+            try {
+                instance_type = l_scope -> get_type(ns_name, instance);
+                // the type instance has a type that builds it,
+                // we make sure the parameters it depends on are also valid
+                for(auto& instance_param : instance_params) {
+                    try {
+                        bool instance_param_is_parametrized = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
+                        if(instance_param_is_parametrized == true)
+                            instance.is_parametrized(true);
+                    } catch(invalid_type err) {
+                        throw err;
+                    }
+                }
+                // so all parameters to this type instance have valid type builders, we set the type builder on this
+                instance.set_type(instance_type);
+            }
+            catch(symbol_not_found err) {
+                // the type was not found in the scope given the namespace,
+                // we try to find if it might be among the stand in types
+                // but we only bother checking if it is among the standins if it admit no parameters
+                if(instance_params.size() > 0) {
+                    throw invalid_type(instance.get_token(), "This type instance has no type that builds it in the given scope and namespace.");
+                }
+                else {
+                    if(std::find(standins.begin(), standins.end(), instance.get_token()) != standins.end()) {
+                        is_parametrized = true;
+                    }
+                    else {
+                        throw invalid_type(instance.get_token(), "This type instance has no type that builds it in the given scope and namespace.");
+                    }
+                }
+            }
+        }
+        // if we have a built-in type, we just check if it depends on a parametrized type instance
+        else {
             for(auto& instance_param : instance_params) {
                 try {
                     bool instance_param_in_abstract = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
@@ -45,27 +78,9 @@ namespace avalon {
                     throw err;
                 }
             }
-            // so all parameters to this type instance have valid type builders, we set the type builder on this
-            instance.set_type(instance_type);
-        }
-        catch(symbol_not_found err) {
-            // the type was not found in the scope given the namespace,
-            // we try to find if it might be among the stand in types
-            // but we only bother checking if it is among the standins if it admit no parameters
-            if(instance_params.size() > 0) {
-                throw invalid_type(instance.get_token(), "This type instance has no type that builds it in the given scope and namespace.");
-            }
-            else {
-                if(std::find(standins.begin(), standins.end(), instance.get_token()) != standins.end()) {
-                    is_abstract = true;
-                }
-                else {
-                    throw invalid_type(instance.get_token(), "This type instance has no type that builds it in the given scope and namespace.");
-                }
-            }
-        }
+        }        
 
-        return is_abstract;
+        return is_parametrized;
     }
 
     /**
@@ -78,7 +93,7 @@ namespace avalon {
      */
     bool type_instance_checker::complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
         const std::string& l_ns_name = instance.get_namespace();
-        bool is_abstract = false;
+        bool is_parametrized = false;
 
         // if the type instance namespace is "*" then it means the type instance exists either:
         // - in the current namespace where the object that holds it is declared (this is given to us as a parameter)
@@ -86,11 +101,11 @@ namespace avalon {
         if(l_ns_name == "*") {
             try {
                 // first we search the type instance holder object namespace
-                is_abstract = type_instance_checker::simple_check(instance, l_scope, ns_name, standins);
+                is_parametrized = type_instance_checker::simple_check(instance, l_scope, ns_name, standins);
             } catch(invalid_type err) {
                 // we could not find the type instance in the holder namespace, we try the global namespace
                 try {
-                    is_abstract = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
+                    is_parametrized = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
                 } catch(invalid_type err) {
                     throw err;
                 }
@@ -99,10 +114,10 @@ namespace avalon {
         else {
             try {
                 // the type instance carries an identified namespace, we use that.
-                is_abstract = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
+                is_parametrized = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
                 // if the type instance is abstract, we raise an error because abstract type instances
                 // are not allowed to be constrainted to a namespace
-                if(is_abstract) {
+                if(is_parametrized) {
                     throw invalid_type(instance.get_token(), "An abstract type instance cannot be constrainted to a namespace.");
                 }
             } catch(invalid_type err) {
@@ -110,7 +125,7 @@ namespace avalon {
             }
         }
 
-        return is_abstract;
+        return is_parametrized;
     }
 
     bool type_instance_checker::complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
@@ -140,8 +155,8 @@ namespace avalon {
 
             // validate the constructor parameter
             try {
-                bool is_abstract = type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
-                if(is_abstract == false)
+                bool is_parametrized = type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
+                if(is_parametrized == false)
                     instance_type = cons_param.get_type();
             } catch(invalid_type err) {
                 throw invalid_constructor("This constructor depends on a type that does not exist either in the attached namespace or the local namespace or the global namespace.");
@@ -149,12 +164,14 @@ namespace avalon {
 
             // we have the type instance type builder, we check if it is the same as that which this constructor builds
             // if they are the same, then we can judge this constructor to be temporarily valid
-            if((ns_name == l_ns_name) & (instance_type != nullptr && * instance_type == * type_decl))
+            if((ns_name == l_ns_name) & (instance_type != nullptr && * instance_type == * type_decl)) {
                 continue;
-
-            // if the type instance type builder is invalid, so it is the constructor
-            if(instance_type != nullptr && instance_type -> is_valid(INVALID))
-                throw invalid_constructor("Default constructor <" + def_constructor.get_name() + "> failed type checking because the type <" + instance_type -> get_name() + "> is not valid.");
+            }
+            else {
+                // if the type instance type builder is invalid, so it is the constructor
+                if(instance_type != nullptr && instance_type -> is_valid(INVALID))
+                    throw invalid_constructor("Default constructor <" + def_constructor.get_name() + "> failed type checking because the type <" + instance_type -> get_name() + "> is not valid.");
+            }
         }
     }
 
@@ -173,8 +190,8 @@ namespace avalon {
 
             // validate the constructor parameter
             try {
-                bool is_abstract = type_instance_checker::complex_check(cons_param.second, l_scope, ns_name, type_params);
-                if(is_abstract == false)
+                bool is_parametrized = type_instance_checker::complex_check(cons_param.second, l_scope, ns_name, type_params);
+                if(is_parametrized == false)
                     instance_type = cons_param.second.get_type();
             } catch(invalid_type err) {
                 throw invalid_constructor("This constructor depends on a type that does not exist either in the attached namespace or the local namespace or the global namespace.");
@@ -182,12 +199,14 @@ namespace avalon {
 
             // we have the type instance type builder, we check if it is the same as that which this constructor builds
             // if they are the same, then we can judge this constructor to be temporarily valid
-            if((ns_name == l_ns_name) & (instance_type != nullptr && * instance_type == * type_decl))
+            if((ns_name == l_ns_name) & (instance_type != nullptr && * instance_type == * type_decl)) {
                 continue;
-
-            // if the type instance type builder is invalid, so it is the constructor
-            if(instance_type != nullptr && instance_type -> is_valid(INVALID))
-                throw invalid_constructor("Record constructor <" + rec_constructor.get_name() + "> failed type checking because the type <" + instance_type -> get_name() + "> is not valid.");
+            }
+            else {
+                // if the type instance type builder is invalid, so it is the constructor
+                if(instance_type != nullptr && instance_type -> is_valid(INVALID))
+                    throw invalid_constructor("Record constructor <" + rec_constructor.get_name() + "> failed type checking because the type <" + instance_type -> get_name() + "> is not valid.");
+            }
         }
     }
 

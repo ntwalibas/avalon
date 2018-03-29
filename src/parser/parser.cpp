@@ -1623,6 +1623,11 @@ parser::parser(
         // if we match a left parenthesis, then we have a tuple type instance
         else if(match(LEFT_PAREN)) {
             std::shared_ptr<token>& instance_tok = lookback();
+
+            // we only continue if no custom namespace is set
+            if(namespace_name != "*")
+                throw parsing_error(true, instance_tok, "Built-in tuple type instance can only appear in the global namespace. Please don't specify a namespace before it.");
+            
             type_instance instance(* instance_tok, namespace_name);
             instance.set_category(TUPLE);
 
@@ -1637,6 +1642,11 @@ parser::parser(
         // if we match a left bracket, then we have a list type instance
         else if(match(LEFT_BRACKET)) {
             std::shared_ptr<token>& instance_tok = lookback();
+
+            // we only continue if no custom namespace is set
+            if(namespace_name != "*")
+                throw parsing_error(true, instance_tok, "Built-in list type instance can only appear in the global namespace. Please don't specify a namespace before it.");
+            
             type_instance instance(* instance_tok, namespace_name);
             instance.set_category(LIST);
 
@@ -1649,6 +1659,11 @@ parser::parser(
         // if we match a left brace, then we have a map type instance
         else if(match(LEFT_BRACE)) {
             std::shared_ptr<token>& instance_tok = lookback();
+
+            // we only continue if no custom namespace is set
+            if(namespace_name != "*")
+                throw parsing_error(true, instance_tok, "Built-in map type instance can only appear in the global namespace. Please don't specify a namespace before it.");
+            
             type_instance instance(* instance_tok, namespace_name);
             instance.set_category(MAP);
 

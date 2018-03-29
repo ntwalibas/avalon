@@ -33,8 +33,10 @@
 #include "program/ast/stmt/expression_stmt.hpp"
 /* Expressions */
 #include "program/ast/expr/expr.hpp"
+#include "program/ast/expr/map_expression.hpp"
 #include "program/ast/expr/cast_expression.hpp"
 #include "program/ast/expr/call_expression.hpp"
+#include "program/ast/expr/list_expression.hpp"
 #include "program/ast/expr/unary_expression.hpp"
 #include "program/ast/expr/tuple_expression.hpp"
 #include "program/ast/expr/binary_expression.hpp"
@@ -1519,6 +1521,16 @@ parser::parser(
                 l_expression = grouped_expr;
             }
         }
+        else if(match(LEFT_BRACKET)) {
+            std::shared_ptr<token>& left_bracket = lookback();
+            l_expression = parse_list_expression(left_bracket);
+            consume(RIGHT_BRACKET, "Excepted a closing bracket in list expression");            
+        }
+        else if(match(LEFT_BRACE)) {
+            std::shared_ptr<token>& left_brace = lookback();
+            l_expression = parse_map_expression(left_brace);
+            consume(RIGHT_BRACE, "Excepted a closing bracket in map expression");            
+        }
         else if(match(INTEGER) || match(FLOATING_POINT) || match(DECIMAL) || match(STRING)) {
             std::shared_ptr<token>& literal_tok = lookback();
             std::shared_ptr<literal_expression> literal_expr = std::make_shared<literal_expression>(* literal_tok, literal_tok -> get_lexeme());
@@ -1587,6 +1599,48 @@ parser::parser(
         } while(match(COMMA));
 
         l_expression = tuple_expr;
+        return l_expression;
+    }
+
+    /**
+     * parse_list_expression
+     * if we encounter an opening bracket, we have a list
+     */
+    std::shared_ptr<expr> parser::parse_list_expression(std::shared_ptr<token>& left_bracket) {
+        std::shared_ptr<expr> l_expression = nullptr;
+        std::shared_ptr<list_expression> list_expr = std::make_shared<list_expression>(* left_bracket);
+
+        // if the next token is not a closing bracket, then we don't have an empty list
+        if(check_next(RIGHT_BRACKET) == false) {
+            std::shared_ptr<expr> next_element = nullptr;
+            do {
+                next_element = parse_expression();
+                list_expr -> add_element(next_element);
+            } while(match(COMMA));
+        }
+
+        l_expression = list_expr;
+        return l_expression;
+    }
+
+    /**
+     * parse_map_expression
+     * if we encounter an opening brace, we have a map
+     */
+    std::shared_ptr<expr> parser::parse_map_expression(std::shared_ptr<token>& left_brace) {
+        std::shared_ptr<expr> l_expression = nullptr;
+        std::shared_ptr<map_expression> map_expr = std::make_shared<map_expression>(* left_brace);
+
+        // if the next token is not a closing brace, then we don't have an empty map
+        if(check_next(RIGHT_BRACE) == false) {
+            std::shared_ptr<expr> next_element = nullptr;
+            do {
+                next_element = parse_expression();
+                map_expr -> add_element(next_element);
+            } while(match(COMMA));
+        }
+
+        l_expression = map_expr;
         return l_expression;
     }
 

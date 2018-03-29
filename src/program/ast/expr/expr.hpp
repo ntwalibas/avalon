@@ -25,6 +25,12 @@ namespace avalon {
         virtual bool is_tuple_expression() {
             return false;
         }
+        virtual bool is_list_expression() {
+            return false;
+        }
+        virtual bool is_map_expression() {
+            return false;
+        }
         virtual bool is_grouping_expression() {
             return false;
         }

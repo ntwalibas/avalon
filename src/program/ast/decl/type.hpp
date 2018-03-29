@@ -309,6 +309,11 @@ namespace avalon {
     class type_instance {
     public:
         /**
+         * the default constructor expects nothing
+         */
+        type_instance();
+        
+        /**
          * this constructor expects the token with source code information and the namespace where to find the type
          */
         type_instance(token& tok, const std::string& namespace_name);

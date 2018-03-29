@@ -272,6 +272,12 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
         return mangled_name;
     }
 
+/**
+ * the default constructor expects nothing
+ */
+type_instance::type_instance() : m_name(star_tok.get_lexeme()), m_tok(star_tok), m_old_tok(star_tok), m_category(USER), m_namespace("*"), m_type(nullptr), m_return_type_instance(nullptr), m_is_parametrized(false) {    
+}
+
 /*
  * type instance
  */

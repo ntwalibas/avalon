@@ -32,11 +32,15 @@ namespace avalon {
      * determines the kind of expression we have then calls the appropriate checker
      */
     type_instance expression_checker::check(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        if(an_expression -> is_underscore_expression())
+        if(an_expression -> is_underscore_expression()) {
             return check_underscore(an_expression, l_scope, ns_name);
-        
-        else
+        }
+        else if(an_expression -> is_literal_expression()) {
+            return check_literal(an_expression, l_scope, ns_name);
+        }        
+        else {
             throw std::runtime_error("[compiler error] unexpected expression type in expression checker.");
+        }
     }
 
 
@@ -47,5 +51,15 @@ namespace avalon {
     type_instance expression_checker::check_underscore(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         type_instance underscore_type_instance = inferer::infer(an_expression, l_scope, ns_name);
         return underscore_type_instance;
+    }
+
+    /**
+     * check_literal
+     * literals are built-in data (constructors)
+     * this function simply returns the type instance for each type of literal
+     */
+    type_instance expression_checker::check_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        type_instance literal_type_instance = inferer::infer(an_expression, l_scope, ns_name);
+        return literal_type_instance;
     }
 }

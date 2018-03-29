@@ -29,6 +29,12 @@ namespace avalon {
          * infers the type instance of an underscopre expression, which is just a type instance without any type
          */
         static type_instance infer_underscore(std::shared_ptr<expr>& an_expression);
+
+        /**
+         * infer_underscore
+         * infers the type instance of a literal
+         */
+        static type_instance infer_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope);
     };
 }
 

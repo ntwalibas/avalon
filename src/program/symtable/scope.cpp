@@ -63,6 +63,16 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
         std::vector<record_constructor> rec_constructors = type_decl -> get_record_constructors();
         for(auto& rec_constructor : rec_constructors)
             add_record_constructor(ns_name, rec_constructor);
+
+        // we import list constructors
+        std::vector<list_constructor> list_constructors = type_decl -> get_list_constructors();
+        for(auto& lst_constructor : list_constructors)
+            add_list_constructor(ns_name, lst_constructor);
+
+        // we import map constructors
+        std::vector<map_constructor> map_constructors = type_decl -> get_map_constructors();
+        for(auto& mp_constructor : map_constructors)
+            add_map_constructor(ns_name, mp_constructor);
     }
 
     /**
@@ -162,6 +172,46 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
     }
 
     /**
+     * add_list_constructor
+     * add a new list constructor into this symbol table
+     */
+    void scope::add_list_constructor(const std::string& ns_name, list_constructor& list_cons) {
+        // make sure there are no namespaces that share the same with this constructor
+        if(m_namespaces.count(list_cons.get_name()) > 0)
+            throw symbol_can_collide("A constructor cannot have share the same name as a namespace available in this scope.");
+
+        // make sure there are no function declarations with the same name as this constructor
+        if(m_dtable.function_exists(ns_name, list_cons.get_name()))
+            throw symbol_can_collide("A constructor cannot have share the same name as a function already declared in this scope.");
+
+        // make sure there are no variable declarations with the same name as this constructor
+        if(m_dtable.variable_exists(ns_name, list_cons.get_name()))
+            throw symbol_can_collide("A constructor cannot have share the same name as a variable already declared in this scope.");
+
+        m_ctable.insert_list_constructor(ns_name, list_cons);
+    }
+
+    /**
+     * add_map_constructor
+     * add a new map constructor into this symbol table
+     */
+    void scope::add_map_constructor(const std::string& ns_name, map_constructor& map_cons) {
+        // make sure there are no namespaces that share the same with this constructor
+        if(m_namespaces.count(map_cons.get_name()) > 0)
+            throw symbol_can_collide("A constructor cannot have share the same name as a namespace available in this scope.");
+
+        // make sure there are no function declarations with the same name as this constructor
+        if(m_dtable.function_exists(ns_name, map_cons.get_name()))
+            throw symbol_can_collide("A constructor cannot have share the same name as a function already declared in this scope.");
+
+        // make sure there are no variable declarations with the same name as this constructor
+        if(m_dtable.variable_exists(ns_name, map_cons.get_name()))
+            throw symbol_can_collide("A constructor cannot have share the same name as a variable already declared in this scope.");
+
+        m_ctable.insert_map_constructor(ns_name, map_cons);
+    }
+
+    /**
      * get_default_constructor
      * given a constructor name and arity, return the matching default constructor if it exists
      */
@@ -175,6 +225,22 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
      */
     record_constructor& scope::get_record_constructor(const std::string& ns_name, const std::string& cons_name, std::size_t arity) {
         return m_ctable.get_record_constructor(ns_name, cons_name, arity);
+    }
+
+    /**
+     * get_list_constructor
+     * given a constructor name, return the matching list constructor if it exists
+     */
+    list_constructor& scope::get_list_constructor(const std::string& ns_name, const std::string& cons_name) {
+        return m_ctable.get_list_constructor(ns_name, cons_name);
+    }
+
+    /**
+     * get_map_constructor
+     * given a constructor name, return the matching map constructor if it exists
+     */
+    map_constructor& scope::get_map_constructor(const std::string& ns_name, const std::string& cons_name) {
+        return m_ctable.get_map_constructor(ns_name, cons_name);
     }
 
     /**
@@ -194,6 +260,22 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
     }
 
     /**
+     * list_constructor_exists
+     * given a constructor name, find if an existing list constructor matches the same
+     */
+    bool scope::list_constructor_exists(const std::string& ns_name, const std::string& cons_name) {
+        return m_ctable.list_constructor_exists(ns_name, cons_name);
+    }
+
+    /**
+     * map_constructor_exists
+     * given a constructor name, find if an existing map constructor matches the same
+     */
+    bool scope::map_constructor_exists(const std::string& ns_name, const std::string& cons_name) {
+        return m_ctable.map_constructor_exists(ns_name, cons_name);
+    }
+
+    /**
      * add_function
      * given a namespace and a function declaration, add the declaration to the scope
      */
@@ -209,6 +291,14 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
         // make sure the function doesn't share the same name with a record constructor
         if(m_ctable.record_constructor_exists(ns_name, function_decl -> get_name()))
             throw symbol_can_collide("This function has the same name as an existing record constructor. This is not allowed.");
+
+        // make sure the function doesn't share the same name with a list constructor
+        if(m_ctable.list_constructor_exists(ns_name, function_decl -> get_name()))
+            throw symbol_can_collide("This function has the same name as an existing list constructor. This is not allowed.");
+
+        // make sure the function doesn't share the same name with a map constructor
+        if(m_ctable.map_constructor_exists(ns_name, function_decl -> get_name()))
+            throw symbol_can_collide("This function has the same name as an existing map constructor. This is not allowed.");
 
         m_dtable.insert_function(ns_name, function_decl);
     }

@@ -222,6 +222,100 @@ namespace avalon {
         }
     }
 
+    void constructor_checker::check(list_constructor& lst_constructor, std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        type_instance& cons_param = lst_constructor.get_param();
+        const std::vector<token>& type_params = type_decl -> get_params();
+        const std::string& l_ns_name = cons_param.get_namespace();
+        std::shared_ptr<type> instance_type = nullptr;
+
+        // validate the constructor parameter
+        try {
+            bool is_parametrized = type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
+            if(is_parametrized == false)
+                instance_type = cons_param.get_type();
+        } catch(invalid_type err) {
+            throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+        }
+
+        // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
+        // we issue an error as this constructor cannot be used
+        if(instance_type != nullptr && (instance_type -> is_public() == false && type_decl -> is_public() == true)) {
+            throw invalid_constructor("This constructor depends on a type instance that's private while the type it builds is public. Both must be public or both must be private.");
+        }
+
+        // we have the type instance type builder, we check if it is the same as that which this constructor builds
+        // if they are the same, then we can judge this constructor to be temporarily valid
+        if((ns_name == l_ns_name) & (instance_type != nullptr && * instance_type == * type_decl)) {
+            ;
+        }
+        else {
+            // if the type instance type builder is invalid, so it is the constructor
+            if(instance_type != nullptr && instance_type -> is_valid(INVALID))
+                throw invalid_constructor("List constructor <" + lst_constructor.get_name() + "> failed type checking because the type <" + instance_type -> get_name() + "> is not valid.");
+        }
+    }
+
+    void constructor_checker::check(map_constructor& mp_constructor, std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        const std::vector<token>& type_params = type_decl -> get_params();
+        
+        /* we do checking for the key parameter */
+        type_instance& cons_param_key = mp_constructor.get_param_key();
+        const std::string& key_ns_name = cons_param_key.get_namespace();
+        std::shared_ptr<type> key_instance_type = nullptr;
+        // validate the constructor parameter key
+        try {
+            bool is_parametrized = type_instance_checker::complex_check(cons_param_key, l_scope, ns_name, type_params);
+            if(is_parametrized == false)
+                key_instance_type = cons_param_key.get_type();
+        } catch(invalid_type err) {
+            throw invalid_constructor("This constructor key parameter depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+        }
+        // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
+        // we issue an error as this constructor cannot be used
+        if(key_instance_type != nullptr && (key_instance_type -> is_public() == false && type_decl -> is_public() == true)) {
+            throw invalid_constructor("This constructor key parameter depends on a type instance that's private while the type it builds is public. Both must be public or both must be private.");
+        }
+        // we have the type instance type builder, we check if it is the same as that which this constructor builds
+        // if they are the same, then we can judge this constructor to be temporarily valid
+        if((ns_name == key_ns_name) & (key_instance_type != nullptr && * key_instance_type == * type_decl)) {
+            ;
+        }
+        else {
+            // if the type instance type builder is invalid, so it is the constructor
+            if(key_instance_type != nullptr && key_instance_type -> is_valid(INVALID))
+                throw invalid_constructor("Map constructor <" + mp_constructor.get_name() + "> failed type checking because the type <" + key_instance_type -> get_name() + "> is not valid.");
+        }
+        
+
+        /* we do checking for the value parameter */
+        type_instance& cons_param_value = mp_constructor.get_param_value();
+        const std::string& value_ns_name = cons_param_key.get_namespace();
+        std::shared_ptr<type> value_instance_type = nullptr;
+        // validate the constructor parameter value
+        try {
+            bool is_parametrized = type_instance_checker::complex_check(cons_param_value, l_scope, ns_name, type_params);
+            if(is_parametrized == false)
+                value_instance_type = cons_param_key.get_type();
+        } catch(invalid_type err) {
+            throw invalid_constructor("This constructor value parameter depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+        }
+        // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
+        // we issue an error as this constructor cannot be used
+        if(value_instance_type != nullptr && (value_instance_type -> is_public() == false && type_decl -> is_public() == true)) {
+            throw invalid_constructor("This constructor value parameter depends on a type instance that's private while the type it builds is public. Both must be public or both must be private.");
+        }
+        // we have the type instance type builder, we check if it is the same as that which this constructor builds
+        // if they are the same, then we can judge this constructor to be temporarily valid
+        if((ns_name == value_ns_name) & (value_instance_type != nullptr && * value_instance_type == * type_decl)) {
+            ;
+        }
+        else {
+            // if the type instance type builder is invalid, so it is the constructor
+            if(value_instance_type != nullptr && value_instance_type -> is_valid(INVALID))
+                throw invalid_constructor("Map constructor <" + mp_constructor.get_name() + "> failed type checking because the type <" + value_instance_type -> get_name() + "> is not valid.");
+        }
+    }
+
 
 /**
  * the default constructor expects nothing
@@ -274,6 +368,26 @@ type_checker::type_checker() {
                 constructor_checker::check(rec_constructor, type_decl, l_scope, ns_name);
             } catch(invalid_constructor err) {
                 throw invalid_type(rec_constructor.get_token(), err.what());
+            }
+        }
+
+        // check list constructors
+        std::vector<list_constructor> list_constructors = type_decl -> get_list_constructors();
+        for(auto& lst_constructor : list_constructors) {
+            try {
+                constructor_checker::check(lst_constructor, type_decl, l_scope, ns_name);
+            } catch(invalid_constructor err) {
+                throw invalid_type(lst_constructor.get_token(), err.what());
+            }
+        }
+
+        // check map constructors
+        std::vector<map_constructor> map_constructors = type_decl -> get_map_constructors();
+        for(auto& mp_constructor : map_constructors) {
+            try {
+                constructor_checker::check(mp_constructor, type_decl, l_scope, ns_name);
+            } catch(invalid_constructor err) {
+                throw invalid_type(mp_constructor.get_token(), err.what());
             }
         }
 

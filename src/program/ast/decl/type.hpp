@@ -110,6 +110,18 @@ namespace avalon {
         std::vector<record_constructor> get_record_constructors();
 
         /**
+         * get_list_constructors
+         * returns a vector of all list constructors that build this type
+         */
+        std::vector<list_constructor> get_list_constructors();
+
+        /**
+         * get_map_constructors
+         * returns a vector of all map constructors that build this type
+         */
+        std::vector<map_constructor> get_map_constructors();
+
+        /**
          * get_default_constructors
          * returns a vector of default constructors matching the name given
          */

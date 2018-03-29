@@ -118,6 +118,28 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
     }
 
     /**
+     * get_list_constructors
+     * returns a vector of all list constructors that build this type
+     */
+    std::vector<list_constructor> type::get_list_constructors() {
+        std::vector<list_constructor> list_constructors;
+        for(auto& lst_constructor : m_list_constructors)
+            list_constructors.push_back(lst_constructor.second);
+        return list_constructors;
+    }
+
+    /**
+     * get_map_constructors
+     * returns a vector of all map constructors that build this type
+     */
+    std::vector<map_constructor> type::get_map_constructors() {
+        std::vector<map_constructor> map_constructors;
+        for(auto& mp_constructor : m_map_constructors)
+            map_constructors.push_back(mp_constructor.second);
+        return map_constructors;
+    }
+
+    /**
      * get_default_constructors
      * returns a vector of default constructors matching the name given
      */

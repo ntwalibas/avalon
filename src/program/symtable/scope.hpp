@@ -106,6 +106,18 @@ namespace avalon {
         void add_record_constructor(const std::string& ns_name, record_constructor& rec_cons);
 
         /**
+         * add_list_constructor
+         * add a new list constructor into this symbol table
+         */
+        void add_list_constructor(const std::string& ns_name, list_constructor& list_cons);
+
+        /**
+         * add_map_constructor
+         * add a new map constructor into this symbol table
+         */
+        void add_map_constructor(const std::string& ns_name, map_constructor& map_cons);
+
+        /**
          * get_default_constructor
          * given a constructor name and arity, return the matching default constructor if it exists
          */
@@ -118,16 +130,40 @@ namespace avalon {
         record_constructor& get_record_constructor(const std::string& ns_name, const std::string& cons_name, std::size_t arity);
 
         /**
+         * get_list_constructor
+         * given a constructor name, return the matching list constructor if it exists
+         */
+        list_constructor& get_list_constructor(const std::string& ns_name, const std::string& cons_name);
+
+        /**
+         * get_map_constructor
+         * given a constructor name, return the matching map constructor if it exists
+         */
+        map_constructor& get_map_constructor(const std::string& ns_name, const std::string& cons_name);
+
+        /**
          * default_constructor_exists
-         * given a type name and its arity, find if an existing default constructor matches the same
+         * given a constructor name and its arity, find if an existing default constructor matches the same
          */
         bool default_constructor_exists(const std::string& ns_name, const std::string& cons_name, std::size_t arity);
 
         /**
          * record_constructor_exists
-         * given a type name and its arity, find if an existing record constructor matches the same
+         * given a constructor name and its arity, find if an existing record constructor matches the same
          */
         bool record_constructor_exists(const std::string& ns_name, const std::string& cons_name, std::size_t arity);
+
+        /**
+         * list_constructor_exists
+         * given a constructor name, find if an existing list constructor matches the same
+         */
+        bool list_constructor_exists(const std::string& ns_name, const std::string& cons_name);
+
+        /**
+         * map_constructor_exists
+         * given a constructor name, find if an existing map constructor matches the same
+         */
+        bool map_constructor_exists(const std::string& ns_name, const std::string& cons_name);
 
         
         /*** FUNCTION DECLARATIONS ***/

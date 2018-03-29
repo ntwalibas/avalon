@@ -159,7 +159,14 @@ namespace avalon {
                 if(is_parametrized == false)
                     instance_type = cons_param.get_type();
             } catch(invalid_type err) {
-                throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+                // we check if the type instance in question is not the current type this constructor builds
+                if(cons_param.is_builtby(type_decl)) {
+                    instance_type = type_decl;
+                    cons_param.set_type(type_decl);
+                }
+                else {
+                    throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+                }
             }
 
             // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
@@ -200,7 +207,14 @@ namespace avalon {
                 if(is_parametrized == false)
                     instance_type = cons_param.second.get_type();
             } catch(invalid_type err) {
-                throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+                // we check if the type instance in question is not the current type this constructor builds
+                if(cons_param.second.is_builtby(type_decl)) {
+                    instance_type = type_decl;
+                    cons_param.second.set_type(type_decl);
+                }
+                else {
+                    throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+                }
             }
 
             // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
@@ -234,7 +248,14 @@ namespace avalon {
             if(is_parametrized == false)
                 instance_type = cons_param.get_type();
         } catch(invalid_type err) {
-            throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+            // we check if the type instance in question is not the current type this constructor builds
+                if(cons_param.is_builtby(type_decl)) {
+                    instance_type = type_decl;
+                    cons_param.set_type(type_decl);
+                }
+                else {
+                    throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+                }
         }
 
         // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
@@ -268,7 +289,14 @@ namespace avalon {
             if(is_parametrized == false)
                 key_instance_type = cons_param_key.get_type();
         } catch(invalid_type err) {
-            throw invalid_constructor("This constructor key parameter depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+            // we check if the type instance in question is not the current type this constructor builds
+            if(cons_param_key.is_builtby(type_decl)) {
+                key_instance_type = type_decl;
+                cons_param_key.set_type(type_decl);
+            }
+            else {
+                throw invalid_constructor("This constructor key parameter depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+            }
         }
         // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
         // we issue an error as this constructor cannot be used
@@ -297,7 +325,14 @@ namespace avalon {
             if(is_parametrized == false)
                 value_instance_type = cons_param_key.get_type();
         } catch(invalid_type err) {
-            throw invalid_constructor("This constructor value parameter depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+            // we check if the type instance in question is not the current type this constructor builds
+            if(cons_param_value.is_builtby(type_decl)) {
+                value_instance_type = type_decl;
+                cons_param_value.set_type(type_decl);
+            }
+            else {
+                throw invalid_constructor("This constructor value parameter depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+            }
         }
         // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
         // we issue an error as this constructor cannot be used

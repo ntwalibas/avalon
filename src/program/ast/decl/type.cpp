@@ -375,6 +375,17 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
     }
 
     /**
+     * is_builtby
+     * given a type declaration, return true if that type builds this type instance
+     */
+    bool type_instance::is_builtby(std::shared_ptr<type>& ty) {
+        if(ty -> get_name() == m_name && ty -> get_params().size() == m_params.size())
+            return true;
+        else
+            return false;
+    }
+
+    /**
      * add_param
      * a type instance depends on other type instances if
      * the type constructor that builds it is parametric.

@@ -386,6 +386,12 @@ namespace avalon {
         std::shared_ptr<type>& get_type();
 
         /**
+         * is_builtby
+         * given a type declaration, return true if that type builds this type instance
+         */
+        bool is_builtby(std::shared_ptr<type>& ty);
+
+        /**
          * add_param
          * a type instance depends on other type instances if
          * the type constructor that builds it is parametric.

@@ -2,6 +2,7 @@
 #define AVALON_PROGRAM_AST_EXPR_UNDERSCORE_EXPRESSION_HPP_
 
 #include "program/ast/expr/expr.hpp"
+#include "program/ast/decl/type.hpp"
 #include "lexer/token.hpp"
 
 
@@ -18,6 +19,18 @@ namespace avalon {
          * returns a token with type source information
          */
         const token& get_token() const;
+
+        /**
+         * set_type_instance
+         * sets the type instance of this expression
+         */
+        void set_type_instance(type_instance& instance);
+
+        /**
+         * get_type_instance
+         * returns the type instance of this expression
+         */
+        type_instance& get_type_instance();
         
         /**
          * is_underscore_expression
@@ -32,6 +45,11 @@ namespace avalon {
          * the token with source code information
          */
         token m_tok;
+
+        /*
+         * type instance of this expression
+         */
+        type_instance m_instance;
     };
 }
 

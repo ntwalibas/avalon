@@ -3,6 +3,7 @@
 #include <string>
 
 /* Expressions */
+#include "program/ast/expr/underscore_expression.hpp"
 #include "program/ast/expr/literal_expression.hpp"
 #include "program/ast/expr/expr.hpp"
 
@@ -41,7 +42,9 @@ namespace avalon {
      * infers the type instance of an underscopre expression, which is just a type instance without any type
      */
     type_instance inferer::infer_underscore(std::shared_ptr<expr>& an_expression) {
+        std::shared_ptr<underscore_expression> const & und_expr = std::static_pointer_cast<underscore_expression>(an_expression);
         type_instance instance(star_tok, "*");
+        und_expr -> set_type_instance(instance);
         return instance;
     }
 

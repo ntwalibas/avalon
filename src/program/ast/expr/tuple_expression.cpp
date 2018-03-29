@@ -38,6 +38,17 @@ namespace avalon {
     }
 
     /**
+     * has_type_instance
+     * returns true if the type instance is not star
+     */
+    bool tuple_expression::has_type_instance() {
+        if(m_instance.get_name() == "*" && m_instance.get_namespace() == "*")
+            return true;
+        else
+            return false;
+    }
+
+    /**
      * add_element
      * add a new element to the tuple
      */

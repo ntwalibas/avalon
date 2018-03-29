@@ -36,6 +36,12 @@ namespace avalon {
         type_instance& get_type_instance();
 
         /**
+         * has_type_instance
+         * returns true if the type instance is not star
+         */
+        bool has_type_instance();
+
+        /**
          * add_element
          * add a new element to the tuple
          */

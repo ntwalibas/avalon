@@ -1,3 +1,5 @@
+#include <utility>
+#include <memory>
 #include <string>
 
 #include "program/ast/expr/map_expression.hpp"
@@ -22,17 +24,17 @@ namespace avalon {
 
     /**
      * add_element
-     * add a new element to the map
+     * add a new key/value pair to the map
      */
-    void map_expression::add_element(std::shared_ptr<expr> element) {
-        m_elements.push_back(element);
+    void map_expression::add_element(std::shared_ptr<expr>& key, std::shared_ptr<expr>& value) {
+        m_elements.emplace_back(key, value);
     }
 
     /**
      * get_elements
      * returns a vector of all the elements in the map
      */
-    std::vector<std::shared_ptr<expr> >& map_expression::get_elements() {
+    std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > >& map_expression::get_elements() {
         return m_elements;
     }
 }

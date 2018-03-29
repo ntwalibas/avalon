@@ -1642,10 +1642,13 @@ parser::parser(
 
         // if the next token is not a closing brace, then we don't have an empty map
         if(check_next(RIGHT_BRACE) == false) {
-            std::shared_ptr<expr> next_element = nullptr;
+            std::shared_ptr<expr> key = nullptr;
+            std::shared_ptr<expr> value = nullptr;
             do {
-                next_element = parse_expression();
-                map_expr -> add_element(next_element);
+                key = parse_expression();
+                consume(COLON, "Excepted colon after key in map expression.");
+                value = parse_expression();
+                map_expr -> add_element(key, value);
             } while(match(COMMA));
         }
 

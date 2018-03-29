@@ -1,6 +1,7 @@
 #ifndef AVALON_PROGRAM_AST_EXPR_MAP_EXPRESSION_HPP_
 #define AVALON_PROGRAM_AST_EXPR_MAP_EXPRESSION_HPP_
 
+#include <utility>
 #include <memory>
 #include <vector>
 
@@ -24,15 +25,15 @@ namespace avalon {
 
         /**
          * add_element
-         * add a new element to the map
+         * add a new key/value pair to the map
          */
-        void add_element(std::shared_ptr<expr> element);
+        void add_element(std::shared_ptr<expr>& key, std::shared_ptr<expr>& value);
 
         /**
          * get_elements
          * returns a vector of all the elements in the map
          */
-        std::vector<std::shared_ptr<expr> >& get_elements();
+        std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > >& get_elements();
         
         /**
          * is_map_expression
@@ -51,7 +52,7 @@ namespace avalon {
         /*
          * a vector of expressions that make up the map
          */
-        std::vector<std::shared_ptr<expr> > m_elements;
+        std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > > m_elements;
     };
 }
 

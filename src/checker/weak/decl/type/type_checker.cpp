@@ -26,10 +26,10 @@ namespace avalon {
      * given a type instance, the scope were it was found, the namespace of the object that holds it and a list of possible standins,
      * this function checks to see if that type instance exists in that scope in the given namespace or among the standins.
      */
-    bool type_instance_checker::simple_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
+    std::pair<bool,bool> type_instance_checker::simple_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
         std::vector<type_instance>& instance_params = instance.get_params();
         std::shared_ptr<type> instance_type = nullptr;
-        bool is_parametrized = false;
+        std::pair<bool,bool> ret(false, false);
 
         // we can only look for user defined type instances in the scope we have
         if(instance.get_category() == USER) {
@@ -40,9 +40,11 @@ namespace avalon {
                 // we make sure the parameters it depends on are also valid
                 for(auto& instance_param : instance_params) {
                     try {
-                        bool instance_param_is_parametrized = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
-                        if(instance_param_is_parametrized == true)
+                        std::pair<bool,bool> res = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
+                        if(res.first == true || res.second == true) {
                             instance.is_parametrized(true);
+                            ret.second = true;
+                        }
                     } catch(invalid_type err) {
                         throw err;
                     }
@@ -59,7 +61,7 @@ namespace avalon {
                 }
                 else {
                     if(std::find(standins.begin(), standins.end(), instance.get_token()) != standins.end()) {
-                        is_parametrized = true;
+                        ret.first = true;
                     }
                     else {
                         throw invalid_type(instance.get_token(), "This type instance has no type that builds it in the given scope and namespace.");
@@ -71,16 +73,18 @@ namespace avalon {
         else {
             for(auto& instance_param : instance_params) {
                 try {
-                    bool instance_param_in_abstract = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
-                    if(instance_param_in_abstract == true)
+                    std::pair<bool,bool> res = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
+                    if(res.first == true || res.second == true) {
                         instance.is_parametrized(true);
+                        ret.second = true;
+                    }
                 } catch(invalid_type err) {
                     throw err;
                 }
             }
         }        
 
-        return is_parametrized;
+        return ret;
     }
 
     /**
@@ -91,9 +95,9 @@ namespace avalon {
      * - the global namespace
      * - the type instance attached namespace
      */
-    bool type_instance_checker::complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
+    std::pair<bool,bool> type_instance_checker::complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins) {
         const std::string& l_ns_name = instance.get_namespace();
-        bool is_parametrized = false;
+       std::pair<bool,bool> res;
 
         // if the type instance namespace is "*" then it means the type instance exists either:
         // - in the current namespace where the object that holds it is declared (this is given to us as a parameter)
@@ -101,11 +105,11 @@ namespace avalon {
         if(l_ns_name == "*") {
             try {
                 // first we search the type instance holder object namespace
-                is_parametrized = type_instance_checker::simple_check(instance, l_scope, ns_name, standins);
+                res = type_instance_checker::simple_check(instance, l_scope, ns_name, standins);
             } catch(invalid_type err) {
                 // we could not find the type instance in the holder namespace, we try the global namespace
                 try {
-                    is_parametrized = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
+                    res = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
                 } catch(invalid_type err) {
                     throw err;
                 }
@@ -114,10 +118,10 @@ namespace avalon {
         else {
             try {
                 // the type instance carries an identified namespace, we use that.
-                is_parametrized = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
+                res = type_instance_checker::simple_check(instance, l_scope, l_ns_name, standins);
                 // if the type instance is abstract, we raise an error because abstract type instances
                 // are not allowed to be constrainted to a namespace
-                if(is_parametrized) {
+                if(res.first) {
                     throw invalid_type(instance.get_token(), "An abstract type instance cannot be constrainted to a namespace.");
                 }
             } catch(invalid_type err) {
@@ -125,10 +129,10 @@ namespace avalon {
             }
         }
 
-        return is_parametrized;
+        return res;
     }
 
-    bool type_instance_checker::complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+    std::pair<bool,bool> type_instance_checker::complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::vector<token> standins;
         return complex_check(instance, l_scope, ns_name, standins);
     }
@@ -155,8 +159,8 @@ namespace avalon {
 
             // validate the constructor parameter
             try {
-                bool is_parametrized = type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
-                if(is_parametrized == false)
+                std::pair<bool,bool> res = type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
+                if(res.first == false)
                     instance_type = cons_param.get_type();
             } catch(invalid_type err) {
                 // we check if the type instance in question is not the current type this constructor builds
@@ -203,8 +207,8 @@ namespace avalon {
 
             // validate the constructor parameter
             try {
-                bool is_parametrized = type_instance_checker::complex_check(cons_param.second, l_scope, ns_name, type_params);
-                if(is_parametrized == false)
+                std::pair<bool,bool> res = type_instance_checker::complex_check(cons_param.second, l_scope, ns_name, type_params);
+                if(res.first == false)
                     instance_type = cons_param.second.get_type();
             } catch(invalid_type err) {
                 // we check if the type instance in question is not the current type this constructor builds
@@ -244,18 +248,18 @@ namespace avalon {
 
         // validate the constructor parameter
         try {
-            bool is_parametrized = type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
-            if(is_parametrized == false)
+            std::pair<bool,bool> res = type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
+            if(res.first == false)
                 instance_type = cons_param.get_type();
         } catch(invalid_type err) {
             // we check if the type instance in question is not the current type this constructor builds
-                if(cons_param.is_builtby(type_decl)) {
-                    instance_type = type_decl;
-                    cons_param.set_type(type_decl);
-                }
-                else {
-                    throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
-                }
+            if(cons_param.is_builtby(type_decl)) {
+                instance_type = type_decl;
+                cons_param.set_type(type_decl);
+            }
+            else {
+                throw invalid_constructor("This constructor depends on a type instance that does not exist either in the attached namespace or the local namespace or the global namespace.");
+            }
         }
 
         // if the type that builds the parameters this constructor depends on is private and the type this constructor is public
@@ -285,8 +289,8 @@ namespace avalon {
         std::shared_ptr<type> key_instance_type = nullptr;
         // validate the constructor parameter key
         try {
-            bool is_parametrized = type_instance_checker::complex_check(cons_param_key, l_scope, ns_name, type_params);
-            if(is_parametrized == false)
+            std::pair<bool,bool> res = type_instance_checker::complex_check(cons_param_key, l_scope, ns_name, type_params);
+            if(res.first == false)
                 key_instance_type = cons_param_key.get_type();
         } catch(invalid_type err) {
             // we check if the type instance in question is not the current type this constructor builds
@@ -321,8 +325,8 @@ namespace avalon {
         std::shared_ptr<type> value_instance_type = nullptr;
         // validate the constructor parameter value
         try {
-            bool is_parametrized = type_instance_checker::complex_check(cons_param_value, l_scope, ns_name, type_params);
-            if(is_parametrized == false)
+            std::pair<bool,bool> res = type_instance_checker::complex_check(cons_param_value, l_scope, ns_name, type_params);
+            if(res.first == false)
                 value_instance_type = cons_param_key.get_type();
         } catch(invalid_type err) {
             // we check if the type instance in question is not the current type this constructor builds

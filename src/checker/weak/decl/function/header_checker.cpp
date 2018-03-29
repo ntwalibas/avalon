@@ -1,3 +1,4 @@
+#include <utility>
 #include <memory>
 #include <vector>
 #include <string>
@@ -28,8 +29,8 @@ namespace avalon {
             type_instance param_type_instance = param.second.get_type_instance();            
             try {
                 std::shared_ptr<type> param_instance_type = nullptr;
-                bool is_parametrized = type_instance_checker::complex_check(param_type_instance, l_scope, ns_name, constraints);
-                if(is_parametrized == false)
+                std::pair<bool,bool> res = type_instance_checker::complex_check(param_type_instance, l_scope, ns_name, constraints);
+                if(res.first == false)
                     param_instance_type = param_type_instance.get_type();
 
                 // we make sure that if the function is public then all the type instances it depends are built by public types
@@ -48,8 +49,8 @@ namespace avalon {
         type_instance return_type_instance = function_decl -> get_return_type_instance();
         try {
             std::shared_ptr<type> return_instance_type = nullptr;
-            bool is_parametrized = type_instance_checker::complex_check(return_type_instance, l_scope, ns_name, constraints);
-            if(is_parametrized == false)
+            std::pair<bool,bool> res = type_instance_checker::complex_check(return_type_instance, l_scope, ns_name, constraints);
+            if(res.first == false)
                 return_instance_type = return_type_instance.get_type();
 
             // we make sure that if the function is public then the return type instance must be public as well

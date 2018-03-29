@@ -1,6 +1,7 @@
 #ifndef AVALON_CHECKER_LAX_DECL_TYPE_CHECKER_HPP_
 #define AVALON_CHECKER_LAX_DECL_TYPE_CHECKER_HPP_
 
+#include <utility>
 #include <memory>
 #include <string>
 
@@ -17,7 +18,7 @@ namespace avalon {
          * given a type instance, the scope were it was found, the namespace of the object that holds it and a list of possible standins,
          * this function checks to see if that type instance exists in that scope in the given namespace or among the standins.
          */
-        static bool simple_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins);
+        static std::pair<bool,bool> simple_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins);
 
         /**
          * complex_check
@@ -27,8 +28,8 @@ namespace avalon {
          * - the global namespace
          * - the type instance attached namespace
          */
-        static bool complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins);
-        static bool complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        static std::pair<bool,bool> complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::vector<token>& standins);
+        static std::pair<bool,bool> complex_check(type_instance& instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
     };
 
 

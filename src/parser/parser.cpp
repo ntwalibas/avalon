@@ -45,6 +45,8 @@
 #include "program/ast/expr/identifier_expression.hpp"
 #include "program/ast/expr/assignment_expression.hpp"
 #include "program/ast/expr/underscore_expression.hpp"
+#include "program/ast/expr/map_constructor_expression.hpp"
+#include "program/ast/expr/list_constructor_expression.hpp"
 /* Symbol table */
 #include "program/symtable/fqn.hpp"
 #include "program/symtable/scope.hpp"
@@ -1506,6 +1508,12 @@ parser::parser(
         if(check(IDENTIFIER) && check_next(LEFT_PAREN)) {
             l_expression = parse_call_expression();
         }
+        else if(check(IDENTIFIER) && check_next(LEFT_BRACKET)) {
+            l_expression = parse_list_constructor_expression();
+        }
+        else if(check(IDENTIFIER) && check_next(LEFT_BRACE)) {
+            l_expression = parse_map_constructor_expression();
+        }
         else if(check(IDENTIFIER)) {
             std::shared_ptr<token>& id_tok = consume(IDENTIFIER, "Expected an identifier.");
             std::shared_ptr<identifier_expression> id_expr = std::make_shared<identifier_expression>(* id_tok);
@@ -1588,6 +1596,57 @@ parser::parser(
         }
 
         l_expression = fun_call_expr;
+        return l_expression;
+    }
+
+    /**
+     * parse_list_constructor_expression()
+     * if an expression starts by an identifier followed by an opening bracket,
+     * this function parses the remainder of the token stream until it reads a full list expression.
+     * those lists are from list constructors.
+     */
+    std::shared_ptr<expr> parser::parse_list_constructor_expression() {
+        std::shared_ptr<expr> l_expression = nullptr;
+        std::shared_ptr<token>& cons_tok = consume(IDENTIFIER, "Expected the name of the list constructor.");
+        std::shared_ptr<list_constructor_expression> list_cons_expr = std::make_shared<list_constructor_expression>(* cons_tok);
+
+        // if the next token is not a closing bracket, then we don't have an empty list
+        if(check_next(RIGHT_BRACKET) == false) {
+            std::shared_ptr<expr> next_element = nullptr;
+            do {
+                next_element = parse_expression();
+                list_cons_expr -> add_element(next_element);
+            } while(match(COMMA));
+        }
+
+        l_expression = list_cons_expr;
+        return l_expression;
+    }
+
+    /**
+     * parse_map_constructor_expression()
+     * if an expression starts by an identifier followed by an opening brace,
+     * this function parses the remainder of the token stream until it reads a full map expression.
+     * those maps are from map constructors.
+     */
+    std::shared_ptr<expr> parser::parse_map_constructor_expression() {
+        std::shared_ptr<expr> l_expression = nullptr;
+        std::shared_ptr<token>& cons_tok = consume(IDENTIFIER, "Expected the name of the map constructor.");
+        std::shared_ptr<map_constructor_expression> map_cons_expr = std::make_shared<map_constructor_expression>(* cons_tok);
+
+        // if the next token is not a closing brace, then we don't have an empty map
+        if(check_next(RIGHT_BRACE) == false) {
+            std::shared_ptr<expr> key = nullptr;
+            std::shared_ptr<expr> value = nullptr;
+            do {
+                key = parse_expression();
+                consume(COLON, "Excepted colon after key in map expression.");
+                value = parse_expression();
+                map_cons_expr -> add_element(key, value);
+            } while(match(COMMA));
+        }
+
+        l_expression = map_cons_expr;
         return l_expression;
     }
 

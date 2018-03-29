@@ -1550,7 +1550,17 @@ parser::parser(
         }
         else if(match(INTEGER) || match(FLOATING_POINT) || match(DECIMAL) || match(STRING)) {
             std::shared_ptr<token>& literal_tok = lookback();
-            std::shared_ptr<literal_expression> literal_expr = std::make_shared<literal_expression>(* literal_tok, literal_tok -> get_lexeme());
+            std::shared_ptr<literal_expression> literal_expr = nullptr;
+
+            if(literal_tok -> get_type() == INTEGER)
+                literal_expr = std::make_shared<literal_expression>(* literal_tok, INTEGER_EXPR, literal_tok -> get_lexeme());
+            else if(literal_tok -> get_type() == FLOATING_POINT)
+                literal_expr = std::make_shared<literal_expression>(* literal_tok, FLOATING_POINT_EXPR, literal_tok -> get_lexeme());
+            else if(literal_tok -> get_type() == DECIMAL)
+                literal_expr = std::make_shared<literal_expression>(* literal_tok, DECIMAL_EXPR, literal_tok -> get_lexeme());
+            else if(literal_tok -> get_type() == STRING)
+                literal_expr = std::make_shared<literal_expression>(* literal_tok, STRING_EXPR, literal_tok -> get_lexeme());
+            
             l_expression = literal_expr;
         }
         else if(match(UNDERSCORE)) {

@@ -1511,14 +1511,21 @@ parser::parser(
         }
         else if(match(LEFT_PAREN)) {
             std::shared_ptr<token>& left_paren = lookback();
-            std::shared_ptr<expr> inner_expression = parse_expression();
-            if(match(COMMA)) {
-                l_expression = parse_tuple_expression(left_paren, inner_expression);
+            // if we have a closing parenthesis right after the opening paren, then we have an empty tuple
+            if(match(RIGHT_PAREN)) {
+                std::shared_ptr<tuple_expression> tuple_expr = std::make_shared<tuple_expression>(* left_paren);
+                l_expression = tuple_expr;
             }
             else {
-                std::shared_ptr<grouped_expression> grouped_expr = std::make_shared<grouped_expression>(* left_paren, inner_expression);
-                consume(RIGHT_PAREN, "Expected a closing parenthesis after grouped expression.");
-                l_expression = grouped_expr;
+                std::shared_ptr<expr> inner_expression = parse_expression();
+                if(match(COMMA)) {
+                    l_expression = parse_tuple_expression(left_paren, inner_expression);
+                }
+                else {
+                    std::shared_ptr<grouped_expression> grouped_expr = std::make_shared<grouped_expression>(* left_paren, inner_expression);
+                    consume(RIGHT_PAREN, "Expected a closing parenthesis after grouped expression.");
+                    l_expression = grouped_expr;
+                }
             }
         }
         else if(match(LEFT_BRACKET)) {

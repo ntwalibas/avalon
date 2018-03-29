@@ -55,7 +55,7 @@ static bool params_collide(std::vector<std::pair<std::string, variable> >& this_
 /**
  * the constructor expects the token with function information
  */
-function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_return_type_instance(nullptr), m_terminates(false) {
+function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_terminates(false) {
 }
 
     /**
@@ -136,19 +136,22 @@ function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_return_
 
     /**
      * set_return_type_instance
-     * i a return type instance was specified, we set it here
+     * sets the function return type instance
      */
     void function::set_return_type_instance(type_instance& return_type_instance) {
-        m_return_type_instance = std::make_shared<type_instance>(return_type_instance);
+        m_return_type_instance = return_type_instance;
     }
 
     /**
      * get_return_type_instance
-     * if a return type instance was specified, we return it.
-     * else, we throw a "type_error".
+     * return a function return type instance
      */
-    type_instance function::get_return_type_instance() const {
-        return * m_return_type_instance;
+    type_instance& function::get_return_type_instance() {
+        return m_return_type_instance;
+    }
+
+    const type_instance& function::get_return_type_instance() const {
+        return m_return_type_instance;
     }
 
     /**
@@ -178,7 +181,7 @@ function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_return_
             return false;
 
         if(params_collide(this_params, that_params)) {
-            if(type_instance_strong_compare(* m_return_type_instance, that.get_return_type_instance()))
+            if(type_instance_strong_compare(m_return_type_instance, that.get_return_type_instance()))
                 return true;
             return false;
         }

@@ -84,15 +84,16 @@ namespace avalon {
 
         /**
          * set_return_type_instance
-         * i a return type instance was specified, we set it here
+         * sets the function return type instance
          */
         void set_return_type_instance(type_instance& return_type_instance);
 
         /**
          * get_return_type_instance
-         * we return the return type instance of this function
+         * return a function return type instance
          */
-        type_instance get_return_type_instance() const;
+        type_instance& get_return_type_instance();
+        const type_instance& get_return_type_instance() const;
 
         /**
          * set_body
@@ -190,7 +191,7 @@ namespace avalon {
         /*
          * the return type of this function
          */
-        std::shared_ptr<type_instance> m_return_type_instance;
+        type_instance m_return_type_instance;
 
         /*
          * the body of the function

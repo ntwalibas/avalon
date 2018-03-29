@@ -253,13 +253,13 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
 /*
  * type instance
  */
-type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_namespace(namespace_name), m_type(nullptr), m_return_type_instance(nullptr), m_is_parametrized(false) {
+type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(nullptr), m_return_type_instance(nullptr), m_is_parametrized(false) {
 }
 
 /**
  * this constructor expects the token with source code information, the type that buils this instance and the namespace where to find that type
  */
-type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_namespace(namespace_name), m_type(ty), m_return_type_instance(nullptr), m_is_parametrized(false)  {
+type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(ty), m_return_type_instance(nullptr), m_is_parametrized(false)  {
 }
     
     /**
@@ -310,6 +310,22 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
      */
     const token& type_instance::get_old_token() const {
         return m_old_tok;
+    }
+
+    /**
+     * set_category
+     * set the category to which this type instance belongs
+     */
+    void type_instance::set_category(type_instance_category category) {
+        m_category = category;
+    }
+
+    /**
+     * get_category
+     * get the category to which this type instance belongs
+     */
+    const type_instance_category& type_instance::get_category() const {
+        return m_category;
     }
 
     /**

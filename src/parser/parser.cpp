@@ -1607,6 +1607,7 @@ parser::parser(
         if(match(IDENTIFIER)) {
             std::shared_ptr<token>& instance_tok = lookback();
             type_instance instance(* instance_tok, namespace_name);
+            instance.set_category(USER);
 
             // if the type instance admits parameters, we build it as such
             // and check if there exists a type constructor that builds it
@@ -1617,6 +1618,49 @@ parser::parser(
                 } while(match(COMMA));
                 consume(RIGHT_PAREN, "Expected closing parenthesis after type instance parameters.");
             }
+            return instance;
+        }
+        // if we match a left parenthesis, then we have a tuple type instance
+        else if(match(LEFT_PAREN)) {
+            std::shared_ptr<token>& instance_tok = lookback();
+            type_instance instance(* instance_tok, namespace_name);
+            instance.set_category(TUPLE);
+
+            do {
+                type_instance param = parse_type_instance();
+                instance.add_param(param);
+            } while(match(COMMA));
+            consume(RIGHT_PAREN, "Expected closing parenthesis after tuple type instance parameters.");
+
+            return instance;
+        }
+        // if we match a left bracket, then we have a list type instance
+        else if(match(LEFT_BRACKET)) {
+            std::shared_ptr<token>& instance_tok = lookback();
+            type_instance instance(* instance_tok, namespace_name);
+            instance.set_category(LIST);
+
+            type_instance param = parse_type_instance();
+            instance.add_param(param);
+
+            consume(RIGHT_BRACKET, "Expected closing parenthesis after list type instance parameter.");
+            return instance;
+        }
+        // if we match a left brace, then we have a map type instance
+        else if(match(LEFT_BRACE)) {
+            std::shared_ptr<token>& instance_tok = lookback();
+            type_instance instance(* instance_tok, namespace_name);
+            instance.set_category(MAP);
+
+            type_instance param_key = parse_type_instance();
+            instance.add_param(param_key);
+
+            consume(COLON, "Excepted a colon after map type instance key.");
+
+            type_instance param_value = parse_type_instance();
+            instance.add_param(param_value);
+            
+            consume(RIGHT_BRACE, "Expected closing parenthesis after map type instance parameter.");
             return instance;
         }
         // anything else is wrong

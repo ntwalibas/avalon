@@ -31,6 +31,20 @@ namespace avalon {
         UNKNOWN
     };
 
+    /*
+     * types of type instances
+     * USER     : user defined type instance
+     * TUPLE    : built-in tuple type instance
+     * LIST     : built-in list type instance
+     * MAP      : built-in map type instance
+     */
+    enum type_instance_category {
+        USER,
+        TUPLE,
+        LIST,
+        MAP
+    };
+
 
     class type: public decl {
     public:
@@ -330,6 +344,18 @@ namespace avalon {
         const token& get_old_token() const;
 
         /**
+         * set_category
+         * set the category to which this type instance belongs
+         */
+        void set_category(type_instance_category category);
+
+        /**
+         * get_category
+         * get the category to which this type instance belongs
+         */
+        const type_instance_category& get_category() const;
+
+        /**
          * get_namespace
          * returns the namespace where to find the type declaration that builds this type instance
          */
@@ -407,6 +433,11 @@ namespace avalon {
          * the old token when this type instance was an abstract instance
          */
         token m_old_tok;
+
+        /*
+         * the category to which this type instance belongs
+         */
+        type_instance_category m_category;
 
         /*
          * the name of the namespace where to find the type builder of this type instance

@@ -25,7 +25,7 @@ namespace avalon {
     /**
      * the constructor expects nothing
      */
-    block_checker::block_checker() : m_decls_count(0), m_inside_loop(false) {
+    block_checker::block_checker(type_instance& ret_instance) : m_ret_instance(ret_instance), m_decls_count(0), m_inside_loop(false) {
     }
 
     /**

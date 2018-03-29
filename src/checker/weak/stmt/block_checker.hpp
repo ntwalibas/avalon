@@ -7,6 +7,7 @@
 #include "program/ast/stmt/block_stmt.hpp"
 #include "program/symtable/scope.hpp"
 #include "program/ast/decl/decl.hpp"
+#include "program/ast/decl/type.hpp"
 
 
 namespace avalon {
@@ -15,7 +16,7 @@ namespace avalon {
         /**
          * the constructor expects nothing
          */
-        block_checker();
+        block_checker(type_instance& ret_instance);
 
         /**
          * check
@@ -39,6 +40,12 @@ namespace avalon {
          * given a statement declaration, check if it is valid
          */
         void check_statement(std::shared_ptr<decl>& declaration, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+
+        /*
+         * since block statements must appear inside functions or in statements inside function
+         * if they contain a return statement, this allows to check that they return the proper type instance
+         */
+        type_instance m_ret_instance;
 
         /*
          * number of declarations in the block

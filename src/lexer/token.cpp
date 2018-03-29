@@ -280,7 +280,6 @@ token int_type_tok(avalon::TYPE, "int", 0, 0, "__bit__");
 token dec_type_tok(avalon::TYPE, "dec", 0, 0, "__bit__");
 token float_type_tok(avalon::TYPE, "flaot", 0, 0, "__bit__");
 token string_type_tok(avalon::TYPE, "string", 0, 0, "__bit__");
-token tuple_type_tok(avalon::TYPE, "tuple", 0, 0, "__bit__");
 
 /**
  * constructor tokens

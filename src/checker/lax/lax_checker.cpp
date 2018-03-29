@@ -74,10 +74,6 @@ namespace avalon {
         // string type
         std::shared_ptr<type> string_type = std::make_shared<type>(string_type_tok, VALID);
         m_bits.push_back(string_type);
-
-        // tuple type
-        std::shared_ptr<type> tuple_type = std::make_shared<type>(tuple_type_tok, VALID);
-        m_bits.push_back(tuple_type);
     }
 
     /**

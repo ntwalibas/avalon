@@ -312,7 +312,6 @@ namespace avalon {
     extern token dec_type_tok;
     extern token float_type_tok;
     extern token string_type_tok;
-    extern token tuple_type_tok;
 
     /**
      * constructor tokens

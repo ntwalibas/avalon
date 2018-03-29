@@ -401,7 +401,7 @@ namespace avalon {
          * a type instance depends on other type instances if
          * the type constructor that builds it is parametric.
          */
-        void add_param(type_instance param);
+        void add_param(type_instance& param);
 
         /**
          * get_params

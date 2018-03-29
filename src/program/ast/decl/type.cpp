@@ -396,7 +396,7 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
      * a type instance depends on other type instances if
      * the type constructor that builds it is parametric.
      */
-    void type_instance::add_param(type_instance param) {
+    void type_instance::add_param(type_instance& param) {
         m_params.push_back(param);
     }
 

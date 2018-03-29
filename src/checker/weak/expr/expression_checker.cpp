@@ -62,8 +62,7 @@ namespace avalon {
      * returns an abstract type instance since underscore expression can never have a concrete type
      */
     type_instance expression_checker::check_underscore(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        type_instance underscore_type_instance = inferer::infer(an_expression, l_scope, ns_name);
-        return underscore_type_instance;
+        return inferer::infer(an_expression, l_scope, ns_name);
     }
 
     /**
@@ -72,8 +71,7 @@ namespace avalon {
      * this function simply returns the type instance for each type of literal
      */
     type_instance expression_checker::check_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        type_instance literal_type_instance = inferer::infer(an_expression, l_scope, ns_name);
-        return literal_type_instance;
+        return inferer::infer(an_expression, l_scope, ns_name);
     }
 
     /**

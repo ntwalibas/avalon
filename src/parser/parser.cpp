@@ -1767,10 +1767,13 @@ parser::parser(
             type_instance instance(* instance_tok, namespace_name);
             instance.set_category(TUPLE);
 
-            do {
-                type_instance param = parse_type_instance();
-                instance.add_param(param);
-            } while(match(COMMA));
+            if(check(RIGHT_PAREN) == false) {
+                do {
+                    type_instance param = parse_type_instance();
+                    instance.add_param(param);
+                } while(match(COMMA));
+            }
+            
             consume(RIGHT_PAREN, "Expected closing parenthesis after tuple type instance parameters.");
 
             return instance;

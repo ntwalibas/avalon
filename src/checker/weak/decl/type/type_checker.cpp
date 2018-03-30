@@ -69,8 +69,9 @@ namespace avalon {
                 }
             }
         }
-        // if we have a built-in type, we just check if it depends on a parametrized type instance
+        // if we have a built-in type, we check the type instances it depends on if any and set the type builder on it
         else {
+            // we check dependent type instances, if any
             for(auto& instance_param : instance_params) {
                 try {
                     std::pair<bool,bool> res = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
@@ -81,6 +82,20 @@ namespace avalon {
                 } catch(invalid_type err) {
                     throw err;
                 }
+            }
+
+            // set the type builder
+            token tok = instance.get_token();
+            std::shared_ptr<type> ty = std::make_shared<type>(tok, VALID);
+            instance.set_type(ty);
+            if(instance.get_category() == TUPLE) {
+                instance.set_category(TUPLE);
+            }
+            else if(instance.get_category() == LIST) {
+                instance.set_category(LIST);
+            }
+            else if(instance.get_category() == MAP) {
+                instance.set_category(MAP);
             }
         }        
 

@@ -1690,6 +1690,13 @@ parser::parser(
                 map_cons_expr -> add_element(key, value);
             } while(match(COMMA));
         }
+        consume(RIGHT_BRACE, "Excepted a closing bracket in map constructor expression");
+
+        // if the expression is followed by a colon, then a type instance was provided
+        if(match(COLON)) {
+            type_instance expr_instance = parse_type_instance();
+            map_cons_expr -> set_type_instance(expr_instance, true);
+        }
 
         l_expression = map_cons_expr;
         return l_expression;

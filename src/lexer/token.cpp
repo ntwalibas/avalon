@@ -268,7 +268,7 @@ avl_string::avl_string(
 /**
  * Predefined tokens
  */
-token star_tok(MUL, "__star__", 0, 0, "__bit__");
+token star_tok(MUL, "*", 0, 0, "__bit__");
 
 /**
  * type tokens

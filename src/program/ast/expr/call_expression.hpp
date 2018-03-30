@@ -27,9 +27,27 @@ namespace avalon {
 
         /**
          * get_name
-         * returns the name of the function to call
+         * returns the name of the function/constructor to call
          */
         const std::string& get_name() const;
+
+        /**
+         * set_type_instance
+         * sets the type instance of this expression
+         */
+        void set_type_instance(type_instance& instance);
+
+        /**
+         * get_type_instance
+         * returns the type instance of this expression
+         */
+        type_instance& get_type_instance();
+
+        /**
+         * has_type_instance
+         * returns true if the type instance is not star
+         */
+        bool has_type_instance();
 
         /**
          * add_argument
@@ -73,6 +91,11 @@ namespace avalon {
          * the name of the function to call
          */
         std::string m_name;
+
+        /*
+         * type instance of this expression
+         */
+        type_instance m_instance;
 
         /*
          * vector arguments passed to the function

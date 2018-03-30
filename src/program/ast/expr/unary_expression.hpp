@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "program/ast/expr/expr.hpp"
+#include "program/ast/decl/type.hpp"
 #include "lexer/token.hpp"
 
 
@@ -35,6 +36,24 @@ namespace avalon {
         const unary_expression_type& get_expression_type() const;
 
         /**
+         * set_type_instance
+         * sets the type instance of this expression
+         */
+        void set_type_instance(type_instance& instance);
+
+        /**
+         * has_type_instance
+         * returns true if the type instance is not star
+         */
+        bool has_type_instance();
+
+        /**
+         * get_type_instance
+         * returns the type instance of this expression
+         */
+        type_instance& get_type_instance();
+
+        /**
          * get_val
          * returns the unary operator operand
          */
@@ -58,6 +77,11 @@ namespace avalon {
          * the type of unary expression we have
          */
         unary_expression_type m_expr_type;
+
+        /*
+         * type instance of this expression
+         */
+        type_instance m_instance;
 
         /*
          * the operand to the unary operator

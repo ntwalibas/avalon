@@ -33,6 +33,33 @@ namespace avalon {
     }
 
     /**
+     * set_type_instance
+     * sets the type instance of this expression
+     */
+    void call_expression::set_type_instance(type_instance& instance) {
+        m_instance = instance;
+    }
+
+    /**
+     * get_type_instance
+     * returns the type instance of this expression
+     */
+    type_instance& call_expression::get_type_instance() {
+        return m_instance;
+    }
+
+    /**
+     * has_type_instance
+     * returns true if the type instance is not star
+     */
+    bool call_expression::has_type_instance() {
+        if(m_instance.get_name() == "*" && m_instance.get_namespace() == "*")
+            return true;
+        else
+            return false;
+    }
+
+    /**
      * add_argument
      * adds an argument to the function call
      */

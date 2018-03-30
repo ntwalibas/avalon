@@ -2,6 +2,7 @@
 
 #include "program/ast/expr/binary_expression.hpp"
 #include "program/ast/expr/expr.hpp"
+#include "program/ast/decl/type.hpp"
 #include "lexer/token.hpp"
 
 
@@ -21,6 +22,33 @@ namespace avalon {
      */
     const token& binary_expression::get_token() const {
         return m_tok;
+    }
+
+    /**
+     * set_type_instance
+     * sets the type instance of this expression
+     */
+    void binary_expression::set_type_instance(type_instance& instance) {
+        m_instance = instance;
+    }
+
+    /**
+     * get_type_instance
+     * returns the type instance of this expression
+     */
+    type_instance& binary_expression::get_type_instance() {
+        return m_instance;
+    }
+
+    /**
+     * has_type_instance
+     * returns true if the type instance is not star
+     */
+    bool binary_expression::has_type_instance() {
+        if(m_instance.get_name() == "*" && m_instance.get_namespace() == "*")
+            return true;
+        else
+            return false;
     }
 
     /**

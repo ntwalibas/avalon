@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "program/ast/expr/expr.hpp"
+#include "program/ast/decl/type.hpp"
 #include "lexer/token.hpp"
 
 
@@ -26,6 +27,24 @@ namespace avalon {
          * returns the grouped operator operand
          */
         std::shared_ptr<expr>& get_value();
+
+        /**
+         * set_type_instance
+         * sets the type instance of this expression
+         */
+        void set_type_instance(type_instance& instance);
+
+        /**
+         * get_type_instance
+         * returns the type instance of this expression
+         */
+        type_instance& get_type_instance();
+
+        /**
+         * has_type_instance
+         * returns true if the type instance is not star
+         */
+        bool has_type_instance();
         
         /**
          * is_grouped_expression
@@ -40,6 +59,11 @@ namespace avalon {
          * the token to be used to show errors
          */
         token m_tok;
+
+        /*
+         * type instance of this expression
+         */
+        type_instance m_instance;
 
         /*
          * the operand to the grouped operator

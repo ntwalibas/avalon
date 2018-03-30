@@ -138,24 +138,55 @@ namespace avalon {
         std::shared_ptr<tuple_expression> const & tup_expr = std::static_pointer_cast<tuple_expression>(an_expression);
         
         // if the expression already has a type instance set, we return that
-        if(tup_expr -> has_type_instance()) {
+        if(tup_expr -> type_instance_from_parser() == false && tup_expr -> has_type_instance() == true) {
             return tup_expr -> get_type_instance();
+        }
+
+        // if on the other hand a type instance from the parser was posted, we type check check it
+        type_instance parser_type_instance;
+        bool has_parser_type_instance = false;
+        if(tup_expr -> type_instance_from_parser() == true) {
+            has_parser_type_instance = true;
+            parser_type_instance = tup_expr -> get_type_instance();
+
+            try {
+                // we typecheck the parser type instance
+                std::pair<bool,bool> res = type_instance_checker::complex_check(parser_type_instance, l_scope, ns_name);
+                // we don't allow parametrized type instances to be bound to expressions
+                if (res.second == true) {
+                    throw invalid_type(parser_type_instance.get_token(), "Parametrized types cannot be used on expressions.");
+                }
+            } catch(invalid_type err) {
+                throw err;
+            }
         }
 
         // we create a type and type instance out of the expression dynamically
         token tok = tup_expr -> get_token();
         std::shared_ptr<type> tup_type = std::make_shared<type>(tok, VALID);
-        type_instance instance(tok, tup_type, "*");
-        instance.set_category(TUPLE);
+        type_instance infered_type_instance(tok, tup_type, "*");
+        infered_type_instance.set_category(TUPLE);
 
         // we fill in the type instance parameters
         std::vector<std::shared_ptr<expr> >& elements = tup_expr -> get_elements();
         for(auto& element : elements) {
             type_instance el_instance = inferer::infer(element, l_scope, ns_name);
-            instance.add_param(el_instance);
+            infered_type_instance.add_param(el_instance);
         }
 
-        tup_expr -> set_type_instance(instance);
-        return instance;
+        // if we have type instance from the parser we compare it with the infered type
+        // and if they equal, we keep the parser type instance
+        if(has_parser_type_instance) {
+            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
+                throw invalid_type(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            }
+            else {
+                return parser_type_instance;
+            }
+        }
+        else {
+            tup_expr -> set_type_instance(infered_type_instance, false);
+            return infered_type_instance;
+        }        
     }
 }

@@ -1524,13 +1524,17 @@ parser::parser(
             // if we have a closing parenthesis right after the opening paren, then we have an empty tuple
             if(match(RIGHT_PAREN)) {
                 std::shared_ptr<tuple_expression> tuple_expr = std::make_shared<tuple_expression>(* left_paren);
+                // if the expression is followed by a colon, then a type instance was provided
+                if(match(COLON)) {
+                    type_instance expr_instance = parse_type_instance();
+                    tuple_expr -> set_type_instance(expr_instance, true);
+                }
                 l_expression = tuple_expr;
             }
             else {
                 std::shared_ptr<expr> inner_expression = parse_expression();
                 if(match(COMMA)) {
                     l_expression = parse_tuple_expression(left_paren, inner_expression);
-                    consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple expression.");
                 }
                 else {
                     std::shared_ptr<grouped_expression> grouped_expr = std::make_shared<grouped_expression>(* left_paren, inner_expression);
@@ -1542,12 +1546,12 @@ parser::parser(
         else if(match(LEFT_BRACKET)) {
             std::shared_ptr<token>& left_bracket = lookback();
             l_expression = parse_list_expression(left_bracket);
-            consume(RIGHT_BRACKET, "Excepted a closing bracket in list expression");            
+            consume(RIGHT_BRACKET, "Excepted a closing bracket in list expression");
         }
         else if(match(LEFT_BRACE)) {
             std::shared_ptr<token>& left_brace = lookback();
             l_expression = parse_map_expression(left_brace);
-            consume(RIGHT_BRACE, "Excepted a closing bracket in map expression");            
+            consume(RIGHT_BRACE, "Excepted a closing bracket in map expression");
         }
         else if(match(INTEGER) || match(FLOATING_POINT) || match(DECIMAL) || match(STRING)) {
             std::shared_ptr<token>& literal_tok = lookback();
@@ -1685,7 +1689,15 @@ parser::parser(
                 next_element = parse_expression();
                 tuple_expr -> add_element(next_element);
             } while(match(COMMA));
-        }        
+        }
+
+        consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple expression.");
+
+        // if the expression is followed by a colon, then a type instance was provided
+        if(match(COLON)) {
+            type_instance expr_instance = parse_type_instance();
+            tuple_expr -> set_type_instance(expr_instance, true);
+        }
 
         l_expression = tuple_expr;
         return l_expression;

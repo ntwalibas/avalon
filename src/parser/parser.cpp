@@ -1530,6 +1530,7 @@ parser::parser(
                 std::shared_ptr<expr> inner_expression = parse_expression();
                 if(match(COMMA)) {
                     l_expression = parse_tuple_expression(left_paren, inner_expression);
+                    consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple expression.");
                 }
                 else {
                     std::shared_ptr<grouped_expression> grouped_expr = std::make_shared<grouped_expression>(* left_paren, inner_expression);

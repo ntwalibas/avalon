@@ -1656,6 +1656,13 @@ parser::parser(
                 list_cons_expr -> add_element(next_element);
             } while(match(COMMA));
         }
+        consume(RIGHT_BRACKET, "Excepted a closing bracket in list constructor expression");
+
+        // if the expression is followed by a colon, then a type instance was provided
+        if(match(COLON)) {
+            type_instance expr_instance = parse_type_instance();
+            list_cons_expr -> set_type_instance(expr_instance, true);
+        }
 
         l_expression = list_cons_expr;
         return l_expression;

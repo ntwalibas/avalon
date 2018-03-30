@@ -2,6 +2,8 @@
 #include <string>
 
 #include "checker/weak/decl/variable/variable_checker.hpp"
+#include "checker/exceptions/invalid_expression.hpp"
+#include "checker/weak/expr/expression_checker.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
 #include "checker/weak/decl/type/type_checker.hpp"
 #include "checker/exceptions/invalid_type.hpp"
@@ -44,7 +46,22 @@ namespace avalon {
 
         // if the variable is initialized, we check the initializer expression
         if(variable_val != nullptr) {
-            
+            expression_checker checker;
+            try {
+                type_instance expr_instance = checker.check(variable_val, l_scope, ns_name);
+                // if the variable has a type instance set, we make sure it is the same as the one on the expression
+                if(variable_decl -> has_type_instance()) {
+                    type_instance variable_type_instance = variable_decl -> get_type_instance();
+                    if(type_instance_weak_compare(variable_type_instance, expr_instance) == false) {
+                        throw invalid_variable(variable_decl -> get_token(), "The variable has a different type instance than the expression it is initialized with.");
+                    }
+                }
+                else {
+                    variable_decl -> set_type_instance(expr_instance);
+                }
+            } catch(invalid_expression err) {
+                throw err;
+            }
         }
     }
 }

@@ -1550,7 +1550,6 @@ parser::parser(
         else if(match(LEFT_BRACE)) {
             std::shared_ptr<token>& left_brace = lookback();
             l_expression = parse_map_expression(left_brace);
-            consume(RIGHT_BRACE, "Excepted a closing bracket in map expression");
         }
         else if(match(INTEGER) || match(FLOATING_POINT) || match(DECIMAL) || match(STRING)) {
             std::shared_ptr<token>& literal_tok = lookback();
@@ -1747,6 +1746,13 @@ parser::parser(
                 value = parse_expression();
                 map_expr -> add_element(key, value);
             } while(match(COMMA));
+        }
+        consume(RIGHT_BRACE, "Excepted a closing bracket in map expression");
+
+        // if the expression is followed by a colon, then a type instance was provided
+        if(match(COLON)) {
+            type_instance expr_instance = parse_type_instance();
+            map_expr -> set_type_instance(expr_instance, true);
         }
 
         l_expression = map_expr;

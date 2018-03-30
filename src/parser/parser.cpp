@@ -1517,6 +1517,11 @@ parser::parser(
         else if(check(IDENTIFIER)) {
             std::shared_ptr<token>& id_tok = consume(IDENTIFIER, "Expected an identifier.");
             std::shared_ptr<identifier_expression> id_expr = std::make_shared<identifier_expression>(* id_tok);
+            // if the expression is followed by a colon, then a type instance was provided
+            if(match(COLON)) {
+                type_instance expr_instance = parse_type_instance();
+                id_expr -> set_type_instance(expr_instance, true);
+            }
             l_expression = id_expr;
         }
         else if(match(LEFT_PAREN)) {
@@ -1593,7 +1598,8 @@ parser::parser(
     std::shared_ptr<expr> parser::parse_call_expression() {
         std::shared_ptr<expr> l_expression = nullptr;
         std::shared_ptr<token>& function_name = consume(IDENTIFIER, "Expected the name of the function to call.");
-        std::shared_ptr<call_expression> fun_call_expr = std::make_shared<call_expression>(* function_name);
+        std::shared_ptr<call_expression> call_expr = std::make_shared<call_expression>(* function_name);
+        bool type_instance_provided = false;
 
         consume(LEFT_PAREN, "Expected an opening parenthesis before the function call arguments.");
         do {
@@ -1601,21 +1607,33 @@ parser::parser(
                 std::shared_ptr<token>& arg_name = consume(IDENTIFIER, "Expected the argument name in function call.");
                 consume(EQUAL, "Expected an equal sign before the argument value.");
                 std::shared_ptr<expr> arg_value = parse_expression();
-                fun_call_expr -> add_argument(* arg_name, arg_value);
+                call_expr -> add_argument(* arg_name, arg_value);
             }
             else {
                 std::shared_ptr<expr> arg_value = parse_expression();
-                fun_call_expr -> add_argument(star_tok, arg_value); // we use the general purpose underscore token in lieu of the actual argument name as we have none
+                call_expr -> add_argument(star_tok, arg_value); // we use the general purpose underscore token in lieu of the actual argument name as we have none
             }
         } while(match(COMMA));
         consume(RIGHT_PAREN, "Expected a closing parenthesis after the function call arguments.");
 
-        if(match(RETURN_TYPE)) {
-            type_instance return_type_instance = parse_type_instance();
-            fun_call_expr -> set_return_type_instance(return_type_instance);
+        // if the expression is followed by a colon, then a type instance was provided
+        if(match(COLON)) {
+            type_instance_provided = true;
+            type_instance expr_instance = parse_type_instance();
+            call_expr -> set_type_instance(expr_instance, true);
         }
 
-        l_expression = fun_call_expr;
+        if(type_instance_provided == true && check(RETURN_TYPE) == true) {
+            throw parsing_error(true, peek(), "A type instance cannot be provided in the middle of a function call expression.");
+        }
+        else {
+            if(match(RETURN_TYPE)) {
+                type_instance return_type_instance = parse_type_instance();
+                call_expr -> set_return_type_instance(return_type_instance);
+            }
+        }        
+
+        l_expression = call_expr;
         return l_expression;
     }
 

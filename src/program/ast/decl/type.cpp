@@ -479,24 +479,51 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
      * returns a string representation of a type instance
      */
     std::string mangle_type_instance(const type_instance& instance) {
+        std::vector<type_instance> params = instance.get_params();
         std::string mangled_name = "";
 
         if(instance.is_abstract()) {
             mangled_name += "*";
         }
         else {
-            mangled_name += instance.get_name();
-            std::vector<type_instance> params = instance.get_params();
-            if(!params.empty()) {
-                mangled_name += std::string("(");
-                for(auto it = params.begin(); it != params.end(); ++it) {
-                    mangled_name += mangle_type_instance(* it);
+            if(instance.get_category() == USER) {
+                mangled_name += instance.get_name();                
+                if(!params.empty()) {
+                    mangled_name += std::string("(");
+                    for(auto it = params.begin(); it != params.end(); ++it) {
+                        mangled_name += mangle_type_instance(* it);
 
-                    if((it != params.end()) && (it + 1 != params.end()))
-                        mangled_name += std::string(",");
+                        if((it != params.end()) && (it + 1 != params.end()))
+                            mangled_name += std::string(",");
+                    }
+                    mangled_name += std::string(")");
+                }
+            }
+            else if(instance.get_category() == TUPLE) {
+                mangled_name += "(";
+                if(!params.empty()) {
+                    for(auto it = params.begin(); it != params.end(); ++it) {
+                        mangled_name += mangle_type_instance(* it);
+
+                        if((it != params.end()) && (it + 1 != params.end()))
+                            mangled_name += std::string(",");
+                    }
                 }
                 mangled_name += std::string(")");
             }
+            else if(instance.get_category() == LIST) {
+                mangled_name += "[";
+                mangled_name += mangle_type_instance(params[0]);
+                mangled_name += std::string("]");
+            }
+            else if(instance.get_category() == MAP) {
+                mangled_name += "{";
+                mangled_name += mangle_type_instance(params[0]);
+                mangled_name += ":";
+                mangled_name += mangle_type_instance(params[1]);
+                mangled_name += std::string("}");
+            }
+            
         }
 
         return mangled_name;

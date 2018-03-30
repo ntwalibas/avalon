@@ -34,7 +34,7 @@ namespace avalon {
          * infer_literal
          * infers the type instance of a literal
          */
-        static type_instance infer_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope);
+        static type_instance infer_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
 
         /**
          * infer_tuple

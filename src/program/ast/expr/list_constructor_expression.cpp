@@ -10,7 +10,7 @@ namespace avalon {
     /**
      * the constructor expects the token with source code information
      */
-    list_constructor_expression::list_constructor_expression(token& tok) : m_tok(tok) {
+    list_constructor_expression::list_constructor_expression(token& tok) : m_tok(tok), m_type_instance_from_parser(false) {
     }
 
     /**
@@ -30,6 +30,16 @@ namespace avalon {
     }
 
     /**
+     * set_type_instance
+     * sets the type instance of this expression with the possibility of specifying
+     * if the parser (true case) set the type instance or the inference engine (false case)
+     */
+    void list_constructor_expression::set_type_instance(type_instance& instance, bool from_parser) {
+        m_instance = instance;
+        m_type_instance_from_parser = from_parser;
+    }
+
+    /**
      * get_type_instance
      * returns the type instance of this expression
      */
@@ -46,6 +56,15 @@ namespace avalon {
             return true;
         else
             return false;
+    }
+
+    /**
+     * type_instance_from_parser
+     * returns true if the type instance was set by the parser
+     * this will happen when the user specifies a type directly on an expression
+     */
+    bool list_constructor_expression::type_instance_from_parser() const {
+        return m_type_instance_from_parser;
     }
 
     /**

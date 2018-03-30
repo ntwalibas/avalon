@@ -35,6 +35,13 @@ namespace avalon {
         void set_type_instance(type_instance& instance);
 
         /**
+         * set_type_instance
+         * sets the type instance of this expression with the possibility of specifying
+         * if the parser (true case) set the type instance or the inference engine (false case)
+         */
+        void set_type_instance(type_instance& instance, bool from_parser);
+
+        /**
          * get_type_instance
          * returns the type instance of this expression
          */
@@ -45,6 +52,13 @@ namespace avalon {
          * returns true if the type instance is not star
          */
         bool has_type_instance();
+
+        /**
+         * type_instance_from_parser
+         * returns true if the type instance was set by the parser
+         * this will happen when the user specifies a type directly on an expression
+         */
+        bool type_instance_from_parser() const;
         
         /**
          * is_identifier_expression
@@ -64,6 +78,11 @@ namespace avalon {
          * the token with source code information
          */
         token m_tok;
+
+        /*
+         * whether the type instance is from the parser
+         */
+        bool m_type_instance_from_parser;
 
         /*
          * type instance of this expression

@@ -1741,7 +1741,7 @@ parser::parser(
         std::shared_ptr<list_expression> list_expr = std::make_shared<list_expression>(* left_bracket);
 
         // if the next token is not a closing bracket, then we don't have an empty list
-        if(check_next(RIGHT_BRACKET) == false) {
+        if(check(RIGHT_BRACKET) == false) {
             std::shared_ptr<expr> next_element = nullptr;
             do {
                 next_element = parse_expression();
@@ -1769,7 +1769,7 @@ parser::parser(
         std::shared_ptr<map_expression> map_expr = std::make_shared<map_expression>(* left_brace);
 
         // if the next token is not a closing brace, then we don't have an empty map
-        if(check_next(RIGHT_BRACE) == false) {
+        if(check(RIGHT_BRACE) == false) {
             std::shared_ptr<expr> key = nullptr;
             std::shared_ptr<expr> value = nullptr;
             do {

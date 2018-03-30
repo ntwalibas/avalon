@@ -109,6 +109,7 @@ namespace avalon {
         token tok = tup_expr -> get_token();
         std::shared_ptr<type> tup_type = std::make_shared<type>(tok, VALID);
         type_instance instance(tok, tup_type, "*");
+        instance.set_category(TUPLE);
 
         // we fill in the type instance parameters
         std::vector<std::shared_ptr<expr> >& elements = tup_expr -> get_elements();

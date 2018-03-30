@@ -462,16 +462,16 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
      */
     bool type_instance::is_abstract() {
         if(m_type == nullptr)
-            return false;
-        else
             return true;
+        else
+            return false;
     }
 
     bool type_instance::is_abstract() const {
         if(m_type == nullptr)
-            return false;
-        else
             return true;
+        else
+            return false;
     }
 
     /**

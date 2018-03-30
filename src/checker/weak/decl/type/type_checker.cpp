@@ -88,16 +88,7 @@ namespace avalon {
             token tok = instance.get_token();
             std::shared_ptr<type> ty = std::make_shared<type>(tok, VALID);
             instance.set_type(ty);
-            if(instance.get_category() == TUPLE) {
-                instance.set_category(TUPLE);
-            }
-            else if(instance.get_category() == LIST) {
-                instance.set_category(LIST);
-            }
-            else if(instance.get_category() == MAP) {
-                instance.set_category(MAP);
-            }
-        }        
+        }
 
         return ret;
     }

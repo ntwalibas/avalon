@@ -1553,6 +1553,7 @@ parser::parser(
             std::shared_ptr<token>& literal_tok = lookback();
             std::shared_ptr<literal_expression> literal_expr = nullptr;
 
+            // we initialize the literal expression
             if(literal_tok -> get_type() == INTEGER)
                 literal_expr = std::make_shared<literal_expression>(* literal_tok, INTEGER_EXPR, literal_tok -> get_lexeme());
             else if(literal_tok -> get_type() == FLOATING_POINT)
@@ -1561,6 +1562,12 @@ parser::parser(
                 literal_expr = std::make_shared<literal_expression>(* literal_tok, DECIMAL_EXPR, literal_tok -> get_lexeme());
             else if(literal_tok -> get_type() == STRING)
                 literal_expr = std::make_shared<literal_expression>(* literal_tok, STRING_EXPR, literal_tok -> get_lexeme());
+
+            // if the expression is followed by a colon, then a type instance was provided
+            if(match(COLON)) {
+                type_instance expr_instance = parse_type_instance();
+                literal_expr -> set_type_instance(expr_instance, true);
+            }
             
             l_expression = literal_expr;
         }

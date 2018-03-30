@@ -1670,12 +1670,15 @@ parser::parser(
         std::shared_ptr<expr> l_expression = nullptr;
         std::shared_ptr<tuple_expression> tuple_expr = std::make_shared<tuple_expression>(* left_paren);
         tuple_expr -> add_element(first_element);
-
-        std::shared_ptr<expr> next_element = nullptr;
-        do {
-            next_element = parse_expression();
-            tuple_expr -> add_element(next_element);
-        } while(match(COMMA));
+        
+        // we fetch coming expressions if no closing parenthesis was provided
+        if(check(RIGHT_PAREN) ==  false) {
+            std::shared_ptr<expr> next_element = nullptr;
+            do {
+                next_element = parse_expression();
+                tuple_expr -> add_element(next_element);
+            } while(match(COMMA));
+        }        
 
         l_expression = tuple_expr;
         return l_expression;

@@ -1545,8 +1545,7 @@ parser::parser(
         }
         else if(match(LEFT_BRACKET)) {
             std::shared_ptr<token>& left_bracket = lookback();
-            l_expression = parse_list_expression(left_bracket);
-            consume(RIGHT_BRACKET, "Excepted a closing bracket in list expression");
+            l_expression = parse_list_expression(left_bracket);            
         }
         else if(match(LEFT_BRACE)) {
             std::shared_ptr<token>& left_brace = lookback();
@@ -1690,7 +1689,6 @@ parser::parser(
                 tuple_expr -> add_element(next_element);
             } while(match(COMMA));
         }
-
         consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple expression.");
 
         // if the expression is followed by a colon, then a type instance was provided
@@ -1718,6 +1716,13 @@ parser::parser(
                 next_element = parse_expression();
                 list_expr -> add_element(next_element);
             } while(match(COMMA));
+        }
+        consume(RIGHT_BRACKET, "Excepted a closing bracket in list expression");
+
+        // if the expression is followed by a colon, then a type instance was provided
+        if(match(COLON)) {
+            type_instance expr_instance = parse_type_instance();
+            list_expr -> set_type_instance(expr_instance, true);
         }
 
         l_expression = list_expr;

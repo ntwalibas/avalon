@@ -278,7 +278,7 @@ token unit_type_tok(avalon::TYPE, "unit", 0, 0, "__bit__");
 token bool_type_tok(avalon::TYPE, "bool", 0, 0, "__bit__");
 token int_type_tok(avalon::TYPE, "int", 0, 0, "__bit__");
 token dec_type_tok(avalon::TYPE, "dec", 0, 0, "__bit__");
-token float_type_tok(avalon::TYPE, "flaot", 0, 0, "__bit__");
+token float_type_tok(avalon::TYPE, "float", 0, 0, "__bit__");
 token string_type_tok(avalon::TYPE, "string", 0, 0, "__bit__");
 
 /**

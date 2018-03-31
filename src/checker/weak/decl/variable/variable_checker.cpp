@@ -50,7 +50,7 @@ namespace avalon {
             try {
                 type_instance expr_instance = checker.check(variable_val, l_scope, ns_name);
                 // if the expression has a type instance after checking is done, we work with the variable type instance if any
-                if(expr_instance.get_name() != "*" && expr_instance.get_namespace() != "*") {                    
+                if(expr_instance.get_name() != "*") {                    
                     // if the variable has a type instance set, we make sure it is the same as the one on the expression
                     if(variable_decl -> has_type_instance()) {
                         type_instance variable_type_instance = variable_decl -> get_type_instance();
@@ -64,7 +64,7 @@ namespace avalon {
                 }
                 // if the expression has no type instance and the variable has none as well, this is an error
                 // this prevents code like "var x = []" because we can't deduce the type of "x"
-                else if(expr_instance.get_name() == "*" && expr_instance.get_namespace() == "*" && variable_decl -> has_type_instance() ==  false) {
+                else if(expr_instance.get_name() == "*" && variable_decl -> has_type_instance() ==  false) {
                     throw invalid_variable(variable_decl -> get_token(), "Variable declaration lacks type instance and none could be derived from the initializer expression. Please provide one.");
                 }
             } catch(invalid_expression err) {

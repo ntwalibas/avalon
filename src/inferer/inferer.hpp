@@ -41,6 +41,12 @@ namespace avalon {
          * infers the type instance of a tuple
          */
         static type_instance infer_tuple(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
+
+        /**
+         * infer_list
+         * infers the type instance of a list
+         */
+        static type_instance infer_list(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
     };
 }
 

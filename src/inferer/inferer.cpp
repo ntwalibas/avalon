@@ -6,6 +6,7 @@
 #include "program/ast/expr/underscore_expression.hpp"
 #include "program/ast/expr/literal_expression.hpp"
 #include "program/ast/expr/tuple_expression.hpp"
+#include "program/ast/expr/list_expression.hpp"
 #include "program/ast/expr/expr.hpp"
 
 /* Symbol table */
@@ -41,6 +42,9 @@ namespace avalon {
         }
         else if(an_expression -> is_tuple_expression()) {
             return inferer::infer_tuple(an_expression, l_scope, ns_name);
+        }
+        else if(an_expression -> is_list_expression()) {
+            return inferer::infer_list(an_expression, l_scope, ns_name);
         }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
@@ -187,6 +191,72 @@ namespace avalon {
         else {
             tup_expr -> set_type_instance(infered_type_instance, false);
             return infered_type_instance;
-        }        
+        }
+    }
+
+    /**
+     * infer_list
+     * infers the type instance of a list
+     */
+    type_instance inferer::infer_list(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<list_expression> const & list_expr = std::static_pointer_cast<list_expression>(an_expression);
+        
+        // if the expression already has a type instance set, we return that
+        if(list_expr -> type_instance_from_parser() == false && list_expr -> has_type_instance() == true) {
+            return list_expr -> get_type_instance();
+        }
+
+        // if on the other hand a type instance from the parser was posted, we type check check it
+        type_instance parser_type_instance;
+        bool has_parser_type_instance = false;
+        if(list_expr -> type_instance_from_parser() == true) {
+            has_parser_type_instance = true;
+            parser_type_instance = list_expr -> get_type_instance();
+
+            try {
+                // we typecheck the parser type instance
+                std::pair<bool,bool> res = type_instance_checker::complex_check(parser_type_instance, l_scope, ns_name);
+                // we don't allow parametrized type instances to be bound to expressions
+                if (res.second == true) {
+                    throw invalid_type(parser_type_instance.get_token(), "Parametrized types cannot be used on expressions.");
+                }
+            } catch(invalid_type err) {
+                throw err;
+            }
+        }
+
+        // if the list is empty, we return the type instance on the list
+        // it can be a parser provided one or the generic type instance (signaling a lack of user provided type instance)
+        std::vector<std::shared_ptr<expr> >& elements = list_expr -> get_elements();
+        if(elements.size() == 0) {
+            return list_expr -> get_type_instance();
+        }
+
+        // if we do have at least one element in the list, then its type instance is that of the first element
+        // we leave it to the check to make sure other elements have the same type instance as the first one
+        std::shared_ptr<expr>& first_element = elements[0];
+        type_instance first_element_instance = inferer::infer(first_element, l_scope, ns_name);
+
+        // we build the list type instance
+        token tok = list_expr -> get_token();
+        std::shared_ptr<type> list_type = std::make_shared<type>(tok, VALID);
+        type_instance infered_type_instance(tok, list_type, "*");
+        infered_type_instance.set_category(LIST);
+        infered_type_instance.add_param(first_element_instance);
+
+        // if we have type instance from the parser we compare it with the infered type
+        // and if they equal, we keep the parser type instance
+        if(has_parser_type_instance) {
+            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
+                throw invalid_type(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            }
+            else {
+                return parser_type_instance;
+            }
+        }
+        else {
+            list_expr -> set_type_instance(infered_type_instance, false);
+            return infered_type_instance;
+        }
     }
 }

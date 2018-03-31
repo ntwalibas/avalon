@@ -45,10 +45,10 @@ namespace avalon {
      * returns true if the type instance is not star
      */
     bool binary_expression::has_type_instance() {
-        if(m_instance.get_name() == "*" && m_instance.get_namespace() == "*")
-            return true;
-        else
+        if(m_instance.get_name() == "*")
             return false;
+        else
+            return true;
     }
 
     /**

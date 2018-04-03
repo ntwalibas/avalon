@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <utility>
 #include <memory>
 #include <string>
 
@@ -7,6 +8,7 @@
 #include "program/ast/expr/literal_expression.hpp"
 #include "program/ast/expr/tuple_expression.hpp"
 #include "program/ast/expr/list_expression.hpp"
+#include "program/ast/expr/map_expression.hpp"
 #include "program/ast/expr/expr.hpp"
 
 /* Symbol table */
@@ -45,6 +47,9 @@ namespace avalon {
         }
         else if(an_expression -> is_list_expression()) {
             return inferer::infer_list(an_expression, l_scope, ns_name);
+        }
+        else if(an_expression -> is_map_expression()) {
+            return inferer::infer_map(an_expression, l_scope, ns_name);
         }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
@@ -213,6 +218,11 @@ namespace avalon {
             has_parser_type_instance = true;
             parser_type_instance = list_expr -> get_type_instance();
 
+            // make sure the type instance is of type LIST
+            if(parser_type_instance.get_category() != LIST) {
+                throw invalid_type(parser_type_instance.get_token(), "Excepted a list type instance to be attached to a list expression.");
+            }
+
             try {
                 // we typecheck the parser type instance
                 std::pair<bool,bool> res = type_instance_checker::complex_check(parser_type_instance, l_scope, ns_name);
@@ -256,6 +266,79 @@ namespace avalon {
         }
         else {
             list_expr -> set_type_instance(infered_type_instance, false);
+            return infered_type_instance;
+        }
+    }
+
+    /**
+     * infer_map
+     * infers the type instance of a map
+     */
+    type_instance inferer::infer_map(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<map_expression> const & map_expr = std::static_pointer_cast<map_expression>(an_expression);
+        
+        // if the expression already has a type instance set, we return that
+        if(map_expr -> type_instance_from_parser() == false && map_expr -> has_type_instance() == true) {
+            return map_expr -> get_type_instance();
+        }
+
+        // if on the other hand a type instance from the parser was posted, we type check it
+        type_instance parser_type_instance;
+        bool has_parser_type_instance = false;
+        if(map_expr -> type_instance_from_parser() == true) {
+            has_parser_type_instance = true;
+            parser_type_instance = map_expr -> get_type_instance();
+
+            // make sure the type instance is of type MAP
+            if(parser_type_instance.get_category() != MAP) {
+                throw invalid_type(parser_type_instance.get_token(), "Excepted a map type instance to be attached to a map expression.");
+            }
+
+            try {
+                // we typecheck the parser type instance
+                std::pair<bool,bool> res = type_instance_checker::complex_check(parser_type_instance, l_scope, ns_name);
+                // we don't allow parametrized type instances to be bound to expressions
+                if (res.second == true) {
+                    throw invalid_type(parser_type_instance.get_token(), "Parametrized types cannot be used on expressions.");
+                }
+            } catch(invalid_type err) {
+                throw err;
+            }
+        }
+
+        // if the list is empty, we return the type instance on the list
+        // it can be a parser provided one or the generic type instance (signaling a lack of user provided type instance)
+        std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > >& elements = map_expr -> get_elements();
+        if(elements.size() == 0) {
+            return map_expr -> get_type_instance();
+        }
+
+        // if we do have at least one element in the list, then its type instance is that of the first element
+        // we leave it to the check to make sure other elements have the same type instance as the first one
+        std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> >& first_element = elements[0];
+        type_instance first_element_key_instance = inferer::infer(first_element.first, l_scope, ns_name);
+        type_instance first_element_value_instance = inferer::infer(first_element.second, l_scope, ns_name);
+
+        // we build the list type instance
+        token tok = map_expr -> get_token();
+        std::shared_ptr<type> map_type = std::make_shared<type>(tok, VALID);
+        type_instance infered_type_instance(tok, map_type, "*");
+        infered_type_instance.set_category(MAP);
+        infered_type_instance.add_param(first_element_key_instance);
+        infered_type_instance.add_param(first_element_value_instance);
+
+        // if we have type instance from the parser we compare it with the infered type
+        // and if they equal, we keep the parser type instance
+        if(has_parser_type_instance) {
+            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
+                throw invalid_type(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            }
+            else {
+                return parser_type_instance;
+            }
+        }
+        else {
+            map_expr -> set_type_instance(infered_type_instance, false);
             return infered_type_instance;
         }
     }

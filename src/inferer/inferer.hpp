@@ -47,6 +47,12 @@ namespace avalon {
          * infers the type instance of a list
          */
         static type_instance infer_list(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
+
+        /**
+         * infer_map
+         * infers the type instance of a map
+         */
+        static type_instance infer_map(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
     };
 }
 

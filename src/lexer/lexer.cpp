@@ -428,6 +428,7 @@ lexer::lexer(
                 // if we are inside parenthesis or braces or brackets, we don't emit a NEWLINE token
                 if((m_parens_levels > 0) | (m_braces_levels > 0) | (m_brackets_levels > 0)) {
                     m_line++;
+                    m_column = 1;
                     break;
                 }
 

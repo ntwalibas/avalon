@@ -101,7 +101,7 @@ parse_error::parse_error(error& error_handler, token tok, bool fatal, const std:
 
 parser::parser(
     std::vector<std::shared_ptr<token> >& tokens, const std::string& source_path, error& error_handler
-) : m_tokens(tokens), m_source_path(source_path), m_error_handler(error_handler), m_current(0)
+) : m_tokens(tokens), m_source_path(source_path), m_error_handler(error_handler), m_current(0), m_inside_map(false)
 {
 }
     
@@ -1518,7 +1518,7 @@ parser::parser(
             std::shared_ptr<token>& id_tok = consume(IDENTIFIER, "Expected an identifier.");
             std::shared_ptr<identifier_expression> id_expr = std::make_shared<identifier_expression>(* id_tok);
             // if the expression is followed by a colon, then a type instance was provided
-            if(match(COLON)) {
+            if(m_inside_map == false && match(COLON)) {
                 type_instance expr_instance = parse_type_instance();
                 id_expr -> set_type_instance(expr_instance, true);
             }
@@ -1530,7 +1530,7 @@ parser::parser(
             if(match(RIGHT_PAREN)) {
                 std::shared_ptr<tuple_expression> tuple_expr = std::make_shared<tuple_expression>(* left_paren);
                 // if the expression is followed by a colon, then a type instance was provided
-                if(match(COLON)) {
+                if(m_inside_map == false && match(COLON)) {
                     type_instance expr_instance = parse_type_instance();
                     tuple_expr -> set_type_instance(expr_instance, true);
                 }
@@ -1571,7 +1571,7 @@ parser::parser(
                 literal_expr = std::make_shared<literal_expression>(* literal_tok, STRING_EXPR, literal_tok -> get_lexeme());
 
             // if the expression is followed by a colon, then a type instance was provided
-            if(match(COLON)) {
+            if(m_inside_map == false && match(COLON)) {
                 type_instance expr_instance = parse_type_instance();
                 literal_expr -> set_type_instance(expr_instance, true);
             }
@@ -1617,7 +1617,7 @@ parser::parser(
         consume(RIGHT_PAREN, "Expected a closing parenthesis after the function call arguments.");
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(match(COLON)) {
+        if(m_inside_map == false && match(COLON)) {
             type_instance_provided = true;
             type_instance expr_instance = parse_type_instance();
             call_expr -> set_type_instance(expr_instance, true);
@@ -1659,7 +1659,7 @@ parser::parser(
         consume(RIGHT_BRACKET, "Excepted a closing bracket in list constructor expression");
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(match(COLON)) {
+        if(m_inside_map == false && match(COLON)) {
             type_instance expr_instance = parse_type_instance();
             list_cons_expr -> set_type_instance(expr_instance, true);
         }
@@ -1693,7 +1693,7 @@ parser::parser(
         consume(RIGHT_BRACE, "Excepted a closing brace in map constructor expression");
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(match(COLON)) {
+        if(m_inside_map == false && match(COLON)) {
             type_instance expr_instance = parse_type_instance();
             map_cons_expr -> set_type_instance(expr_instance, true);
         }
@@ -1723,7 +1723,7 @@ parser::parser(
         consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple expression.");
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(match(COLON)) {
+        if(m_inside_map == false && match(COLON)) {
             type_instance expr_instance = parse_type_instance();
             tuple_expr -> set_type_instance(expr_instance, true);
         }
@@ -1751,7 +1751,7 @@ parser::parser(
         consume(RIGHT_BRACKET, "Excepted a closing bracket in list expression");
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(match(COLON)) {
+        if(m_inside_map == false && match(COLON)) {
             type_instance expr_instance = parse_type_instance();
             list_expr -> set_type_instance(expr_instance, true);
         }
@@ -1771,18 +1771,20 @@ parser::parser(
         // if the next token is not a closing brace, then we don't have an empty map
         if(check(RIGHT_BRACE) == false) {
             std::shared_ptr<expr> key = nullptr;
-            std::shared_ptr<expr> value = nullptr;
+            std::shared_ptr<expr> value = nullptr;            
             do {
+                m_inside_map = true;
                 key = parse_expression();
+                m_inside_map = false;
                 consume(COLON, "Excepted colon after key in map expression.");
                 value = parse_expression();
                 map_expr -> add_element(key, value);
             } while(match(COMMA));
         }
-        consume(RIGHT_BRACE, "Excepted a closing bracket in map expression");
+        consume(RIGHT_BRACE, "Excepted a closing bracket in map expression");        
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(match(COLON)) {
+        if(m_inside_map == false && match(COLON)) {
             type_instance expr_instance = parse_type_instance();
             map_expr -> set_type_instance(expr_instance, true);
         }

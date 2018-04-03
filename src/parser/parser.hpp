@@ -466,6 +466,13 @@ namespace avalon {
          */
         program m_program;
 
+        /*
+         * the colon token can follow a primary expression to provide a type instance
+         * but inside maps, it can follow a primary expression when used as a key value
+         * to disambigue both, we require that type instance not be provided alongside expressions used as map keys
+         */
+        bool m_inside_map;
+
         /**
          * lookback
          * returns the token that comes before the current token being worked on

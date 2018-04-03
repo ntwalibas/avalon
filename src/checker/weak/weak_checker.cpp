@@ -43,37 +43,7 @@ namespace avalon {
      * - the error handler to use in order to display errors
      */
     weak_checker::weak_checker(gtable& gtab, const std::string& source_path, error& error_handler) : m_source_path(source_path), m_error_handler(error_handler), m_gtable(gtab) {
-        /* we create built-in types to be made available to all programs being checked */
-        // void type
-        std::shared_ptr<type> void_type = std::make_shared<type>(void_type_tok, VALID);
-        m_bits.push_back(void_type);
-
-        // unit type
-        std::shared_ptr<type> unit_type = std::make_shared<type>(unit_type_tok, VALID);
-        default_constructor unit_cons(unit_cons_tok, unit_type);
-        m_bits.push_back(unit_type);
-
-        // bool type
-        std::shared_ptr<type> bool_type = std::make_shared<type>(bool_type_tok, VALID);
-        default_constructor true_cons(true_cons_tok, bool_type);
-        default_constructor false_cons(false_cons_tok, bool_type);
-        m_bits.push_back(bool_type);
-
-        // integer type
-        std::shared_ptr<type> int_type = std::make_shared<type>(int_type_tok, VALID);
-        m_bits.push_back(int_type);
-
-        // decimal type
-        std::shared_ptr<type> dec_type = std::make_shared<type>(dec_type_tok, VALID);
-        m_bits.push_back(dec_type);
-
-        // floating point type
-        std::shared_ptr<type> float_type = std::make_shared<type>(float_type_tok, VALID);
-        m_bits.push_back(float_type);
-
-        // string type
-        std::shared_ptr<type> string_type = std::make_shared<type>(string_type_tok, VALID);
-        m_bits.push_back(string_type);
+        create_declarations();        
     }
 
     /**
@@ -152,8 +122,14 @@ namespace avalon {
         std::shared_ptr<scope>& l_scope = prog.get_scope();
 
         // first, we "import" built-in types in the current program
-        for(auto& bit : m_bits)
+        for(auto& bit : m_bits) {
             import_type(bit, l_scope, "*");
+        }
+
+        // then we "import" built-in functions in the current program
+        for(auto& bif : m_bifs) {
+            import_function(bif, l_scope, "*");
+        }
 
         // we add the namespace to the scope
         l_scope -> add_namespace(namespace_decl -> get_name());
@@ -337,5 +313,239 @@ namespace avalon {
      */
     check_error weak_checker::checking_error(bool fatal, const token& tok, const std::string& message) {
         return check_error(m_error_handler, tok, fatal, message);
+    }
+
+    /**
+     * create_declarations
+     * this functions creates built-in declarations to be used during this checking
+     */
+    void weak_checker::create_declarations() {
+        /** Built-in types **/
+        // void type
+        std::shared_ptr<type> void_type = std::make_shared<type>(void_type_tok, VALID);
+        m_bits.push_back(void_type);
+
+        // unit type
+        std::shared_ptr<type> unit_type = std::make_shared<type>(unit_type_tok, VALID);
+        default_constructor unit_cons(unit_cons_tok, unit_type);
+        m_bits.push_back(unit_type);
+
+        // bool type
+        std::shared_ptr<type> bool_type = std::make_shared<type>(bool_type_tok, VALID);
+        default_constructor true_cons(true_cons_tok, bool_type);
+        default_constructor false_cons(false_cons_tok, bool_type);
+        m_bits.push_back(bool_type);
+
+        // integer type
+        std::shared_ptr<type> int_type = std::make_shared<type>(int_type_tok, VALID);
+        m_bits.push_back(int_type);
+
+        // decimal type
+        std::shared_ptr<type> dec_type = std::make_shared<type>(dec_type_tok, VALID);
+        m_bits.push_back(dec_type);
+
+        // floating point type
+        std::shared_ptr<type> float_type = std::make_shared<type>(float_type_tok, VALID);
+        m_bits.push_back(float_type);
+
+        // string type
+        std::shared_ptr<type> string_type = std::make_shared<type>(string_type_tok, VALID);
+        m_bits.push_back(string_type);
+
+
+
+        /** Built-in functions **/
+        /* functions for the bool type */
+        type_instance bool_instance(bool_type_tok, bool_type, "*");
+        // variables
+        variable bool_param(var_one_tok, false);
+        bool_param.set_type_instance(bool_instance);
+
+        // boolean and
+        std::shared_ptr<function> bool_and_function = std::make_shared<function>(and_function_tok);
+        bool_and_function -> add_param(bool_param);
+        bool_and_function -> add_param(bool_param);
+        bool_and_function -> set_return_type_instance(bool_instance);
+        m_bifs.push_back(bool_and_function);
+
+        // boolean or
+        std::shared_ptr<function> bool_or_function = std::make_shared<function>(or_function_tok);
+        bool_or_function -> add_param(bool_param);
+        bool_or_function -> add_param(bool_param);
+        bool_or_function -> set_return_type_instance(bool_instance);
+        m_bifs.push_back(bool_or_function);
+
+        // boolean not
+        std::shared_ptr<function> bool_not_function = std::make_shared<function>(not_function_tok);
+        bool_not_function -> add_param(bool_param);
+        bool_not_function -> set_return_type_instance(bool_instance);
+        m_bifs.push_back(bool_not_function);
+
+
+        /* functions for the integer type */
+        type_instance int_instance(int_type_tok, int_type, "*");
+        // variables
+        variable int_param(var_one_tok, false);
+        int_param.set_type_instance(int_instance);
+
+        // unary positive
+        std::shared_ptr<function> int_pos_function = std::make_shared<function>(pos_function_tok);
+        int_pos_function -> add_param(int_param);
+        int_pos_function -> set_return_type_instance(int_instance);
+        m_bifs.push_back(int_pos_function);
+
+        // unary negative
+        std::shared_ptr<function> int_neg_function = std::make_shared<function>(neg_function_tok);
+        int_neg_function -> add_param(int_param);
+        int_neg_function -> set_return_type_instance(int_instance);
+        m_bifs.push_back(int_neg_function);
+
+        // integer addition
+        std::shared_ptr<function> int_add_function = std::make_shared<function>(add_function_tok);
+        int_add_function -> add_param(int_param);
+        int_add_function -> add_param(int_param);
+        int_add_function -> set_return_type_instance(int_instance);
+        m_bifs.push_back(int_add_function);
+
+        // integer substraction
+        std::shared_ptr<function> int_sub_function = std::make_shared<function>(sub_function_tok);
+        int_sub_function -> add_param(int_param);
+        int_sub_function -> add_param(int_param);
+        int_sub_function -> set_return_type_instance(int_instance);
+        m_bifs.push_back(int_sub_function);
+
+        // integer multiplication
+        std::shared_ptr<function> int_mul_function = std::make_shared<function>(mul_function_tok);
+        int_mul_function -> add_param(int_param);
+        int_mul_function -> add_param(int_param);
+        int_mul_function -> set_return_type_instance(int_instance);
+        m_bifs.push_back(int_mul_function);
+
+        // integer division
+        std::shared_ptr<function> int_div_function = std::make_shared<function>(div_function_tok);
+        int_div_function -> add_param(int_param);
+        int_div_function -> add_param(int_param);
+        int_div_function -> set_return_type_instance(int_instance);
+        m_bifs.push_back(int_div_function);
+
+        // integer hashing
+        std::shared_ptr<function> int_hash_function = std::make_shared<function>(hash_function_tok);
+        int_hash_function -> add_param(int_param);
+        int_hash_function -> set_return_type_instance(int_instance);
+        m_bifs.push_back(int_hash_function);
+
+
+        /* functions for the decimal type */
+        type_instance dec_instance(dec_type_tok, dec_type, "*");
+        // variables
+        variable dec_param(var_one_tok, false);
+        dec_param.set_type_instance(dec_instance);
+
+        // unary positive
+        std::shared_ptr<function> dec_pos_function = std::make_shared<function>(pos_function_tok);
+        dec_pos_function -> add_param(dec_param);
+        dec_pos_function -> set_return_type_instance(dec_instance);
+        m_bifs.push_back(dec_pos_function);
+
+        // unary negative
+        std::shared_ptr<function> dec_neg_function = std::make_shared<function>(neg_function_tok);
+        dec_neg_function -> add_param(dec_param);
+        dec_neg_function -> set_return_type_instance(dec_instance);
+        m_bifs.push_back(dec_neg_function);
+
+        // decimal addition
+        std::shared_ptr<function> dec_add_function = std::make_shared<function>(add_function_tok);
+        dec_add_function -> add_param(dec_param);
+        dec_add_function -> add_param(dec_param);
+        dec_add_function -> set_return_type_instance(dec_instance);
+        m_bifs.push_back(dec_add_function);
+
+        // decimal substraction
+        std::shared_ptr<function> dec_sub_function = std::make_shared<function>(sub_function_tok);
+        dec_sub_function -> add_param(dec_param);
+        dec_sub_function -> add_param(dec_param);
+        dec_sub_function -> set_return_type_instance(dec_instance);
+        m_bifs.push_back(dec_sub_function);
+
+        // decimal multiplication
+        std::shared_ptr<function> dec_mul_function = std::make_shared<function>(mul_function_tok);
+        dec_mul_function -> add_param(dec_param);
+        dec_mul_function -> add_param(dec_param);
+        dec_mul_function -> set_return_type_instance(dec_instance);
+        m_bifs.push_back(dec_mul_function);
+
+        // decimal division
+        std::shared_ptr<function> dec_div_function = std::make_shared<function>(div_function_tok);
+        dec_div_function -> add_param(dec_param);
+        dec_div_function -> add_param(dec_param);
+        dec_div_function -> set_return_type_instance(dec_instance);
+        m_bifs.push_back(dec_div_function);
+
+
+        /* functions for the floating point type */
+        type_instance float_instance(float_type_tok, float_type, "*");
+        // variables
+        variable float_param(var_one_tok, false);
+        float_param.set_type_instance(float_instance);
+
+        // unary positive
+        std::shared_ptr<function> float_pos_function = std::make_shared<function>(pos_function_tok);
+        float_pos_function -> add_param(float_param);
+        float_pos_function -> set_return_type_instance(float_instance);
+        m_bifs.push_back(float_pos_function);
+
+        // unary negative
+        std::shared_ptr<function> float_neg_function = std::make_shared<function>(neg_function_tok);
+        float_neg_function -> add_param(float_param);
+        float_neg_function -> set_return_type_instance(float_instance);
+        m_bifs.push_back(float_neg_function);
+
+        // floating point addition
+        std::shared_ptr<function> float_add_function = std::make_shared<function>(add_function_tok);
+        float_add_function -> add_param(float_param);
+        float_add_function -> add_param(float_param);
+        float_add_function -> set_return_type_instance(float_instance);
+        m_bifs.push_back(float_add_function);
+
+        // floating point substraction
+        std::shared_ptr<function> float_sub_function = std::make_shared<function>(sub_function_tok);
+        float_sub_function -> add_param(float_param);
+        float_sub_function -> add_param(float_param);
+        float_sub_function -> set_return_type_instance(float_instance);
+        m_bifs.push_back(float_sub_function);
+
+        // floating point multiplication
+        std::shared_ptr<function> float_mul_function = std::make_shared<function>(mul_function_tok);
+        float_mul_function -> add_param(float_param);
+        float_mul_function -> add_param(float_param);
+        float_mul_function -> set_return_type_instance(float_instance);
+        m_bifs.push_back(float_mul_function);
+
+        // floating point division
+        std::shared_ptr<function> float_div_function = std::make_shared<function>(div_function_tok);
+        float_div_function -> add_param(float_param);
+        float_div_function -> add_param(float_param);
+        float_div_function -> set_return_type_instance(float_instance);
+        m_bifs.push_back(float_div_function);
+
+
+        /* function for the string type */
+        type_instance string_instance(string_type_tok, string_type, "*");
+        // variables
+        variable string_param(var_one_tok, false);
+        string_param.set_type_instance(string_instance);
+
+        // string concatenation
+        std::shared_ptr<function> string_concat_function = std::make_shared<function>(add_function_tok);
+        string_concat_function -> add_param(string_param);
+        string_concat_function -> add_param(string_param);
+        string_concat_function -> set_return_type_instance(string_instance);
+        m_bifs.push_back(string_concat_function);
+
+        // string hashing
+        std::shared_ptr<function> string_hash_function = std::make_shared<function>(hash_function_tok);
+        string_hash_function -> add_param(string_param);
+        string_hash_function -> set_return_type_instance(int_instance);
+        m_bifs.push_back(string_hash_function);
     }
 }

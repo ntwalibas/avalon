@@ -111,9 +111,14 @@ namespace avalon {
         program m_prog;
 
         /*
-         * vector of default types to be made available throughout the program
+         * vector of built-in types to be made available throughout the program
          */
         std::vector<std::shared_ptr<type> > m_bits;
+
+        /*
+         * vector of built-in functions to be made available throughout the program
+         */
+        std::vector<std::shared_ptr<function> > m_bifs;
 
         /**
          * import_declarations
@@ -144,6 +149,12 @@ namespace avalon {
          * contructs and returns a check_error exception
          */
         check_error checking_error(bool fatal, const token& tok, const std::string& message);
+
+        /**
+         * create_declarations
+         * this functions creates built-in declarations to be used during this checking
+         */
+        void create_declarations();
     };
 }
 

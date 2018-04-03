@@ -5,6 +5,7 @@
 #include <string>
 
 #include "program/ast/stmt/expression_stmt.hpp"
+#include "program/ast/expr/call_expression.hpp"
 #include "program/symtable/scope.hpp"
 #include "program/ast/expr/expr.hpp"
 #include "program/ast/decl/type.hpp"
@@ -70,26 +71,26 @@ namespace avalon {
          * this function determines the kind of expression the call expression is (default constructor, record constructor or function call)
          * then dispatches the checking to the actual checker.
          */
-        type_instance check_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
         /**
          * check_default_constructor
          * we validate the expressions that occur within the constructor.
          */
-        type_instance check_default_constructor(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
         /**
          * check_record_constructor
          * we validate the expressions that occur within the constructor.
          */
-        type_instance check_record_constructor(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
         /**
          * check_function_call
          * we validate the expressions that were passed as argument to the function
          * we also make sure that all arguments were named or none was
          */
-        type_instance check_function_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
         /**
          * check_list_constructor

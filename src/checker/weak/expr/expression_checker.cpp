@@ -7,6 +7,7 @@
 /* Expressions */
 #include "program/ast/expr/tuple_expression.hpp"
 #include "program/ast/expr/list_expression.hpp"
+#include "program/ast/expr/call_expression.hpp"
 #include "program/ast/expr/map_expression.hpp"
 #include "program/ast/expr/expr.hpp"
 
@@ -28,6 +29,7 @@
 #include "inferer/inferer.hpp"
 
 /* Exceptions */
+#include "checker/exceptions/invalid_expression.hpp"
 #include "checker/exceptions/invalid_type.hpp"
 
 
@@ -67,6 +69,9 @@ namespace avalon {
         }
         else if(an_expression -> is_map_expression()) {
             return check_map(an_expression, l_scope, ns_name);
+        }
+        else if(an_expression -> is_call_expression()) {
+            return check_call(an_expression, l_scope, ns_name, ns_name);
         }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in expression checker.");
@@ -115,13 +120,12 @@ namespace avalon {
     type_instance expression_checker::check_list(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<list_expression> const & list_expr = std::static_pointer_cast<list_expression>(an_expression);
         std::vector<std::shared_ptr<expr> >& elements = list_expr -> get_elements();
-        type_instance list_type_instance = inferer::infer(an_expression, l_scope, ns_name);
 
         // if the list is not empty, type check all its elements
         if(elements.size() > 0) {
             // we get the type instance of the first element as it determines the type instance of the whole list
             std::shared_ptr<expr>& first_element = elements[0];
-            type_instance first_element_instance = inferer::infer(first_element, l_scope, ns_name);
+            type_instance first_element_instance = check(first_element, l_scope, ns_name);
 
             // we make sure each element in the list has the same type instance as the first element
             type_instance element_instance;
@@ -129,13 +133,13 @@ namespace avalon {
             for(auto& element : elements) {
                 element_instance = check(element, l_scope, ns_name);
                 if(type_instance_weak_compare(first_element_instance, element_instance) == false) {
-                    throw invalid_type(list_expr -> get_token(), "Element number <" + std::to_string(index) + "> in the list has type instance <" + mangle_type_instance(element_instance) + "> while the list has type instance <" + mangle_type_instance(list_type_instance) + ">. Please ensure each element in the list is of the proper type instance.");
+                    throw invalid_type(list_expr -> get_token(), "Element number <" + std::to_string(index) + "> in the list has type instance <" + mangle_type_instance(element_instance) + "> while the list has type instance <[" + mangle_type_instance(first_element_instance) + "]>. Please ensure each element in the list is of the proper type instance.");
                 }
                 index = index + 1;
             }
         }
 
-        return list_type_instance;
+        return inferer::infer(an_expression, l_scope, ns_name);;
     }
 
     /**
@@ -146,6 +150,33 @@ namespace avalon {
     type_instance expression_checker::check_map(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<map_expression> const & map_expr = std::static_pointer_cast<map_expression>(an_expression);
         std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > >& elements = map_expr -> get_elements();
+        
+        // if the map is not empty, type check all its elements
+        if(elements.size() > 0) {
+            // we make sure each element in the map has the type instance that map up the map
+            std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> >& first_element = elements[0];
+            type_instance map_key_instance = check(first_element.first, l_scope, ns_name);
+            type_instance map_value_instance = check(first_element.second, l_scope, ns_name);
+
+            // we make sure each element in the map has the same type instance as the first element
+            type_instance element_key_instance;
+            type_instance element_value_instance;
+            int index = 0;
+            for(auto& element : elements) {
+                element_key_instance = check(element.first, l_scope, ns_name);
+                element_value_instance = check(element.second, l_scope, ns_name);
+                if(
+                   type_instance_weak_compare(map_key_instance, element_key_instance) == false ||
+                   type_instance_weak_compare(map_value_instance, element_value_instance) == false
+                ) {
+                    throw invalid_type(map_expr -> get_token(), "Element number <" + std::to_string(index) + "> in the list has type instance <" + mangle_type_instance(element_key_instance) + ":" + mangle_type_instance(element_value_instance) + "> while the map has type instance <{" + mangle_type_instance(map_key_instance) + ":" + mangle_type_instance(map_value_instance) + "}>. Please ensure each element in the map is of the proper type instance.");
+                }
+                index = index + 1;
+            }
+        }
+
+        // if we are here, then the map is valid as its subexpressions are valid
+        // we infer the type instance of the map and perform a last check
         type_instance map_type_instance = inferer::infer(an_expression, l_scope, ns_name);
 
         // if the inference engine was able to deduce the type instance of the expression
@@ -182,30 +213,55 @@ namespace avalon {
             }
         }
 
-        // if the map is not empty, type check all its elements
-        if(elements.size() > 0) {
-            // we make sure each element in the map has the type instance that map up the map
-            std::vector<type_instance>& map_instance_params = map_type_instance.get_params();
-            type_instance map_key_instance = map_instance_params[0];
-            type_instance map_value_instance = map_instance_params[1];
-
-            // we make sure each element in the map has the same type instance as the first element
-            type_instance element_key_instance;
-            type_instance element_value_instance;
-            int index = 0;
-            for(auto& element : elements) {
-                element_key_instance = check(element.first, l_scope, ns_name);
-                element_value_instance = check(element.second, l_scope, ns_name);
-                if(
-                   type_instance_weak_compare(map_key_instance, element_key_instance) == false ||
-                   type_instance_weak_compare(map_value_instance, element_value_instance) == false
-                ) {
-                    throw invalid_type(map_expr -> get_token(), "Element number <" + std::to_string(index) + "> in the list has type instance <" + mangle_type_instance(element_key_instance) + ":" + mangle_type_instance(element_value_instance) + "> while the map has type instance <" + mangle_type_instance(map_type_instance) + ">. Please ensure each element in the map is of the proper type instance.");
-                }
-                index = index + 1;
-            }
-        }
-
         return map_type_instance;
+    }
+
+    /**
+     * check_call
+     * this function determines the kind of expression the call expression is (default constructor, record constructor or function call)
+     * then dispatches the checking to the actual checker.
+     */
+    type_instance expression_checker::check_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(an_expression);        
+
+        // we decide if we have a function call or a constructor call
+        if(l_scope -> function_exists(ns_name, call_expr -> get_name())) {
+            return check_function_call(call_expr, l_scope, ns_name, sub_ns_name);
+        }
+        // we check if it is a default constructor or a record constructor
+        else {
+            if(call_expr -> has_record_syntax())
+                return check_record_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+            else
+                return check_default_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+        }
+    }
+
+    /**
+     * check_default_constructor
+     * we validate the expressions that occur within the constructor.
+     */
+    type_instance expression_checker::check_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {        
+        type_instance instance;
+        return instance;
+    }
+
+    /**
+     * check_record_constructor
+     * we validate the expressions that occur within the constructor.
+     */
+    type_instance expression_checker::check_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        type_instance instance;
+        return instance;
+    }
+
+    /**
+     * check_function_call
+     * we validate the expressions that were passed as argument to the function
+     * we also make sure that all arguments were named or none was
+     */
+    type_instance expression_checker::check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        type_instance instance;
+        return instance;
     }
 }

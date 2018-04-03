@@ -266,25 +266,50 @@ avl_string::avl_string(
 
 
 /**
- * Predefined tokens
+ * General token
  */
 token star_tok(MUL, "*", 0, 0, "__bit__");
 
 /**
- * type tokens
+ * Type tokens
  */
-token void_type_tok(avalon::TYPE, "void", 0, 0, "__bit__");
-token unit_type_tok(avalon::TYPE, "unit", 0, 0, "__bit__");
-token bool_type_tok(avalon::TYPE, "bool", 0, 0, "__bit__");
-token int_type_tok(avalon::TYPE, "int", 0, 0, "__bit__");
-token dec_type_tok(avalon::TYPE, "dec", 0, 0, "__bit__");
-token float_type_tok(avalon::TYPE, "float", 0, 0, "__bit__");
-token string_type_tok(avalon::TYPE, "string", 0, 0, "__bit__");
+token void_type_tok(TYPE, "void", 0, 0, "__bit__");
+token unit_type_tok(TYPE, "unit", 0, 0, "__bit__");
+token bool_type_tok(TYPE, "bool", 0, 0, "__bit__");
+token int_type_tok(TYPE, "int", 0, 0, "__bit__");
+token dec_type_tok(TYPE, "dec", 0, 0, "__bit__");
+token float_type_tok(TYPE, "float", 0, 0, "__bit__");
+token string_type_tok(TYPE, "string", 0, 0, "__bit__");
 
 /**
  * constructor tokens
  */
-token unit_cons_tok(avalon::IDENTIFIER, "Unit", 0, 0, "__bic__");
-token true_cons_tok(avalon::IDENTIFIER, "True", 0, 0, "__bic__");
-token false_cons_tok(avalon::IDENTIFIER, "False", 0, 0, "__bic__");
+token unit_cons_tok(IDENTIFIER, "Unit", 0, 0, "__bic__");
+token true_cons_tok(IDENTIFIER, "True", 0, 0, "__bic__");
+token false_cons_tok(IDENTIFIER, "False", 0, 0, "__bic__");
+
+/**
+ * Function tokens
+ */
+token and_function_tok(FUNCTION, "__and__", 0, 0, "__bif__");
+token or_function_tok(FUNCTION, "__or__", 0, 0, "__bif__");
+token not_function_tok(FUNCTION, "__not__", 0, 0, "__bif__");
+token pos_function_tok(FUNCTION, "__pos__", 0, 0, "__bif__");
+token neg_function_tok(FUNCTION, "__neg__", 0, 0, "__bif__");
+token add_function_tok(FUNCTION, "__add__", 0, 0, "__bif__");
+token sub_function_tok(FUNCTION, "__sub__", 0, 0, "__bif__");
+token mul_function_tok(FUNCTION, "__mul__", 0, 0, "__bif__");
+token div_function_tok(FUNCTION, "__div__", 0, 0, "__bif__");
+token mod_function_tok(FUNCTION, "__mod__", 0, 0, "__bif__");
+token getatrr_function_tok(FUNCTION, "__getattr__", 0, 0, "__bif__");
+token setattr_function_tok(FUNCTION, "__setattr__", 0, 0, "__bif__");
+token getitem_function_tok(FUNCTION, "__getitem__", 0, 0, "__bif__");
+token setitem_function_tok(FUNCTION, "__setitem__", 0, 0, "__bif__");
+token hash_function_tok(FUNCTION, "__hash__", 0, 0, "__bif__");
+
+/**
+ * variable tokens
+ */
+token var_one_tok(IDENTIFIER, "__var_one__", 0, 0, "__biv__");
+token var_two_tok(IDENTIFIER, "__var_two__", 0, 0, "__biv__");
 }

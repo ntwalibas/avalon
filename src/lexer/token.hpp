@@ -302,9 +302,13 @@ namespace avalon {
 
 
     /**
-     * Predefined tokens
+     * General token
      */
     extern token star_tok;
+
+    /**
+     * Type tokens
+     */
     extern token void_type_tok;
     extern token unit_type_tok;
     extern token bool_type_tok;
@@ -319,6 +323,31 @@ namespace avalon {
     extern token unit_cons_tok;
     extern token true_cons_tok;
     extern token false_cons_tok;
+
+    /**
+     * Function tokens
+     */
+    extern token and_function_tok;
+    extern token or_function_tok;
+    extern token not_function_tok;
+    extern token pos_function_tok;
+    extern token neg_function_tok;
+    extern token add_function_tok;
+    extern token sub_function_tok;
+    extern token mul_function_tok;
+    extern token div_function_tok;
+    extern token mod_function_tok;
+    extern token getattr_function_tok;
+    extern token setattr_function_tok;
+    extern token getitem_function_tok;
+    extern token setitem_function_tok;
+    extern token hash_function_tok;
+
+    /**
+     * variable tokens
+     */
+    extern token var_one_tok;
+    extern token var_two_tok;
 }
 
 #endif

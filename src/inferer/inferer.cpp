@@ -2,6 +2,7 @@
 #include <utility>
 #include <memory>
 #include <string>
+#include <map>
 
 /* Expressions */
 #include "program/ast/expr/underscore_expression.hpp"
@@ -487,6 +488,86 @@ namespace avalon {
             else {
                 type_instance arg_type_instance = inferer::infer(arg_it -> second, l_scope, ns_name, sub_ns_name);
                 build_type_instance(infered_type_instance, * param_it, arg_type_instance, call_expr -> get_token());
+            }
+        }
+
+        // if we have type instance from the parser we compare it with the infered type
+        // and if they equal, we keep the parser type instance
+        if(has_parser_type_instance) {
+            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
+                throw invalid_type(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            }
+            else {
+                return parser_type_instance;
+            }
+        }
+        else {
+            call_expr -> set_type_instance(infered_type_instance, false);
+            return infered_type_instance;
+        }
+    }
+
+    /**
+     * infer_record_constructor
+     * infers the type instance of a record constructor expression
+     */
+    type_instance inferer::infer_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        // if the expression already has a type instance, we return it
+        if(call_expr -> type_instance_from_parser() == false && call_expr -> has_type_instance() == true) {
+            return call_expr -> get_type_instance();
+        }
+
+        // if on the other hand a type instance from the parser was posted, we type check check it
+        type_instance parser_type_instance;
+        bool has_parser_type_instance = false;
+        if(call_expr -> type_instance_from_parser() == true) {
+            has_parser_type_instance = true;
+            parser_type_instance = call_expr -> get_type_instance();
+
+            try {
+                // we typecheck the parser type instance
+                std::pair<bool,bool> res = type_instance_checker::complex_check(parser_type_instance, l_scope, ns_name);
+                // we don't allow parametrized type instances to be bound to expressions
+                if (res.second == true) {
+                    throw invalid_type(parser_type_instance.get_token(), "Parametrized types cannot be used on expressions.");
+                }
+            } catch(invalid_type err) {
+                throw err;
+            }
+        }
+
+        std::vector<std::pair<token, std::shared_ptr<expr> > >& cons_args = call_expr -> get_arguments();
+        record_constructor& cons = l_scope -> get_record_constructor(sub_ns_name, call_expr -> get_name(), cons_args.size());
+        std::map<token,type_instance>& cons_params = cons.get_params();
+        std::shared_ptr<type>& cons_type = cons.get_type();
+        const std::vector<token>& type_params = cons_type -> get_params();
+        const token& type_token = cons_type -> get_token();
+
+        // we create the type instance for which we are going to fill parameters
+        type_instance infered_type_instance(const_cast<token&>(type_token), cons_type, sub_ns_name);
+        // at this point, all of this type instance parameters will be abstract types so the instance should be parametrized
+        // but since we are going to be replacing those parameters (or some anyway) with other types, it is easier to go from not parametrized to parametrized
+        // the logic is this: we start with not parametrized. the moment we encounter a parametrized type, we set this type instance to parametrized
+        // doing this like this is O(1) while doing the reverse would be at best O(n)
+        infered_type_instance.is_parametrized(false);
+        for(auto& type_param : type_params) {
+            type_instance instance_param(const_cast<token&>(type_param), "*");
+            instance_param.is_parametrized(true);
+            infered_type_instance.add_param(instance_param);
+        }
+
+        // we have a type instance with abstract types from the type builder
+        // now we need to replace them with actual types infered from the constructor expression
+        auto param_it = cons_params.begin(), param_end = cons_params.end();
+        auto arg_it = cons_args.begin(), arg_end = cons_args.end();
+        for(; param_it != param_end && arg_it != arg_end; ++param_it, ++arg_it) {
+            if(arg_it -> second -> is_underscore_expression()) {
+                infered_type_instance.is_parametrized(true);
+                continue;
+            }
+            else {
+                type_instance arg_type_instance = inferer::infer(arg_it -> second, l_scope, ns_name, sub_ns_name);
+                build_type_instance(infered_type_instance, param_it -> second, arg_type_instance, call_expr -> get_token());
             }
         }
 

@@ -25,6 +25,12 @@ namespace avalon {
          */
         static type_instance infer_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
+        /**
+         * infer_record_constructor
+         * infers the type instance of a record constructor expression
+         */
+        static type_instance infer_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
     private:
         /**
          * the default constructor expects nothing

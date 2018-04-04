@@ -84,7 +84,7 @@ namespace avalon {
      * returns an abstract type instance since underscore expression can never have a concrete type
      */
     type_instance expression_checker::check_underscore(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        return inferer::infer(an_expression, l_scope, ns_name);
+        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
     }
 
     /**
@@ -93,7 +93,7 @@ namespace avalon {
      * this function simply returns the type instance for each type of literal
      */
     type_instance expression_checker::check_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        return inferer::infer(an_expression, l_scope, ns_name);
+        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
     }
 
     /**
@@ -109,7 +109,7 @@ namespace avalon {
             check(element, l_scope, ns_name);
 
         // we derive the tuple type instance
-        return inferer::infer(an_expression, l_scope, ns_name);
+        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
     }
 
     /**
@@ -139,7 +139,7 @@ namespace avalon {
             }
         }
 
-        return inferer::infer(an_expression, l_scope, ns_name);;
+        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
     }
 
     /**
@@ -177,7 +177,7 @@ namespace avalon {
 
         // if we are here, then the map is valid as its subexpressions are valid
         // we infer the type instance of the map and perform a last check
-        type_instance map_type_instance = inferer::infer(an_expression, l_scope, ns_name);
+        type_instance map_type_instance = inferer::infer(an_expression, l_scope, ns_name, ns_name);
 
         // if the inference engine was able to deduce the type instance of the expression
         // we make sure that key values are hashable but only if the type instance is not abstract
@@ -226,14 +226,19 @@ namespace avalon {
 
         // we decide if we have a function call or a constructor call
         if(l_scope -> function_exists(ns_name, call_expr -> get_name())) {
+            call_expr -> set_expression_type(FUNCTION_CALL_EXPR);
             return check_function_call(call_expr, l_scope, ns_name, sub_ns_name);
         }
         // we check if it is a default constructor or a record constructor
         else {
-            if(call_expr -> has_record_syntax())
+            if(call_expr -> has_record_syntax()) {
+                call_expr -> set_expression_type(DEFAULT_CONSTRUCTOR_EXPR);
                 return check_record_constructor(call_expr, l_scope, ns_name, sub_ns_name);
-            else
+            }
+            else {
+                call_expr -> set_expression_type(RECORD_CONSTRUCTOR_EXPR);
                 return check_default_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+            }
         }
     }
 
@@ -242,8 +247,30 @@ namespace avalon {
      * we validate the expressions that occur within the constructor.
      */
     type_instance expression_checker::check_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {        
-        type_instance instance;
-        return instance;
+        std::vector<std::pair<token, std::shared_ptr<expr> > >& args = call_expr -> get_arguments();
+        const std::string& call_name = call_expr -> get_name();
+        
+        // we try to find if we have a default constructor corresponding to the call expression
+        if(l_scope -> default_constructor_exists(sub_ns_name, call_name, args.size()) == false) {
+            throw invalid_expression(call_expr -> get_token(), "Failed to find a default constructor with the given name and arity in the given namespace.");
+        }
+
+        // we check the constructor's parameters
+        for(auto& arg : args) {
+            token& arg_tok = arg.first;
+            std::shared_ptr<expr>& arg_val = arg.second;
+
+            // we make sure that the argument name is "star" since in a default constructors, only anonymous arguments are allowed
+            if(arg_tok.get_lexeme() != "*") {
+                throw invalid_expression(arg_tok, "Unexpected named argument in default constructor call.");
+            }
+
+            // we check the argument value
+            check(arg_val, l_scope, ns_name);
+        }
+
+        // so we have a default constructor with the given name and arity; we deduce its type instance
+        return inferer::infer_default_constructor(call_expr, l_scope, ns_name, sub_ns_name);
     }
 
     /**

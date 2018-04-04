@@ -100,7 +100,7 @@ lexer::lexer(
     m_keywords["type"]         = TYPE;
 
     // function declaration
-    m_keywords["function"]     = FUNCTION;
+    m_keywords["def"]          = FUNCTION;
 
     // variable declaration
     m_keywords["var"]          = VAR;

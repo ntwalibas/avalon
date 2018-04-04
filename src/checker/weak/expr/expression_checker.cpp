@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <map>
 
 /* Expressions */
 #include "program/ast/expr/tuple_expression.hpp"
@@ -278,8 +279,38 @@ namespace avalon {
      * we validate the expressions that occur within the constructor.
      */
     type_instance expression_checker::check_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
-        type_instance instance;
-        return instance;
+        std::vector<std::pair<token, std::shared_ptr<expr> > >& args = call_expr -> get_arguments();
+        const std::string& call_name = call_expr -> get_name();
+        
+        // we try to find if we have a default constructor corresponding to the call expression
+        if(l_scope -> record_constructor_exists(sub_ns_name, call_name, args.size()) == false) {
+            throw invalid_expression(call_expr -> get_token(), "Failed to find a record constructor with the given name and arity in the given namespace.");
+        }
+
+        // we check the constructor's parameters
+        for(auto& arg : args) {
+            token& arg_tok = arg.first;
+            std::shared_ptr<expr>& arg_val = arg.second;
+            record_constructor& cons = l_scope -> get_record_constructor(sub_ns_name, call_name, args.size());
+            std::map<token,type_instance>& cons_params = cons.get_params();
+
+            // we make sure that the argument name is not "star" since in a record constructors, all arguments must have names
+            if(arg_tok.get_lexeme() == "*") {
+                throw invalid_expression(arg_tok, "Excepted the argument's name in record constructor call.");
+            }
+            // if we have a name, we make sure it exists on the constructor
+            else {
+                if(cons_params.count(arg_tok) == 0) {
+                    throw invalid_expression(arg_tok, "The record constructor that builds this expression does not accept an argument by the name <" + arg_tok.get_lexeme() + ">.");
+                }
+            }
+
+            // we check the argument value
+            check(arg_val, l_scope, ns_name);
+        }
+
+        // return the infered type of the record constructor
+        return inferer::infer_record_constructor(call_expr, l_scope, ns_name, sub_ns_name);
     }
 
     /**

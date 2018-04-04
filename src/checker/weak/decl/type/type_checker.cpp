@@ -40,7 +40,7 @@ namespace avalon {
                 // we make sure the parameters it depends on are also valid
                 for(auto& instance_param : instance_params) {
                     try {
-                        std::pair<bool,bool> res = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
+                        std::pair<bool,bool> res = type_instance_checker::complex_check(instance_param, l_scope, ns_name, standins);
                         if(res.first == true || res.second == true) {
                             instance.is_parametrized(true);
                             ret.second = true;
@@ -57,14 +57,14 @@ namespace avalon {
                 // we try to find if it might be among the stand in types
                 // but we only bother checking if it is among the standins if it admit no parameters
                 if(instance_params.size() > 0) {
-                    throw invalid_type(instance.get_token(), "This type instance has no type that builds it in the given scope and namespace.");
+                    throw invalid_type(instance.get_token(), "The type instance <" + mangle_type_instance(instance) + "> has no type that builds it in the namespace <" + ns_name + ">.");
                 }
                 else {
                     if(std::find(standins.begin(), standins.end(), instance.get_token()) != standins.end()) {
                         ret.first = true;
                     }
                     else {
-                        throw invalid_type(instance.get_token(), "This type instance has no type that builds it in the given scope and namespace.");
+                        throw invalid_type(instance.get_token(), "The type instance <" + mangle_type_instance(instance) + "> has no type that builds it in the namespace <" + ns_name + ">.");
                     }
                 }
             }
@@ -74,7 +74,7 @@ namespace avalon {
             // we check dependent type instances, if any
             for(auto& instance_param : instance_params) {
                 try {
-                    std::pair<bool,bool> res = type_instance_checker::simple_check(instance_param, l_scope, ns_name, standins);
+                    std::pair<bool,bool> res = type_instance_checker::complex_check(instance_param, l_scope, ns_name, standins);
                     if(res.first == true || res.second == true) {
                         instance.is_parametrized(true);
                         ret.second = true;

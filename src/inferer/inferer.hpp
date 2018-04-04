@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "program/ast/expr/call_expression.hpp"
 #include "program/symtable/scope.hpp"
 #include "program/ast/expr/expr.hpp"
 #include "program/ast/decl/type.hpp"
@@ -16,7 +17,13 @@ namespace avalon {
          * infer
          * given an expression, this function infers the type instance of said expression and returns it
          */
-        static type_instance infer(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
+        static type_instance infer(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
+        /**
+         * infer_default_constructor
+         * infers the type instance of a default constructor expression
+         */
+        static type_instance infer_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
     private:
         /**
@@ -53,6 +60,12 @@ namespace avalon {
          * infers the type instance of a map
          */
         static type_instance infer_map(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
+
+        /**
+         * infer_call
+         * infers the type instance of a call expression
+         */
+        static type_instance infer_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
     };
 }
 

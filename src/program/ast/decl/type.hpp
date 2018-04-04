@@ -98,6 +98,30 @@ namespace avalon {
         void add_constructor(map_constructor& map_constructor);
 
         /**
+         * replace_constructor
+         * replace a default constructor found on this type
+         */
+        void replace_constructor(default_constructor& def_constructor);
+
+        /**
+         * replace_constructor
+         * replace a record constructor found on this type
+         */
+        void replace_constructor(record_constructor& rec_constructor);
+
+        /**
+         * replace_constructor
+         * replace a list constructor found on this type
+         */
+        void replace_constructor(list_constructor& list_constructor);
+
+        /**
+         * replace_constructor
+         * replace a map constructor found on this type
+         */
+        void replace_constructor(map_constructor& map_constructor);
+
+        /**
          * get_default_constructors
          * returns a vector of all default constructors that build this type
          */

@@ -401,6 +401,7 @@ type_checker::type_checker() {
         for(auto& def_constructor : def_constructors) {
             try {
                 constructor_checker::check(def_constructor, type_decl, l_scope, ns_name);
+                type_decl -> replace_constructor(def_constructor);
             } catch(invalid_constructor err) {
                 throw invalid_type(def_constructor.get_token(), err.what());
             }
@@ -411,6 +412,7 @@ type_checker::type_checker() {
         for(auto& rec_constructor : rec_constructors) {
             try {
                 constructor_checker::check(rec_constructor, type_decl, l_scope, ns_name);
+                type_decl -> replace_constructor(rec_constructor);
             } catch(invalid_constructor err) {
                 throw invalid_type(rec_constructor.get_token(), err.what());
             }
@@ -421,6 +423,7 @@ type_checker::type_checker() {
         for(auto& lst_constructor : list_constructors) {
             try {
                 constructor_checker::check(lst_constructor, type_decl, l_scope, ns_name);
+                type_decl -> replace_constructor(lst_constructor);
             } catch(invalid_constructor err) {
                 throw invalid_type(lst_constructor.get_token(), err.what());
             }
@@ -431,6 +434,7 @@ type_checker::type_checker() {
         for(auto& mp_constructor : map_constructors) {
             try {
                 constructor_checker::check(mp_constructor, type_decl, l_scope, ns_name);
+                type_decl -> replace_constructor(mp_constructor);
             } catch(invalid_constructor err) {
                 throw invalid_type(mp_constructor.get_token(), err.what());
             }

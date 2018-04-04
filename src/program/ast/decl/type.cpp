@@ -96,6 +96,54 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
     }
 
     /**
+     * replace_constructor
+     * replace a default constructor found on this type
+     */
+    void type::replace_constructor(default_constructor& def_constructor) {
+        std::pair<std::string, std::size_t> cons_key(def_constructor.get_name(), def_constructor.get_params().size());
+        if(m_def_constructors.count(cons_key) > 0)
+            m_def_constructors.at(cons_key) = def_constructor;
+        else
+            throw type_error("No such default constructor belongs to this type.");
+    }
+
+    /**
+     * replace_constructor
+     * replace a record constructor found on this type
+     */
+    void type::replace_constructor(record_constructor& rec_constructor) {
+        std::pair<std::string, std::size_t> cons_key(rec_constructor.get_name(), rec_constructor.get_params().size());
+        if(m_rec_constructors.count(cons_key) > 0)
+            m_rec_constructors.at(cons_key) = rec_constructor;
+        else
+            throw type_error("No such record constructor belongs to this type.");
+    }
+
+    /**
+     * replace_constructor
+     * replace a list constructor found on this type
+     */
+    void type::replace_constructor(list_constructor& list_constructor) {
+        const std::string& cons_key = list_constructor.get_name();
+        if(m_list_constructors.count(cons_key) > 0)
+            m_list_constructors.at(cons_key) = list_constructor;
+        else
+            throw type_error("No such list constructor belongs to this type.");
+    }
+
+    /**
+     * replace_constructor
+     * replace a map constructor found on this type
+     */
+    void type::replace_constructor(map_constructor& map_constructor) {
+        const std::string& cons_key = map_constructor.get_name();
+        if(m_map_constructors.count(cons_key) > 0)
+            m_map_constructors.at(cons_key) = map_constructor;
+        else
+            throw type_error("No such map constructor belongs to this type.");
+    }
+
+    /**
      * get_default_constructors
      * returns a vector of all default constructors that build this type
      */
@@ -783,8 +831,7 @@ record_constructor::record_constructor(token& tok, std::shared_ptr<type>& ty) : 
      * when showing error messages, we need the information the token holds.
      */
     void record_constructor::add_param(token param_name, type_instance& param_type) {
-        std::pair<token, type_instance> data(param_name, param_type);
-        m_params.insert(data);
+        m_params.emplace(param_name, param_type);
     }
 
     /**

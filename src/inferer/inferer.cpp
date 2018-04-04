@@ -74,7 +74,8 @@ namespace avalon {
             // we check to see if the type instance from the expression is a concrete type before proceeding
             else {
                 // if the type instance from the constructor is concrete but the one from the expression is not, we have an error
-                if(expr_instance.is_abstract() == false) {
+                // WHY? I wrote this code in an earlier version but can't seem to recall why I required this
+                if(cons_instance.is_abstract() == false && expr_instance.is_abstract() == true) {
                     throw invalid_expression(err_tok, "This expression has type instance <" + mangle_type_instance(expr_instance) + "> while the expected type instance is <" + mangle_type_instance(cons_instance) + ">.");
                 }
                 // if on the other hand both the type instance from the constructor and the one from the expression are concrete,
@@ -538,7 +539,7 @@ namespace avalon {
 
         std::vector<std::pair<token, std::shared_ptr<expr> > >& cons_args = call_expr -> get_arguments();
         record_constructor& cons = l_scope -> get_record_constructor(sub_ns_name, call_expr -> get_name(), cons_args.size());
-        std::map<token,type_instance>& cons_params = cons.get_params();
+        std::map<token, type_instance>& cons_params = cons.get_params();
         std::shared_ptr<type>& cons_type = cons.get_type();
         const std::vector<token>& type_params = cons_type -> get_params();
         const token& type_token = cons_type -> get_token();
@@ -558,16 +559,15 @@ namespace avalon {
 
         // we have a type instance with abstract types from the type builder
         // now we need to replace them with actual types infered from the constructor expression
-        auto param_it = cons_params.begin(), param_end = cons_params.end();
-        auto arg_it = cons_args.begin(), arg_end = cons_args.end();
-        for(; param_it != param_end && arg_it != arg_end; ++param_it, ++arg_it) {
-            if(arg_it -> second -> is_underscore_expression()) {
+        for(auto& cons_arg : cons_args) {
+            type_instance& cons_param = cons_params[cons_arg.first];
+            if(cons_arg.second -> is_underscore_expression()) {
                 infered_type_instance.is_parametrized(true);
                 continue;
             }
             else {
-                type_instance arg_type_instance = inferer::infer(arg_it -> second, l_scope, ns_name, sub_ns_name);
-                build_type_instance(infered_type_instance, param_it -> second, arg_type_instance, call_expr -> get_token());
+                type_instance arg_type_instance = inferer::infer(cons_arg.second, l_scope, ns_name, sub_ns_name);
+                build_type_instance(infered_type_instance, cons_param, arg_type_instance, call_expr -> get_token());
             }
         }
 

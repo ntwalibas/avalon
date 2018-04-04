@@ -13,7 +13,7 @@ namespace avalon {
     /**
      * the constructor expects the token with type source information
      */
-    call_expression::call_expression(token& tok) : m_tok(tok), m_name(tok.get_lexeme()), m_type_instance_from_parser(false), m_return_type(type_instance(star_tok, "*")) {        
+    call_expression::call_expression(token& tok) : m_tok(tok), m_name(tok.get_lexeme()), m_expr_type(FUNCTION_CALL_EXPR), m_type_instance_from_parser(false), m_return_type(type_instance(star_tok, "*")) {        
     }
 
     /**
@@ -78,6 +78,22 @@ namespace avalon {
         return m_type_instance_from_parser;
     }
 
+    /*
+     * set_expression_type
+     * sets the type of expression this is
+     */
+    void call_expression::set_expression_type(call_expression_type expr_type) {
+        m_expr_type = expr_type;
+    }
+
+    /**
+     * get_expression_type
+     * returns the type of expression we are dealing
+     */
+    const call_expression_type& call_expression::get_expression_type() const {
+        return m_expr_type;
+    }
+
     /**
      * add_argument
      * adds an argument to the function call
@@ -108,5 +124,24 @@ namespace avalon {
      */
     type_instance& call_expression::get_return_type_instance() {
         return m_return_type;
+    }
+
+    /**
+     * has_record_syntax
+     * returns true if arguments named, false otherwise
+     */
+    bool call_expression::has_record_syntax() {
+        if(m_arguments.size() == 0) {
+            return false;
+        }
+        else {
+            std::pair<token, std::shared_ptr<expr> >& first_argument = m_arguments[0];
+            // we use the star token as a placeholder in case no argument was given
+            // so its presence as argument token indicates that the user didn't provide any
+            if(first_argument.first.get_lexeme() == "*")
+                return false;
+            else
+                return true;
+        }        
     }
 }

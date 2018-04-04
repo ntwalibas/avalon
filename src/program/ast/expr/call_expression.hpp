@@ -12,6 +12,12 @@
 
 
 namespace avalon {
+    enum call_expression_type {
+        FUNCTION_CALL_EXPR,
+        RECORD_CONSTRUCTOR_EXPR,
+        DEFAULT_CONSTRUCTOR_EXPR
+    };
+
     class call_expression : public expr {
     public:
         /**
@@ -63,6 +69,18 @@ namespace avalon {
          */
         bool type_instance_from_parser() const;
 
+        /*
+         * set_expression_type
+         * sets the type of expression this is
+         */
+        void set_expression_type(call_expression_type expr_type);
+
+        /**
+         * get_expression_type
+         * returns the type of expression we are dealing
+         */
+        const call_expression_type& get_expression_type() const;
+
         /**
          * add_argument
          * adds an argument to the function call
@@ -86,6 +104,12 @@ namespace avalon {
          * returns the expected return type instance of the function that corresponds to this function call
          */
         type_instance& get_return_type_instance();
+
+        /**
+         * has_record_syntax
+         * returns true if arguments named, false otherwise
+         */
+        bool has_record_syntax();
         
         /**
          * is_call_expression
@@ -110,6 +134,11 @@ namespace avalon {
          * type instance of this expression
          */
         type_instance m_instance;
+
+        /*
+         * the type of call this expression is
+         */
+        call_expression_type m_expr_type;
 
         /*
          * whether the type instance is from the parser

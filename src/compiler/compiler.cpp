@@ -13,8 +13,8 @@
 #include "program/ast/program.hpp"
 
 /* Checker */
-#include "checker/check_error.hpp"
-#include "checker/checker.hpp"
+//#include "checker/check_error.hpp"
+//#include "checker/checker.hpp"
 
 /* Importer */
 #include "importer/importer.hpp"
@@ -265,7 +265,7 @@ namespace avalon {
     /**
      * check
      * calls the checker to validate the entire program
-     */
+     *
     void compiler::check(const std::string& source_path) {
         error error_handler(source_path);
 
@@ -333,4 +333,5 @@ namespace avalon {
 
         return;
     }
+    */
 }

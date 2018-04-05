@@ -44,7 +44,7 @@ void compile(const std::string& source_path) {
     /* 2. call the intepreter */
     //std::string path = compiler::get_source_path(source_path);
     //std::cout << source_path << std::endl;
-    comp.check(source_path);
+    comp.import(source_path);
     /*
     std::vector<std::shared_ptr<token> > tokens = comp.lex(source_path);
     for(auto& tok : tokens)

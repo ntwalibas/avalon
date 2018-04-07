@@ -33,14 +33,6 @@ namespace avalon {
         virtual bool is_call_expression() {
             return false;
         }
-        /* list constructor expressions */
-        virtual bool is_list_constructor_expression() {
-            return false;
-        }
-        /* map constructor expressions */
-        virtual bool is_map_constructor_expression() {
-            return false;
-        }
         /* tuple expressions */
         virtual bool is_tuple_expression() {
             return false;

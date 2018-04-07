@@ -5,16 +5,10 @@
 namespace avalon {
     class stmt {
     public:
-        virtual bool is_switch() {
-            return false;
-        }
         virtual bool is_while() {
             return false;
         }
         virtual bool is_if() {
-            return false;
-        }
-        virtual bool is_for() {
             return false;
         }
         virtual bool is_break() {

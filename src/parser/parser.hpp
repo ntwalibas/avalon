@@ -210,12 +210,6 @@ namespace avalon {
         std::shared_ptr<decl> statement_declaration(std::shared_ptr<scope>& parent_scope);
 
         /**
-         * switch_statement
-         * match a switch statement
-         */
-        std::shared_ptr<stmt> switch_statement(std::shared_ptr<scope>& parent_scope);
-
-        /**
          * while_statement
          * match a while statement
          */
@@ -226,12 +220,6 @@ namespace avalon {
          * match an if statement
          */
         std::shared_ptr<stmt> if_statement(std::shared_ptr<scope>& parent_scope);
-
-        /**
-         * for_statement
-         * match a for statement
-         */
-        std::shared_ptr<stmt> for_statement(std::shared_ptr<scope>& parent_scope);
 
         /**
          * break_statement
@@ -398,22 +386,6 @@ namespace avalon {
          * this function parses the remainder of the token stream until it reads a call expression.
          */
         std::shared_ptr<expr> parse_call_expression();
-
-        /**
-         * parse_list_constructor_expression()
-         * if an expression starts by an identifier followed by an opening bracket,
-         * this function parses the remainder of the token stream until it reads a full list expression.
-         * those lists are from list constructors.
-         */
-        std::shared_ptr<expr> parse_list_constructor_expression();
-
-        /**
-         * parse_map_constructor_expression()
-         * if an expression starts by an identifier followed by an opening brace,
-         * this function parses the remainder of the token stream until it reads a full map expression.
-         * those maps are from map constructors.
-         */
-        std::shared_ptr<expr> parse_map_constructor_expression();
 
         /**
          * parse_tuple_expression

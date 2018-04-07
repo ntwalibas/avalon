@@ -22,12 +22,10 @@
 /* Statements */
 #include "hir/ast/stmt/stmt.hpp"
 #include "hir/ast/stmt/if_stmt.hpp"
-#include "hir/ast/stmt/for_stmt.hpp"
 #include "hir/ast/stmt/pass_stmt.hpp"
 #include "hir/ast/stmt/while_stmt.hpp"
 #include "hir/ast/stmt/block_stmt.hpp"
 #include "hir/ast/stmt/break_stmt.hpp"
-#include "hir/ast/stmt/switch_stmt.hpp"
 #include "hir/ast/stmt/return_stmt.hpp"
 #include "hir/ast/stmt/continue_stmt.hpp"
 #include "hir/ast/stmt/expression_stmt.hpp"
@@ -45,8 +43,6 @@
 #include "hir/ast/expr/identifier_expression.hpp"
 #include "hir/ast/expr/assignment_expression.hpp"
 #include "hir/ast/expr/underscore_expression.hpp"
-#include "hir/ast/expr/map_constructor_expression.hpp"
-#include "hir/ast/expr/list_constructor_expression.hpp"
 /* Symbol table */
 #include "hir/symtable/fqn.hpp"
 #include "hir/symtable/scope.hpp"
@@ -379,16 +375,6 @@ parser::parser(
                 // we are done building cunstructors, we expect a closing parenthesis
                 consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple constructor arguments.");
             }
-            // if we have an opening bracket, we have a list constructor
-            else if(match(LEFT_BRACKET)) {
-                parse_list_constructor(constructor_tok, type_decl);
-                consume(RIGHT_BRACKET, "Expected a closing bracket after list constructor arguments.");
-            }
-            // if we have an opening brace, we have a map constructor
-            else if(match(LEFT_BRACE)) {
-                parse_map_constructor(constructor_tok, type_decl);
-                consume(RIGHT_BRACE, "Expected a closing brace after map constructor arguments.");
-            }
             else {
                 parse_default_constructor(constructor_tok, type_decl);
             }
@@ -434,28 +420,6 @@ parser::parser(
 
         // add the constructor to the type declaration
         type_decl -> add_constructor(rec_constructor);
-    }
-
-    /**
-     * parse_list_constructor
-     * this function parses a list constructor.
-     */
-    void parser::parse_list_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl) {        
-        type_instance param = parse_type_instance();
-        list_constructor list_cons(* constructor_tok, type_decl, param);
-        type_decl -> add_constructor(list_cons);
-    }
-
-    /**
-     * parse_map_constructor
-     * this function parses a map constructor.
-     */
-    void parser::parse_map_constructor(std::shared_ptr<token>& constructor_tok, std::shared_ptr<type>& type_decl) {
-        type_instance param_key = parse_type_instance();
-        consume(COLON, "Excepted a colon after the map constructor key.");
-        type_instance param_value = parse_type_instance();
-        map_constructor map_cons(* constructor_tok, type_decl, param_key, param_value);
-        type_decl -> add_constructor(map_cons);
     }
 
     /**
@@ -634,17 +598,11 @@ parser::parser(
         std::shared_ptr<statement> statement_decl = std::make_shared<statement>();
         std::shared_ptr<stmt> statement = nullptr;
 
-        if(match(SWITCH)) {
-            statement = switch_statement(parent_scope);
-        }
-        else if(match(WHILE)) {
+        if(match(WHILE)) {
             statement = while_statement(parent_scope);
         }
         else if(match(IF)) {
             statement = if_statement(parent_scope);
-        }
-        else if(match(FOR)) {
-            statement = for_statement(parent_scope);
         }
         else if(match(BREAK)) {
             statement = break_statement();
@@ -665,119 +623,6 @@ parser::parser(
         statement_decl -> set_statement(statement);
         std::shared_ptr<decl> declaration = statement_decl;
         return declaration;
-    }
-
-    /**
-     * switch_statement
-     * match a switch statement
-     */
-    std::shared_ptr<stmt> parser::switch_statement(std::shared_ptr<scope>& parent_scope) {
-        std::shared_ptr<token>& tok = lookback();
-        std::shared_ptr<switch_stmt> sw_stmt = std::make_shared<switch_stmt>(* tok);
-
-        // we get switch parameters which are essentially variable expressions to match against
-        bool has_paren = false;
-        if(match(LEFT_PAREN))
-            has_paren = true;
-
-        do {
-            std::shared_ptr<expr> param = parse_expression();
-            sw_stmt -> add_param(param);
-        } while(match(COMMA));
-
-        if(has_paren == true)
-            consume(RIGHT_PAREN, "Expected a closing parenthesis after switch parameters.");
-
-        // we expect a colon followed by a newline and an indent
-        consume(COLON, "Expected a colon after switch parameters.");
-
-        bool is_indented = false;
-        consume(NEWLINE, "Expected a new line after switch parameters and the colon.");
-        if(check(INDENT)) {            
-            consume(INDENT, "Expected an indentation before cases in switch statement after the newline.");
-            is_indented = true;
-        }        
-
-        // we handle cases
-        if(check(CASE) == false)
-            throw parsing_error(true, peek(), "Expected at least one case in switch statement.");
-
-        while(match(CASE) && !is_at_end()) {
-            std::shared_ptr<token>& case_tok = lookback();
-            switch_case cas(* case_tok);
-
-            // set the scope introduced by this case
-            std::shared_ptr<scope> l_scope = std::make_shared<scope>();
-            l_scope -> set_start_line(case_tok -> get_line());
-            l_scope -> set_parent(parent_scope);
-            cas.set_scope(l_scope);
-
-            bool case_has_paren = false;
-            if(match(LEFT_PAREN))
-                case_has_paren = true;
-
-            do {
-                std::shared_ptr<expr> match = parse_expression();
-                cas.add_match(match);
-            } while(match(COMMA));
-
-            if(case_has_paren == true)
-                consume(RIGHT_PAREN, "Expected a closing parenthesis after case possible matches.");
-
-            // we expect a colon followed by a newline and an indent before statements
-            consume(COLON, "Expected a colon after case matches.");
-            consume(NEWLINE, "Expected a new line after case matches and the colon.");
-
-            // if we get an indentation, then we can expect a statement
-            if(check(INDENT)) {
-                block_stmt case_block = block_statement(parent_scope); 
-                cas.set_block(case_block);
-            }
-            else {
-                block_stmt case_block;
-                cas.set_block(case_block);
-            }
-
-            // set the end line for the new scope and return to the old scope
-            l_scope -> set_end_line(lookback() -> get_line());
-
-            // add the case to the switch statement
-            sw_stmt -> add_case(cas);
-        }
-
-        // we handle default
-        if(match(DEFAULT)) {
-            std::shared_ptr<token>& def_tok = lookback();
-            switch_default def(* def_tok);
-
-            // default creates a new scope
-            std::shared_ptr<scope> l_scope = std::make_shared<scope>();
-            l_scope -> set_start_line(def_tok -> get_line());
-            l_scope -> set_parent(parent_scope);
-            def.set_scope(l_scope);
-
-            consume(COLON, "Expected a colon after default case.");
-            consume(NEWLINE, "Expected a new line after default case and the colon.");
-
-            if(!check(INDENT))
-                throw parsing_error(true, def_tok, "The default case of a switch statement requires a block statement.");
-
-            // get and set the default case block
-            block_stmt def_block = block_statement(parent_scope);            
-            def.set_block(def_block);
-
-            // set the end line for the new scope
-            l_scope -> set_end_line(lookback() -> get_line());
-
-            // add the default case to the switch statement
-            sw_stmt -> set_default(def);
-        }
-
-        if(is_indented == true)
-            consume(DEDENT, "Expected a dedentation after switch cases and default.");
-
-        std::shared_ptr<stmt> stmt = sw_stmt;
-        return stmt;
     }
 
     /**
@@ -923,74 +768,6 @@ parser::parser(
         }
 
         std::shared_ptr<stmt> stmt = f_stmt;
-        return stmt;
-    }
-
-    /**
-     * for_statement
-     * match a for statement
-     */
-    std::shared_ptr<stmt> parser::for_statement(std::shared_ptr<scope>& parent_scope) {
-        std::shared_ptr<token>& tok = lookback();
-        std::shared_ptr<for_stmt> fr_stmt = std::make_shared<for_stmt>(* tok);
-
-        // a for loop introduces a new scope
-        std::shared_ptr<scope> fr_scope = std::make_shared<scope>();
-        fr_scope -> set_start_line(tok -> get_line());
-        fr_scope -> set_parent(parent_scope);
-        fr_stmt -> set_scope(fr_scope);
-
-        // parse the for loop iteration expression
-        bool has_paren = false;
-        if(match(LEFT_PAREN))
-            has_paren = true;
-
-        std::shared_ptr<expr> iteration = parse_expression();
-        fr_stmt -> set_iteration(iteration);
-
-        if(has_paren)
-            consume(RIGHT_PAREN, "Expected a closing parenthesis after for iteration expression.");
-
-        consume(COLON, "Expected a colon after for loop iteration expression.");
-        consume(NEWLINE, "Expected a new line after the colon in for loop.");
-
-        if(!check(INDENT))
-            throw parsing_error(true, tok, "A for loop must have a body.");
-
-        // get the body of the loop
-        block_stmt body = block_statement(parent_scope);
-        fr_stmt -> set_block(body);
-
-        // set the end line for the new scope
-        fr_scope -> set_end_line(lookback() -> get_line());        
-
-        // try to match an empty branch
-        if(match(EMPTY)) {
-            std::shared_ptr<token>& tok = lookback();
-            empty_branch ept_branch(* tok);
-
-            // an empty branch introduces a new scope
-            std::shared_ptr<scope> ept_scope = std::make_shared<scope>();
-            ept_scope -> set_start_line(tok -> get_line());
-            ept_scope -> set_parent(parent_scope);
-            ept_branch.set_scope(ept_scope);
-
-            consume(COLON, "Expected a colon after empty branch.");
-            consume(NEWLINE, "Expected a new line after the colon in empty branch.");
-
-            if(!check(INDENT))
-                throw parsing_error(true, tok, "An empty branch must have a body.");
-
-            block_stmt body = block_statement(parent_scope);
-            ept_branch.set_block(body);
-
-            // set the end line for the new scope introduced by the else branch
-            ept_scope -> set_end_line(lookback() -> get_line());
-
-            fr_stmt -> set_empty(ept_branch);
-        }
-
-        std::shared_ptr<stmt> stmt = fr_stmt;
         return stmt;
     }
 
@@ -1508,12 +1285,6 @@ parser::parser(
         if(check(IDENTIFIER) && check_next(LEFT_PAREN)) {
             l_expression = parse_call_expression();
         }
-        else if(check(IDENTIFIER) && check_next(LEFT_BRACKET)) {
-            l_expression = parse_list_constructor_expression();
-        }
-        else if(check(IDENTIFIER) && check_next(LEFT_BRACE)) {
-            l_expression = parse_map_constructor_expression();
-        }
         else if(check(IDENTIFIER)) {
             std::shared_ptr<token>& id_tok = consume(IDENTIFIER, "Expected an identifier.");
             std::shared_ptr<identifier_expression> id_expr = std::make_shared<identifier_expression>(* id_tok);
@@ -1634,71 +1405,6 @@ parser::parser(
         }        
 
         l_expression = call_expr;
-        return l_expression;
-    }
-
-    /**
-     * parse_list_constructor_expression()
-     * if an expression starts by an identifier followed by an opening bracket,
-     * this function parses the remainder of the token stream until it reads a full list expression.
-     * those lists are from list constructors.
-     */
-    std::shared_ptr<expr> parser::parse_list_constructor_expression() {
-        std::shared_ptr<expr> l_expression = nullptr;
-        std::shared_ptr<token>& cons_tok = consume(IDENTIFIER, "Expected the name of the list constructor.");
-        std::shared_ptr<list_constructor_expression> list_cons_expr = std::make_shared<list_constructor_expression>(* cons_tok);
-
-        // if the next token is not a closing bracket, then we don't have an empty list
-        if(check(RIGHT_BRACKET) == false) {
-            std::shared_ptr<expr> next_element = nullptr;
-            do {
-                next_element = parse_expression();
-                list_cons_expr -> add_element(next_element);
-            } while(match(COMMA));
-        }
-        consume(RIGHT_BRACKET, "Excepted a closing bracket in list constructor expression");
-
-        // if the expression is followed by a colon, then a type instance was provided
-        if(m_inside_map == false && match(COLON)) {
-            type_instance expr_instance = parse_type_instance();
-            list_cons_expr -> set_type_instance(expr_instance, true);
-        }
-
-        l_expression = list_cons_expr;
-        return l_expression;
-    }
-
-    /**
-     * parse_map_constructor_expression()
-     * if an expression starts by an identifier followed by an opening brace,
-     * this function parses the remainder of the token stream until it reads a full map expression.
-     * those maps are from map constructors.
-     */
-    std::shared_ptr<expr> parser::parse_map_constructor_expression() {
-        std::shared_ptr<expr> l_expression = nullptr;
-        std::shared_ptr<token>& cons_tok = consume(IDENTIFIER, "Expected the name of the map constructor.");
-        std::shared_ptr<map_constructor_expression> map_cons_expr = std::make_shared<map_constructor_expression>(* cons_tok);
-
-        // if the next token is not a closing brace, then we don't have an empty map
-        if(check(RIGHT_BRACE) == false) {
-            std::shared_ptr<expr> key = nullptr;
-            std::shared_ptr<expr> value = nullptr;
-            do {
-                key = parse_expression();
-                consume(COLON, "Excepted colon after key in map expression.");
-                value = parse_expression();
-                map_cons_expr -> add_element(key, value);
-            } while(match(COMMA));
-        }
-        consume(RIGHT_BRACE, "Excepted a closing brace in map constructor expression");
-
-        // if the expression is followed by a colon, then a type instance was provided
-        if(m_inside_map == false && match(COLON)) {
-            type_instance expr_instance = parse_type_instance();
-            map_cons_expr -> set_type_instance(expr_instance, true);
-        }
-
-        l_expression = map_cons_expr;
         return l_expression;
     }
 

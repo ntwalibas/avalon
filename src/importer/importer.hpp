@@ -128,27 +128,12 @@ namespace avalon {
         /*
          * the error handler to call in case of an error
          */
-        error& m_error_handler;
+        error m_error_handler;
 
-        /**
+        /*
          * the global symbol table containing all the declarations made available by compiled programs
          */
-        gtable m_gtable;        
-
-        /*
-         * a dependency map between different the importing program and the imported programs
-         */
-        std::unordered_map<std::string, std::vector<std::string> > m_deps;
-
-        /*
-         * a map between dependencies and their visitation state indicating if dependency has been visited or not or is being visisted
-         */
-        std::unordered_map<std::string, VISIT_STATES> m_dep_states;
-
-        /*
-         * a queue of all dependencies sorted from the one with no dependency to the one with most dependencies
-         */
-        std::queue<std::string> m_sorted_deps;
+        gtable m_gtable;
 
         /**
          * sort_deps_util
@@ -164,6 +149,21 @@ namespace avalon {
          * contructs and returns an import_error exception
          */
         import_error importing_error(bool fatal, const token& tok, const std::string& message);
+
+        /*
+         * a dependency map between different the importing program and the imported programs
+         */
+        std::unordered_map<std::string, std::vector<std::string> > m_deps;
+
+        /*
+         * a map between dependencies and their visitation state indicating if dependency has been visited or not or is being visisted
+         */
+        std::unordered_map<std::string, VISIT_STATES> m_dep_states;
+
+        /*
+         * a queue of all dependencies sorted from the one with no dependency to the one with most dependencies
+         */
+        std::queue<std::string> m_sorted_deps;
     };
 }
 

@@ -48,20 +48,4 @@ gtable::gtable() {
         else
             return false;
     }
-
-    /**
-     * set_checking_order
-     * set the order through which the program in this table must be analyzed
-     */
-    void gtable::set_checking_order(std::queue<std::string>& checking_order) {
-        m_checking_order = checking_order;
-    }
-
-    /**
-     * get_checking_order
-     * returns the order through which the program in this table must be analyzed
-     */
-    std::queue<std::string>& gtable::get_checking_order() {
-        return m_checking_order;
-    }
 }

@@ -34,28 +34,11 @@ namespace avalon {
          */
         bool program_exists(const std::string& fqn_name);
 
-        /**
-         * set_checking_order
-         * set the order through which the program in this table must be analyzed
-         */
-        void set_checking_order(std::queue<std::string>& checking_order);
-
-        /**
-         * get_checking_order
-         * returns the order through which the program in this table must be analyzed
-         */
-        std::queue<std::string>& get_checking_order();
-
     private:
         /*
          * map between fqn(fully qualified name) and the programs within them
          */        
         std::unordered_map<std::string, program> m_programs;
-
-        /*
-         * a queue listing all programs as they are to be checked during semantic analysis
-         */
-        std::queue<std::string> m_checking_order;
     };
 }
 

@@ -87,9 +87,6 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
         // we sort the dependencies, making sure no cycles are allowed among them
         sort_deps();
 
-        // we have a program with no cyclic dependencies, we set the checking order on the gtable
-        m_gtable.set_checking_order(m_sorted_deps);
-
         // last, we return the gtable
         return m_gtable;
     }

@@ -72,30 +72,6 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
     }
 
     /**
-     * add_constructor
-     * add a list constructor to this type
-     */
-    void type::add_constructor(list_constructor& list_constructor) {
-        const std::string& cons_key = list_constructor.get_name();
-        if(m_list_constructors.count(cons_key) > 0)
-            throw type_error("There already exists a list constructor with the given name.");
-        else
-            m_list_constructors.emplace(cons_key, list_constructor);
-    }
-
-    /**
-     * add_constructor
-     * add a map constructor to this type
-     */
-    void type::add_constructor(map_constructor& map_constructor) {
-        const std::string& cons_key = map_constructor.get_name();
-        if(m_map_constructors.count(cons_key) > 0)
-            throw type_error("There already exists a map constructor with the given name.");
-        else
-            m_map_constructors.emplace(cons_key, map_constructor);
-    }
-
-    /**
      * replace_constructor
      * replace a default constructor found on this type
      */
@@ -120,30 +96,6 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
     }
 
     /**
-     * replace_constructor
-     * replace a list constructor found on this type
-     */
-    void type::replace_constructor(list_constructor& list_constructor) {
-        const std::string& cons_key = list_constructor.get_name();
-        if(m_list_constructors.count(cons_key) > 0)
-            m_list_constructors.at(cons_key) = list_constructor;
-        else
-            throw type_error("No such list constructor belongs to this type.");
-    }
-
-    /**
-     * replace_constructor
-     * replace a map constructor found on this type
-     */
-    void type::replace_constructor(map_constructor& map_constructor) {
-        const std::string& cons_key = map_constructor.get_name();
-        if(m_map_constructors.count(cons_key) > 0)
-            m_map_constructors.at(cons_key) = map_constructor;
-        else
-            throw type_error("No such map constructor belongs to this type.");
-    }
-
-    /**
      * get_default_constructors
      * returns a vector of all default constructors that build this type
      */
@@ -163,28 +115,6 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
         for(auto& rec_constructor : m_rec_constructors)
             rec_constructors.push_back(rec_constructor.second);
         return rec_constructors;
-    }
-
-    /**
-     * get_list_constructors
-     * returns a vector of all list constructors that build this type
-     */
-    std::vector<list_constructor> type::get_list_constructors() {
-        std::vector<list_constructor> list_constructors;
-        for(auto& lst_constructor : m_list_constructors)
-            list_constructors.push_back(lst_constructor.second);
-        return list_constructors;
-    }
-
-    /**
-     * get_map_constructors
-     * returns a vector of all map constructors that build this type
-     */
-    std::vector<map_constructor> type::get_map_constructors() {
-        std::vector<map_constructor> map_constructors;
-        for(auto& mp_constructor : m_map_constructors)
-            map_constructors.push_back(mp_constructor.second);
-        return map_constructors;
     }
 
     /**
@@ -236,30 +166,6 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
             return m_rec_constructors.at(cons_key);
         } catch(std::out_of_range err) {
             throw type_error("This type has no record constructor with the given name and arity.");
-        }
-    }
-
-    /**
-     * get_list_constructor
-     * given a list constructor name, find it there is one that builds this type
-     */
-    list_constructor& type::get_list_constructor(const std::string& name) {
-        try {
-            return m_list_constructors.at(name);
-        } catch(std::out_of_range err) {
-            throw type_error("This type has no list constructor with the given name.");
-        }
-    }
-
-    /**
-     * get_map_constructor
-     * given a map constructor name, find it there is one that builds this type
-     */
-    map_constructor& type::get_map_constructor(const std::string& name) {
-        try {
-            return m_map_constructors.at(name);
-        } catch(std::out_of_range err) {
-            throw type_error("This type has no map constructor with the given name.");
         }
     }
 
@@ -871,173 +777,6 @@ record_constructor::record_constructor(token& tok, std::shared_ptr<type>& ty) : 
      * returns true if the constructor relies on an abstract type.
      */
     bool record_constructor::is_parametrized() {
-        return m_is_parametrized;
-    }
-
-
-/**
- * the constructor expects:
- * - the token with the constructor name
- * - the type that this constructor contructs
- * - the type instance that this constructor depends on
- */
-list_constructor::list_constructor(token& tok, std::shared_ptr<type>& ty, type_instance& param) : m_name(tok.get_lexeme()), m_tok(tok), m_type(ty), m_param(param), m_is_parametrized(false) {
-}
-
-    /**
-     * set_type
-     * changes the name of the constructor.
-     */
-    void list_constructor::set_name(const std::string& name) {
-        m_name = name;
-    }
-
-    /**
-     * get_name
-     * returns a string with the name of the constructor
-     */
-    const std::string& list_constructor::get_name() const {
-        return m_name;
-    }
-
-    /**
-     * get_token
-     * returns the token that contains the name of this constructor.
-     */
-    const token& list_constructor::get_token() const {
-        return m_tok;
-    }
-
-    /**
-     * get_type
-     * returns the type that this constructor creates
-     */
-    std::shared_ptr<type>& list_constructor::get_type() {
-        return m_type;
-    }
-
-    /**
-     * add_param
-     * set type instance this constructor depends on
-     */
-    void list_constructor::add_param(type_instance& param) {
-        m_param = param;
-    }
-
-    /**
-     * get_param
-     * return the type instance this list constructor depends on
-     */
-    type_instance& list_constructor::get_param() {
-        return m_param;
-    }
-
-    /**
-     * set_is_parametrized
-     * if the constructor relies on an unknown type,
-     * we use this function to set this flag on.
-     */
-    void list_constructor::set_is_parametrized(bool is_parametrized) {
-        m_is_parametrized = is_parametrized;
-    }
-
-    /**
-     * is_parametrized
-     * returns true if the constructor relies on an abstract type.
-     */
-    bool list_constructor::is_parametrized() {
-        return m_is_parametrized;
-    }
-
-
-/**
- * the constructor expects:
- * - the token with the constructor name
- * - the type that this constructor contructs
- * - the type instance of the constructor key
- * - the type instance of the constructor value
- */
-map_constructor::map_constructor(token& tok, std::shared_ptr<type>& ty, type_instance& param_key, type_instance& param_value) : m_name(tok.get_lexeme()), m_tok(tok), m_type(ty), m_param_key(param_key), m_param_value(param_value), m_is_parametrized(false) {
-}
-
-    /**
-     * set_type
-     * changes the name of the constructor.
-     */
-    void map_constructor::set_name(const std::string& name) {
-        m_name = name;
-    }
-
-    /**
-     * get_name
-     * returns a string with the name of the constructor
-     */
-    const std::string& map_constructor::get_name() const {
-        return m_name;
-    }
-
-    /**
-     * get_token
-     * returns the token that contains the name of this constructor.
-     */
-    const token& map_constructor::get_token() const {
-        return m_tok;
-    }
-
-    /**
-     * get_type
-     * returns the type that this constructor creates
-     */
-    std::shared_ptr<type>& map_constructor::get_type() {
-        return m_type;
-    }
-
-    /**
-     * add_param_key
-     * set type instance this map constructor key
-     */
-    void map_constructor::add_param_key(type_instance& param) {
-        m_param_key = param;
-    }
-
-    /**
-     * get_param_key
-     * return the type instance this map constructor key
-     */
-    type_instance& map_constructor::get_param_key() {
-        return m_param_key;
-    }
-    
-    /**
-     * add_param_value
-     * set type instance this map constructor value
-     */
-    void map_constructor::add_param_value(type_instance& param) {
-        m_param_value = param;
-    }
-
-    /**
-     * get_param_value
-     * return the type instance this map constructor value
-     */
-    type_instance& map_constructor::get_param_value() {
-        return m_param_value;
-    }
-
-    /**
-     * set_is_parametrized
-     * if the constructor relies on an unknown type,
-     * we use this function to set this flag on.
-     */
-    void map_constructor::set_is_parametrized(bool is_parametrized) {
-        m_is_parametrized = is_parametrized;
-    }
-
-    /**
-     * is_parametrized
-     * returns true if the constructor relies on an abstract type.
-     */
-    bool map_constructor::is_parametrized() {
         return m_is_parametrized;
     }
 

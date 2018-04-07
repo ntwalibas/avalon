@@ -10,12 +10,12 @@
 #include "error/error.hpp"
 
 /* AST */
-#include "program/ast/program.hpp"
-#include "program/ast/decl/decl.hpp"
-#include "program/ast/decl/import.hpp"
+#include "hir/ast/program.hpp"
+#include "hir/ast/decl/decl.hpp"
+#include "hir/ast/decl/import.hpp"
 /* Symbol table */
-#include "program/symtable/gtable.hpp"
-#include "program/symtable/fqn.hpp"
+#include "hir/symtable/gtable.hpp"
+#include "hir/symtable/fqn.hpp"
 
 /* Compiler */
 #include "compiler/exceptions/invalid_directory.hpp"

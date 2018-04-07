@@ -13,14 +13,14 @@
 #include "lexer/token.hpp"
 
 /* AST */
-#include "program/ast/program.hpp"
-#include "program/ast/decl/ns.hpp"
-#include "program/ast/decl/type.hpp"
-#include "program/ast/stmt/stmt.hpp"
-#include "program/ast/expr/expr.hpp"
-#include "program/symtable/scope.hpp"
-#include "program/ast/decl/function.hpp"
-#include "program/ast/stmt/block_stmt.hpp"
+#include "hir/ast/program.hpp"
+#include "hir/ast/decl/ns.hpp"
+#include "hir/ast/decl/type.hpp"
+#include "hir/ast/stmt/stmt.hpp"
+#include "hir/ast/expr/expr.hpp"
+#include "hir/symtable/scope.hpp"
+#include "hir/ast/decl/function.hpp"
+#include "hir/ast/stmt/block_stmt.hpp"
 
 
 namespace avalon {

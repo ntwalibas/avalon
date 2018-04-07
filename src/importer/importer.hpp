@@ -15,9 +15,9 @@
 #include "lexer/token.hpp"
 
 /* AST */
-#include "program/ast/program.hpp"
+#include "hir/ast/program.hpp"
 /* Symbol table */
-#include "program/symtable/gtable.hpp"
+#include "hir/symtable/gtable.hpp"
 
 /* Compiler */
 #include "compiler/compiler.hpp"

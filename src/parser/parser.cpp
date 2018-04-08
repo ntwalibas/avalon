@@ -161,7 +161,30 @@ parser::parser(
                 namespace_declaration(parent_scope);
             }
             else {
-                throw parsing_error(true, lookback(), "Expected an import declaration or a namespace declaration.");
+                // if no namespace is provided, we put the declarations we encounter in the global namespace
+                token tok = star_tok;
+                std::shared_ptr<ns> namespace_decl = std::make_shared<ns>(tok);
+                m_namespace = tok.get_lexeme();
+                std::vector<std::shared_ptr<decl> > top_decls;
+
+                // match upcoming declarations
+                if(match(PUBLIC)) {
+                    top_decls = top_declaration(true, parent_scope);
+                }
+                else if(match(PRIVATE)) {
+                    top_decls = top_declaration(false, parent_scope);
+                }
+                else {
+                    top_decls = top_declaration(true, parent_scope);
+                }
+
+                // add them to the namespace
+                for(auto& top_decl : top_decls)
+                    namespace_decl -> add_declaration(top_decl);
+
+                // add the namespace declaration to the program
+                std::shared_ptr<decl> declaration = namespace_decl;
+                m_program.add_declaration(declaration);
             }
         } catch(parse_error& err) {
             // if the error is fatal, we bubble the exception up

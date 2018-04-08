@@ -48,6 +48,38 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
     }
 
     /**
+     * set_fqn
+     * sets the fqn where this declaration was found
+     */
+    void type::set_fqn(fqn& l_fqn) {
+        m_fqn = l_fqn;
+    }
+
+    /**
+     * get_fqn
+     * returns the fqn where this declaration was found
+     */
+    fqn& type::get_fqn() {
+        return m_fqn;
+    }
+
+    /**
+     * set_namespace
+     * set the namespace where this declaration was found
+     */
+    void type::set_namespace(const std::string& namespace_name) {
+        m_namespace = namespace_name;
+    }
+
+    /**
+     * get_namespace
+     * returns the namespace where this declaration was found
+     */
+    const std::string& type::get_namespace() const {
+        return m_namespace;
+    }
+
+    /**
      * add_constructor
      * add a default constructor to this type
      */

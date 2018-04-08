@@ -8,6 +8,7 @@
 #include <new>
 
 #include "lexer/token.hpp"
+#include "hir/symtable/fqn.hpp"
 #include "hir/ast/decl/decl.hpp"
 
 
@@ -70,6 +71,30 @@ namespace avalon {
          * returns a token with type source information
          */
         const token& get_token() const;
+
+        /**
+         * set_fqn
+         * sets the fqn where this declaration was found
+         */
+        void set_fqn(fqn& l_fqn);
+
+        /**
+         * get_fqn
+         * returns the fqn where this declaration was found
+         */
+        fqn& get_fqn();
+
+        /**
+         * set_namespace
+         * set the namespace where this declaration was found
+         */
+        void set_namespace(const std::string& namespace_name);
+
+        /**
+         * get_namespace
+         * returns the namespace where this declaration was found
+         */
+        const std::string& get_namespace() const;
 
         /**
          * add_constructor
@@ -214,6 +239,16 @@ namespace avalon {
          * the token with source file information about the type
          */
         token m_tok;
+
+        /*
+         * the fqn of the compilation unit where this declaration was found
+         */
+        fqn m_fqn;
+
+        /*
+         * the name of the namespace where this declaration was found
+         */
+        std::string m_namespace;
 
         /*
          * map of all default constructors that build this type

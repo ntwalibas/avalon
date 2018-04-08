@@ -51,6 +51,30 @@ namespace avalon {
         const bool is_mutable() const;
 
         /**
+         * set_fqn
+         * sets the fqn where this declaration was found
+         */
+        void set_fqn(fqn& l_fqn);
+
+        /**
+         * get_fqn
+         * returns the fqn where this declaration was found
+         */
+        fqn& get_fqn();
+
+        /**
+         * set_namespace
+         * set the namespace where this declaration was found
+         */
+        void set_namespace(const std::string& namespace_name);
+
+        /**
+         * get_namespace
+         * returns the namespace where this declaration was found
+         */
+        const std::string& get_namespace() const;
+
+        /**
          * set_type_instance
          * sets the type instance for this variable.
          * this function is called either directly while parsing
@@ -151,6 +175,16 @@ namespace avalon {
          * mutability flag
          */
         bool m_is_mutable;
+
+        /*
+         * the fqn of the compilation unit where this declaration was found
+         */
+        fqn m_fqn;
+
+        /*
+         * the name of the namespace where this declaration was found
+         */
+        std::string m_namespace;
         
         /*
          * shared pointer to the type instance

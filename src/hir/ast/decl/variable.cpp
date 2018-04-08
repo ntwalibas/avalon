@@ -53,6 +53,38 @@ namespace avalon {
     }
 
     /**
+     * set_fqn
+     * sets the fqn where this declaration was found
+     */
+    void variable::set_fqn(fqn& l_fqn) {
+        m_fqn = l_fqn;
+    }
+
+    /**
+     * get_fqn
+     * returns the fqn where this declaration was found
+     */
+    fqn& variable::get_fqn() {
+        return m_fqn;
+    }
+
+    /**
+     * set_namespace
+     * set the namespace where this declaration was found
+     */
+    void variable::set_namespace(const std::string& namespace_name) {
+        m_namespace = namespace_name;
+    }
+
+    /**
+     * get_namespace
+     * returns the namespace where this declaration was found
+     */
+    const std::string& variable::get_namespace() const {
+        return m_namespace;
+    }
+
+    /**
      * set_type_instance
      * sets the type instance for this variable.
      * this function is called either directly while parsing

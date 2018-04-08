@@ -19,18 +19,6 @@ namespace avalon {
     class default_constructor;
 
     /*
-     * type checking data
-     * valid    : the object is in a consistent state
-     * invalid  : the object failed type checking
-     * unknown  : the object has not been type checked yet
-     */
-    enum validation_state {
-        VALID,
-        INVALID,
-        UNKNOWN
-    };
-
-    /*
      * types of type instances
      * USER     : user defined type instance
      * TUPLE    : built-in tuple type instance

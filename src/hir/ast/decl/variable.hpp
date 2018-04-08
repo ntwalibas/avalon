@@ -25,6 +25,14 @@ namespace avalon {
          * - whether the variable is mutable
          */
         variable(token& tok, bool is_mutable);
+
+        /**
+         * the constructor expects:
+         * - the token with source code information, including the variable name
+         * - whether the variable is mutable
+         * - the validation state of the variable
+         */
+        variable(token& tok, bool is_mutable, validation_state is_valid);
         
         /**
          * set_name
@@ -196,6 +204,11 @@ namespace avalon {
          * shared pointer to the expression that is held in this variable
          */
         std::shared_ptr<expr> m_value;
+
+        /*
+         * the current validation state of the type
+         */
+        validation_state m_is_valid;
 
         /*
          * whether this type is available for public use outside of the namespace where it was declared

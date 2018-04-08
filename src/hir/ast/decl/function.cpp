@@ -16,47 +16,53 @@
 
 
 namespace avalon {
-static bool instances_collide(std::vector<type_instance>& this_instances, std::vector<type_instance>& that_instances) {
-    if(this_instances.size() != that_instances.size())
-        return false;
+    static bool instances_collide(std::vector<type_instance>& this_instances, std::vector<type_instance>& that_instances) {
+        if(this_instances.size() != that_instances.size())
+            return false;
 
-    auto this_it = this_instances.begin(), this_end = this_instances.end();
-    auto that_it = that_instances.begin(), that_end = that_instances.end();
+        auto this_it = this_instances.begin(), this_end = this_instances.end();
+        auto that_it = that_instances.begin(), that_end = that_instances.end();
 
-    for(; this_it != this_end && that_it != that_end; ++this_it, ++that_it) {
-        if(type_instance_strong_compare(* this_it, * that_it) == false) {
-            if(type_instance_weak_compare(* this_it, * that_it) == false)
-                return false;
+        for(; this_it != this_end && that_it != that_end; ++this_it, ++that_it) {
+            if(type_instance_strong_compare(* this_it, * that_it) == false) {
+                if(type_instance_weak_compare(* this_it, * that_it) == false)
+                    return false;
 
-            std::vector<type_instance>& this_params = this_it -> get_params();
-            std::vector<type_instance>& that_params = that_it -> get_params();
-            if(instances_collide(this_params, that_params) == false)
-                return false;
+                std::vector<type_instance>& this_params = this_it -> get_params();
+                std::vector<type_instance>& that_params = that_it -> get_params();
+                if(instances_collide(this_params, that_params) == false)
+                    return false;
+            }
         }
+
+        return true;
     }
 
-    return true;
-}
+    static bool params_collide(std::vector<std::pair<std::string, variable> >& this_params, std::vector<std::pair<std::string, variable> >& that_params) {
+        std::vector<type_instance> this_instances;
+        std::vector<type_instance> that_instances;
 
-static bool params_collide(std::vector<std::pair<std::string, variable> >& this_params, std::vector<std::pair<std::string, variable> >& that_params) {
-    std::vector<type_instance> this_instances;
-    std::vector<type_instance> that_instances;
+        auto this_it = this_params.begin(), this_end = this_params.end();
+        auto that_it = that_params.begin(), that_end = that_params.end();
+        for(; this_it != this_end && that_it != that_end; ++this_it, ++that_it) {
+            this_instances.push_back(this_it -> second.get_type_instance());
+            that_instances.push_back(that_it -> second.get_type_instance());
+        }
 
-    auto this_it = this_params.begin(), this_end = this_params.end();
-    auto that_it = that_params.begin(), that_end = that_params.end();
-    for(; this_it != this_end && that_it != that_end; ++this_it, ++that_it) {
-        this_instances.push_back(this_it -> second.get_type_instance());
-        that_instances.push_back(that_it -> second.get_type_instance());
+        return instances_collide(this_instances, that_instances);
     }
 
-    return instances_collide(this_instances, that_instances);
-}
+    /**
+     * the constructor expects the token with function information
+     */
+    function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(UNKNOWN), m_is_public(true), m_terminates(false) {
+    }
 
-/**
- * the constructor expects the token with function information
- */
-function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_terminates(false) {
-}
+    /**
+     * the constructor expects the token with function information and the validation state
+     */
+    function::function(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true), m_terminates(false) {    
+    }
 
     /**
      * set_name

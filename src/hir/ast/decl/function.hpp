@@ -28,6 +28,11 @@ namespace avalon {
         function(token& tok);
 
         /**
+         * the constructor expects the token with function information and the validation state
+         */
+        function(token& tok, validation_state is_valid);
+
+        /**
          * set_name
          * updates the name of this function
          */
@@ -231,6 +236,11 @@ namespace avalon {
          * the body of the function
          */
         block_stmt m_body;
+
+        /*
+         * the current validation state of the type
+         */
+        validation_state m_is_valid;
 
         /*
          * whether this type is available for public use outside of the namespace where it was declared

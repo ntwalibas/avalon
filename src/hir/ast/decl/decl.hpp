@@ -3,6 +3,19 @@
 
 
 namespace avalon {
+    /*
+     * checking data
+     * valid    : the object is in a consistent state
+     * invalid  : the object failed type checking
+     * unknown  : the object has not been type checked yet
+     */
+    enum validation_state {
+        VALID,
+        INVALID,
+        UNKNOWN
+    };
+
+
     class decl {
     public:
         virtual bool is_import() {

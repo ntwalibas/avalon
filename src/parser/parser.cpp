@@ -210,13 +210,21 @@ parser::parser(
      * continues parsing in anticipation of type, function, variable and statement declarations
      */
     void parser::namespace_declaration(std::shared_ptr<scope>& parent_scope) {
-        if(!check(MUL) && !check(IDENTIFIER))
-            throw parsing_error(true, peek(), "Expected the namespace name as a star (for the global namespace) or an identifer for a named namespace.");
+        bool namespace_given = false;
+        // we expect the namespace name or no name to signify the global namespace
+        if(!check(IDENTIFIER)) {
+            if(!check(NS_LEFT_PAREN))
+                throw parsing_error(true, peek(), "Expected the namespace name as an identifer for a named namespace or no name for the global namespace name.");
+        }
+        else {
+            namespace_given = true;
+        }
 
-        // the namespace name
-        std::shared_ptr<token>& namespace_tok = advance();
-        std::shared_ptr<ns> namespace_decl = std::make_shared<ns>(* namespace_tok);
-        m_namespace = namespace_tok -> get_lexeme();
+        // construct the namespace
+        std::shared_ptr<token> namespace_tok = namespace_given ? advance() : nullptr;
+        token tok = namespace_tok == nullptr ? star_tok : * namespace_tok;
+        std::shared_ptr<ns> namespace_decl = std::make_shared<ns>(tok);
+        m_namespace = tok.get_lexeme();
         std::vector<std::shared_ptr<decl> > top_decls;
         bool indent_found = false;
 

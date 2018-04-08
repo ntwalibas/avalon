@@ -17,6 +17,7 @@
 /* AST */
 #include "hir/ast/program.hpp"
 /* Symbol table */
+#include "hir/symtable/scope.hpp"
 #include "hir/symtable/gtable.hpp"
 
 /* Compiler */
@@ -74,8 +75,6 @@ namespace avalon {
         bool m_fatal;
     };
 
-
-
     class importer {
     public:
         /**
@@ -114,6 +113,12 @@ namespace avalon {
          */
         void sort_deps();
 
+        /**
+         * run_imports
+         * performs imports of declarations from one program to another
+         */
+        void run_imports();
+
         /*
          * the origin program
          * this is the program all other imports depend on
@@ -143,6 +148,36 @@ namespace avalon {
          * When I do, I might just use it.
          */
         void sort_deps_util(const std::string& dep_name, std::vector<std::string>& sub_deps);
+
+        /**
+         * run_imports_util
+         * goes through all top declarations in a program, finds import declarations and imports those declarations into the current program's scope
+         */
+        void run_imports_util(program& prog);
+
+        /**
+         * import_declarations
+         * given two programs, import all the declarations in "from" program into "to" program's scope
+         */
+        void import_declarations(program& from, program& to);
+
+        /**
+         * import_type
+         * given a namespace name and a type declaration, insert the type into the given scope
+         */
+        void import_type(std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name);
+
+        /**
+         * import_function
+         * given a namespace name and a function declaration, insert the function into the given scope
+         */
+        void import_function(std::shared_ptr<function>& function_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name);
+
+        /**
+         * import_variable
+         * given a namespace name and a variable declaration, insert the variable into the given scope
+         */
+        void import_variable(std::shared_ptr<variable>& variable_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name);
 
         /**
          * importing_error

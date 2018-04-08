@@ -4,8 +4,6 @@
 #include <memory>
 #include <vector>
 
-#include <iostream>
-
 /* Error */
 #include "error/error.hpp"
 
@@ -14,7 +12,9 @@
 #include "hir/ast/decl/decl.hpp"
 #include "hir/ast/decl/import.hpp"
 /* Symbol table */
+#include "hir/symtable/exceptions/symbol_already_declared.hpp"
 #include "hir/symtable/gtable.hpp"
+#include "hir/symtable/scope.hpp"
 #include "hir/symtable/fqn.hpp"
 
 /* Compiler */
@@ -78,7 +78,7 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
     /**
      * import_all
      * the importer entry point
-     * it constructs the gtable with all the imported files compiled
+     * it constructs the gtable with all the imported files parsed
      */
     gtable& importer::import_all() {
         // we generate all the dependencies that we will ultimately build the program
@@ -86,6 +86,9 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
 
         // we sort the dependencies, making sure no cycles are allowed among them
         sort_deps();
+
+        // we import public declarations from one program to another
+        run_imports();
 
         // last, we return the gtable
         return m_gtable;
@@ -96,7 +99,7 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
      * given a program, this function gets all the program imports,
      * validates the imports and generates the dependency map.
      */
-    void importer::generate_deps(program& prog) {        
+    void importer::generate_deps(program& prog) {
         std::string prog_fqn_name = prog.get_fqn().get_name();
 
         // if the program already exists in the global symbol table, we return
@@ -155,6 +158,19 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
     }
 
     /**
+     * run_imports
+     * performs imports of declarations from one program to another
+     */
+    void importer::run_imports() {
+        while(!m_sorted_deps.empty()) {
+            const std::string& fqn_name = m_sorted_deps.front();
+            program& prog = m_gtable.get_program(fqn_name);
+            run_imports_util(prog);
+            m_sorted_deps.pop();
+        }
+    }
+
+    /**
      * sort_deps_util
      * perform a topological sort of the dependency graph.
      *
@@ -180,6 +196,110 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
 
         // mark the current dependency as visited
         m_dep_states[dep] = VISITED;
+    }
+
+    /**
+     * run_imports_util
+     * goes through all top declarations in a program, finds import declarations and imports those declarations into the current program's scope
+     */
+    void importer::run_imports_util(program& prog) {
+        std::vector<std::shared_ptr<decl> >& declarations = prog.get_declarations();
+        for(auto& declaration : declarations) {
+            if(declaration -> is_import()) {
+                const std::shared_ptr<import>& import_decl = std::static_pointer_cast<import>(declaration);
+                program& imported_prog = m_gtable.get_program(import_decl -> get_fqn_name());
+                import_declarations(imported_prog, prog);
+            }
+        }
+    }
+
+    /**
+     * import_declarations
+     * given two programs, import all the declarations in "from" program into "to" program's scope
+     */
+    void importer::import_declarations(program& from, program& to) {
+        // declarations defined in from with hope of find namespaces with declarations in them
+        std::vector<std::shared_ptr<decl> >& declarations = from.get_declarations();
+        std::vector<std::shared_ptr<ns> > namespace_decls;
+        // since said declarations exist only on the AST, we also add them into the "from" scope
+        std::shared_ptr<scope>& from_scope = from.get_scope();
+        // the scope into which to insert the found declarations
+        std::shared_ptr<scope>& to_scope = to.get_scope();
+
+        // we get all the namespaces defined in the "from" program        
+        for(auto& declaration : declarations) {
+            if(declaration -> is_namespace()) {
+                std::shared_ptr<ns> namespace_decl = std::static_pointer_cast<ns>(declaration);
+                namespace_decls.push_back(namespace_decl);
+                // we add all namespaces to the "from" and "to" scope
+                from_scope -> add_namespace(namespace_decl -> get_name());
+                to_scope -> add_namespace(namespace_decl -> get_name());
+            }
+        }
+
+        // go over the namespaces and insert the public declarations found in them into the "to" scope
+        for(auto& namespace_decl : namespace_decls) {
+            std::vector<std::shared_ptr<decl> >& l_declarations = namespace_decl -> get_declarations();
+            for(auto& l_declaration : l_declarations) {
+                if(l_declaration -> is_type()) {
+                    std::shared_ptr<type> type_decl = std::static_pointer_cast<type>(l_declaration);
+                    if(type_decl -> is_public()) {
+                        import_type(type_decl, from_scope, namespace_decl -> get_name());
+                        import_type(type_decl, to_scope, namespace_decl -> get_name());
+                    }
+                }
+                else if(l_declaration -> is_function()) {
+                    std::shared_ptr<function> function_decl = std::static_pointer_cast<function>(l_declaration);
+                    if(function_decl -> is_public()) {
+                        import_function(function_decl, from_scope, namespace_decl -> get_name());
+                        import_function(function_decl, to_scope, namespace_decl -> get_name());
+                    }
+                }
+                else if(l_declaration -> is_variable()) {
+                    std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(l_declaration);
+                    if(variable_decl -> is_public()) {
+                        import_variable(variable_decl, from_scope, namespace_decl -> get_name());
+                        import_variable(variable_decl, to_scope, namespace_decl -> get_name());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * import_type
+     * given a namespace name and a type declaration, insert the type into the given scope
+     */
+    void importer::import_type(std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name) {
+        try {
+            scp -> add_type(namespace_name, type_decl);
+        } catch(symbol_already_declared err) {
+            throw importing_error(true, type_decl -> get_token(), err.what());
+        }
+    }
+
+    /**
+     * import_function
+     * given a namespace name and a function declaration, insert the function into the given scope
+     */
+    void importer::import_function(std::shared_ptr<function>& function_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name) {
+        try {
+            scp -> add_function(namespace_name, function_decl);
+        } catch(symbol_already_declared err) {
+            throw importing_error(true, function_decl -> get_token(), err.what());
+        }
+    }
+
+    /**
+     * import_variable
+     * given a namespace name and a variable declaration, insert the variable into the given scope
+     */
+    void importer::import_variable(std::shared_ptr<variable>& variable_decl, std::shared_ptr<scope>& scp, const std::string& namespace_name) {
+        try {
+            scp -> add_variable(namespace_name, variable_decl);
+        } catch(symbol_already_declared err) {
+            throw importing_error(true, variable_decl -> get_token(), err.what());
+        }
     }
 
     /**

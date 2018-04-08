@@ -162,9 +162,8 @@ parser::parser(
             }
             else {
                 // if no namespace is provided, we put the declarations we encounter in the global namespace
-                token tok = star_tok;
-                std::shared_ptr<ns> namespace_decl = std::make_shared<ns>(tok);
-                m_namespace = tok.get_lexeme();
+                std::shared_ptr<ns> namespace_decl = std::make_shared<ns>(star_tok);
+                m_namespace = star_tok.get_lexeme();
                 std::vector<std::shared_ptr<decl> > top_decls;
 
                 // match upcoming declarations

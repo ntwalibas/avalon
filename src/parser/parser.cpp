@@ -1774,8 +1774,6 @@ parser::parser(
                 case VAL:
                 case FUNCTION:
                 case IF:
-                case SWITCH:
-                case FOR:
                 case WHILE:
                 case RETURN:
                 case BREAK:

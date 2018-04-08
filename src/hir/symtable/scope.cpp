@@ -306,6 +306,17 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
     }
 
     /**
+     * has_parent
+     * returns true if this scope has a parent scope
+     */
+    bool scope::has_parent() {
+        if(m_parent == nullptr)
+            return false;
+        else
+            return true;
+    }
+
+    /**
      * set_start_line
      * sets the line where the scope starts
      */

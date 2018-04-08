@@ -202,6 +202,12 @@ namespace avalon {
         std::shared_ptr<scope>& get_parent();
 
         /**
+         * has_parent
+         * returns true if this scope has a parent scope
+         */
+        bool has_parent();
+
+        /**
          * set_start_line
          * sets the line where the scope starts
          */

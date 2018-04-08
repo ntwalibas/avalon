@@ -439,6 +439,11 @@ namespace avalon {
         program m_program;
 
         /*
+         * the name of the current namespace that contains top declarations
+         */
+        std::string m_namespace;
+
+        /*
          * the colon token can follow a primary expression to provide a type instance
          * but inside maps, it can follow a primary expression when used as a key value
          * to disambigue both, we require that type instance not be provided alongside expressions used as map keys

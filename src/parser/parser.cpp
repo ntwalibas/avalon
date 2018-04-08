@@ -216,6 +216,7 @@ parser::parser(
         // the namespace name
         std::shared_ptr<token>& namespace_tok = advance();
         std::shared_ptr<ns> namespace_decl = std::make_shared<ns>(* namespace_tok);
+        m_namespace = namespace_tok -> get_lexeme();
         std::vector<std::shared_ptr<decl> > top_decls;
         bool indent_found = false;
 
@@ -293,8 +294,11 @@ parser::parser(
      */
     std::shared_ptr<decl> parser::type_declaration(bool is_public) {
         std::shared_ptr<token>& type_tok = consume(IDENTIFIER, "Expected the type name in a type declaration.");
+        fqn& l_fqn = m_program.get_fqn();
         std::shared_ptr<type> type_decl = std::make_shared<type>(* type_tok, UNKNOWN);
         type_decl -> is_public(is_public);
+        type_decl -> set_fqn(l_fqn);
+        type_decl -> set_namespace(m_namespace);
 
         if(match(EQUAL)) {
             // we expect parenthesis around type parameters (whether they were provided or not)
@@ -429,8 +433,11 @@ parser::parser(
      */
     std::shared_ptr<decl> parser::function_declaration(bool is_public, std::shared_ptr<scope>& parent_scope) {
         std::shared_ptr<token>& function_tok = consume(IDENTIFIER, "Expected the function name in a function declaration.");
+        fqn& l_fqn = m_program.get_fqn();
         std::shared_ptr<function> function_decl = std::make_shared<function>(* function_tok);
         function_decl -> is_public(is_public);
+        function_decl -> set_fqn(l_fqn);
+        function_decl -> set_namespace(m_namespace);
 
         // set the scope introduced by this function
         std::shared_ptr<scope> l_scope = std::make_shared<scope>();
@@ -517,7 +524,8 @@ parser::parser(
      * continues the parsing process in anticipation of a full variable declaration.
      */
     std::vector<std::shared_ptr<decl> > parser::variable_declaration(bool is_public) {
-        std::vector<std::shared_ptr<decl> > var_decls;        
+        std::vector<std::shared_ptr<decl> > var_decls;   
+        fqn& l_fqn = m_program.get_fqn();     
         bool is_first_def = true;
         bool indent_found = false;
         bool is_mutable = false;
@@ -561,6 +569,8 @@ parser::parser(
             std::shared_ptr<token>& var_tok = consume(IDENTIFIER, "Expected a variable name.");
             std::shared_ptr<variable> var_decl = std::make_shared<variable>(* var_tok, is_mutable);
             var_decl -> is_public(is_public);
+            var_decl -> set_fqn(l_fqn);
+            var_decl -> set_namespace(m_namespace);
 
             // get the type if any
             if(match(COLON)) {

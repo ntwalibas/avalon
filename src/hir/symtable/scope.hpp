@@ -1,5 +1,5 @@
-#ifndef AVALON_PROGRAM_SYMTABLE_SCOPE_HPP_
-#define AVALON_PROGRAM_SYMTABLE_SCOPE_HPP_
+#ifndef AVALON_HIR_SYMTABLE_SCOPE_HPP_
+#define AVALON_HIR_SYMTABLE_SCOPE_HPP_
 
 #include <cstddef>
 #include <memory>

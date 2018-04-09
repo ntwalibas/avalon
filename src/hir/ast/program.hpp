@@ -1,5 +1,5 @@
-#ifndef AVALON_PROGRAM_AST_PROG_H_
-#define AVALON_PROGRAM_AST_PROG_H_
+#ifndef AVALON_HIR_AST_PROG_H_
+#define AVALON_HIR_AST_PROG_H_
 
 #include <memory>
 #include <vector>

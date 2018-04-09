@@ -1,5 +1,5 @@
-#ifndef AVALON_PROGRAM_AST_STMT_BLOCK_HPP_
-#define AVALON_PROGRAM_AST_STMT_BLOCK_HPP_
+#ifndef AVALON_HIR_AST_STMT_BLOCK_HPP_
+#define AVALON_HIR_AST_STMT_BLOCK_HPP_
 
 #include <memory>
 #include <vector>

@@ -1,5 +1,5 @@
-#ifndef AVALON_PROGRAM_SYMTABLE_GTABLE_HPP_
-#define AVALON_PROGRAM_SYMTABLE_GTABLE_HPP_
+#ifndef AVALON_HIR_SYMTABLE_GTABLE_HPP_
+#define AVALON_HIR_SYMTABLE_GTABLE_HPP_
 
 #include <unordered_map>
 #include <string>

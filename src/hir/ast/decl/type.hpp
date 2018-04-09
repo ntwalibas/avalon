@@ -1,5 +1,5 @@
-#ifndef AVALON_PROGRAM_AST_TYPE_HPP_
-#define AVALON_PROGRAM_AST_TYPE_HPP_
+#ifndef AVALON_HIR_AST_TYPE_HPP_
+#define AVALON_HIR_AST_TYPE_HPP_
 
 #include <utility>
 #include <memory>

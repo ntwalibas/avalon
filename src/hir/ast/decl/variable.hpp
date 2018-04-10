@@ -11,12 +11,7 @@
 #include "hir/ast/expr/expr.hpp"
 
 
-namespace avalon {
-    /**
-     * forward declarations
-     */
-    class vtable;
-    
+namespace avalon {    
     class variable: public decl {
     public:
         /**

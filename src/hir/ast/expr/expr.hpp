@@ -1,5 +1,5 @@
-#ifndef AVALON_PARSER_AST_EXPR_HPP_
-#define AVALON_PARSER_AST_EXPR_HPP_
+#ifndef AVALON_HIR_AST_EXPR_HPP_
+#define AVALON_HIR_AST_EXPR_HPP_
 
 
 namespace avalon {

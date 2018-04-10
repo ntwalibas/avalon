@@ -91,12 +91,12 @@ namespace avalon {
         }
 
     private:
-        /**
-         * the name of the type
+        /*
+         * the name of the namespace
          */
         std::string m_name;
 
-        /**
+        /*
          * the token with source file information about the type
          */
         token m_tok;

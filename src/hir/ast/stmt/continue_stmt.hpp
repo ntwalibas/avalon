@@ -1,5 +1,5 @@
-#ifndef AVALON_Program_AST_STMT_CONTINUE_STMT_HPP_
-#define AVALON_Program_AST_STMT_CONTINUE_STMT_HPP_
+#ifndef AVALON_HIR_AST_STMT_CONTINUE_STMT_HPP_
+#define AVALON_HIR_AST_STMT_CONTINUE_STMT_HPP_
 
 #include "hir/ast/stmt/stmt.hpp"
 #include "lexer/token.hpp"

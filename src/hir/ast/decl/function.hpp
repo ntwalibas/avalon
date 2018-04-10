@@ -14,12 +14,6 @@
 
 
 namespace avalon {
-    /**
-     * foward declaration of classes needed below
-     */
-    class parameter_constraint;
-
-
     class function : public decl {
     public:
         /**

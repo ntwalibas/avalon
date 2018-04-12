@@ -1364,14 +1364,25 @@ parser::parser(
                 l_expression = tuple_expr;
             }
             else {
-                std::shared_ptr<expr> inner_expression = parse_expression();
-                if(match(COMMA)) {
-                    l_expression = parse_tuple_expression(left_paren, inner_expression);
+                if(check(IDENTIFIER) && check_next(EQUAL)) {
+                    std::shared_ptr<token>& inner_token = advance();
+                    consume(EQUAL, "Expected an equal sign after element name in tuple expression.");
+                    std::shared_ptr<expr> inner_expression = parse_expression();
+                    // we allow the user to add a comma even if only one element was provided
+                    if(match(COMMA))
+                        ;
+                    l_expression = parse_tuple_expression(left_paren, * inner_token, inner_expression);                    
                 }
                 else {
-                    std::shared_ptr<grouped_expression> grouped_expr = std::make_shared<grouped_expression>(* left_paren, inner_expression);
-                    consume(RIGHT_PAREN, "Expected a closing parenthesis after grouped expression.");
-                    l_expression = grouped_expr;
+                    std::shared_ptr<expr> inner_expression = parse_expression();
+                    if(match(COMMA)) {
+                        l_expression = parse_tuple_expression(left_paren, star_tok, inner_expression);
+                    }
+                    else {
+                        std::shared_ptr<grouped_expression> grouped_expr = std::make_shared<grouped_expression>(* left_paren, inner_expression);
+                        consume(RIGHT_PAREN, "Expected a closing parenthesis after grouped expression.");
+                        l_expression = grouped_expr;
+                    }
                 }
             }
         }
@@ -1438,7 +1449,7 @@ parser::parser(
             }
             else {
                 std::shared_ptr<expr> arg_value = parse_expression();
-                call_expr -> add_argument(star_tok, arg_value); // we use the general purpose underscore token in lieu of the actual argument name as we have none
+                call_expr -> add_argument(star_tok, arg_value); // we use the general purpose star token in lieu of the actual argument name as we have none
             }
         } while(match(COMMA));
         consume(RIGHT_PAREN, "Expected a closing parenthesis after the function call arguments.");
@@ -1469,17 +1480,25 @@ parser::parser(
      * if we encounter an open parenthesis followed by an expression then by a comma,
      * then we know we have a tuple instead of a grouped expression. this function parses the remainder of the tuple.
      */
-    std::shared_ptr<expr> parser::parse_tuple_expression(std::shared_ptr<token>& left_paren, std::shared_ptr<expr>& first_element) {
+    std::shared_ptr<expr> parser::parse_tuple_expression(std::shared_ptr<token>& left_paren, token& first_token, std::shared_ptr<expr>& first_element) {
         std::shared_ptr<expr> l_expression = nullptr;
         std::shared_ptr<tuple_expression> tuple_expr = std::make_shared<tuple_expression>(* left_paren);
-        tuple_expr -> add_element(first_element);
+        tuple_expr -> add_element(first_token, first_element);
         
         // we fetch coming expressions if no closing parenthesis was provided
         if(check(RIGHT_PAREN) ==  false) {
-            std::shared_ptr<expr> next_element = nullptr;
+            std::shared_ptr<expr> el_val = nullptr;
             do {
-                next_element = parse_expression();
-                tuple_expr -> add_element(next_element);
+                if(check(IDENTIFIER) && check_next(EQUAL)) {
+                    std::shared_ptr<token>& el_tok = advance();
+                    consume(EQUAL, "Expected an equal sign after element name in tuple expression.");
+                    el_val = parse_expression();
+                    tuple_expr -> add_element(* el_tok, el_val);
+                }
+                else {
+                    el_val = parse_expression();
+                    tuple_expr -> add_element(star_tok, el_val);
+                }
             } while(match(COMMA));
         }
         consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple expression.");

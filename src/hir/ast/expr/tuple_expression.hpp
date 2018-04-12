@@ -2,7 +2,7 @@
 #define AVALON_HIR_AST_EXPR_TUPLE_EXPRESSION_HPP_
 
 #include <memory>
-#include <vector>
+#include <map>
 
 #include "hir/ast/expr/expr.hpp"
 #include "hir/ast/decl/type.hpp"
@@ -59,13 +59,13 @@ namespace avalon {
          * add_element
          * add a new element to the tuple
          */
-        void add_element(std::shared_ptr<expr> element);
+        void add_element(token& el_tok, std::shared_ptr<expr> el_val);
 
         /**
          * get_elements
-         * returns a vector of all the elements in the tuple
+         * returns a map of all the elements in the tuple
          */
-        std::vector<std::shared_ptr<expr> >& get_elements();
+        std::map<token, std::shared_ptr<expr> >& get_elements();
         
         /**
          * is_tuple_expression
@@ -92,9 +92,9 @@ namespace avalon {
         bool m_type_instance_from_parser;
 
         /*
-         * a vector of expressions that make up the tuple
+         * a map of expressions that make up the tuple
          */
-        std::vector<std::shared_ptr<expr> > m_elements;
+        std::map<token, std::shared_ptr<expr> > m_elements;
     };
 }
 

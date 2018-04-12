@@ -1,4 +1,5 @@
-#include <string>
+#include <memory>
+#include <map>
 
 #include "hir/ast/expr/tuple_expression.hpp"
 #include "hir/ast/expr/expr.hpp"
@@ -71,15 +72,15 @@ namespace avalon {
      * add_element
      * add a new element to the tuple
      */
-    void tuple_expression::add_element(std::shared_ptr<expr> element) {
-        m_elements.push_back(element);
+    void tuple_expression::add_element(token& el_tok, std::shared_ptr<expr> el_val) {
+        m_elements.emplace(el_tok, el_val);
     }
 
     /**
      * get_elements
-     * returns a vector of all the elements in the tuple
+     * returns a map of all the elements in the tuple
      */
-    std::vector<std::shared_ptr<expr> >& tuple_expression::get_elements() {
+    std::map<token, std::shared_ptr<expr> >& tuple_expression::get_elements() {
         return m_elements;
     }
 }

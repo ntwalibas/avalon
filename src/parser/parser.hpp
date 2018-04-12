@@ -392,7 +392,7 @@ namespace avalon {
          * if we encounter an opening parenthesis followed by an expression then by a comma,
          * then we know we have a tuple instead of a grouped expression. this function parses the remainder of the tuple.
          */
-        std::shared_ptr<expr> parse_tuple_expression(std::shared_ptr<token>& left_paren, std::shared_ptr<expr>& first_element);
+        std::shared_ptr<expr> parse_tuple_expression(std::shared_ptr<token>& left_paren, token& first_token, std::shared_ptr<expr>& first_element);
 
         /**
          * parse_list_expression

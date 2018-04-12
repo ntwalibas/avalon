@@ -1483,7 +1483,11 @@ parser::parser(
     std::shared_ptr<expr> parser::parse_tuple_expression(std::shared_ptr<token>& left_paren, token& first_token, std::shared_ptr<expr>& first_element) {
         std::shared_ptr<expr> l_expression = nullptr;
         std::shared_ptr<tuple_expression> tuple_expr = std::make_shared<tuple_expression>(* left_paren);
-        tuple_expr -> add_element(first_token, first_element);
+        try {
+            tuple_expr -> add_element(first_token.get_lexeme(), first_element);
+        } catch(std::invalid_argument err) {
+            throw parsing_error(true, first_token, "This name is already used in the current tuple expression.");
+        }
         
         // we fetch coming expressions if no closing parenthesis was provided
         if(check(RIGHT_PAREN) ==  false) {
@@ -1493,11 +1497,15 @@ parser::parser(
                     std::shared_ptr<token>& el_tok = advance();
                     consume(EQUAL, "Expected an equal sign after element name in tuple expression.");
                     el_val = parse_expression();
-                    tuple_expr -> add_element(* el_tok, el_val);
+                    try {
+                        tuple_expr -> add_element(el_tok -> get_lexeme(), el_val);
+                    } catch(std::invalid_argument err) {
+                        throw parsing_error(true, first_token, "This name is already used in the current tuple expression.");
+                    }
                 }
                 else {
                     el_val = parse_expression();
-                    tuple_expr -> add_element(star_tok, el_val);
+                    tuple_expr -> add_element(star_tok.get_lexeme(), el_val);
                 }
             } while(match(COMMA));
         }
@@ -1823,6 +1831,10 @@ parser::parser(
      */
     parse_error parser::parsing_error(bool fatal, std::shared_ptr<token>& tok, const std::string& message) {
         return parse_error(m_error_handler, * tok, fatal, message);
+    }
+
+    parse_error parser::parsing_error(bool fatal, token& tok, const std::string& message) {
+        return parse_error(m_error_handler, tok, fatal, message);
     }
 
     /**

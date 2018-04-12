@@ -1,4 +1,6 @@
+#include <stdexcept>
 #include <memory>
+#include <string>
 #include <map>
 
 #include "hir/ast/expr/tuple_expression.hpp"
@@ -72,15 +74,26 @@ namespace avalon {
      * add_element
      * add a new element to the tuple
      */
-    void tuple_expression::add_element(token& el_tok, std::shared_ptr<expr> el_val) {
-        m_elements.emplace(el_tok, el_val);
+    void tuple_expression::add_element(const std::string& el_name, std::shared_ptr<expr> el_val) {
+        if(m_elements.count(el_name) > 0) {
+            throw std::invalid_argument("The element name given in tuple expression is already in use.");
+        }
+        else {
+            if(el_name == "*") {
+                std::string new_el_name = std::to_string(m_elements.size());
+                m_elements.emplace(new_el_name, el_val);
+            }
+            else {
+                m_elements.emplace(el_name, el_val);
+            }
+        }
     }
 
     /**
      * get_elements
      * returns a map of all the elements in the tuple
      */
-    std::map<token, std::shared_ptr<expr> >& tuple_expression::get_elements() {
+    std::map<std::string, std::shared_ptr<expr> >& tuple_expression::get_elements() {
         return m_elements;
     }
 }

@@ -1,7 +1,8 @@
 #include <stdexcept>
+#include <utility>
 #include <memory>
+#include <vector>
 #include <string>
-#include <map>
 
 #include "hir/ast/expr/tuple_expression.hpp"
 #include "hir/ast/expr/expr.hpp"
@@ -75,25 +76,24 @@ namespace avalon {
      * add a new element to the tuple
      */
     void tuple_expression::add_element(const std::string& el_name, std::shared_ptr<expr> el_val) {
-        if(m_elements.count(el_name) > 0) {
-            throw std::invalid_argument("The element name given in tuple expression is already in use.");
+        for(auto& el : m_elements) {
+            if(el.first == el_name)
+                throw std::invalid_argument("The element name given in tuple expression is already in use.");
+        }
+        if(el_name == "*") {
+            std::string new_el_name = std::to_string(m_elements.size());
+            m_elements.emplace_back(new_el_name, el_val);
         }
         else {
-            if(el_name == "*") {
-                std::string new_el_name = std::to_string(m_elements.size());
-                m_elements.emplace(new_el_name, el_val);
-            }
-            else {
-                m_elements.emplace(el_name, el_val);
-            }
+            m_elements.emplace_back(el_name, el_val);
         }
     }
 
     /**
      * get_elements
-     * returns a map of all the elements in the tuple
+     * returns a vector of all the elements in the tuple
      */
-    std::map<std::string, std::shared_ptr<expr> >& tuple_expression::get_elements() {
+    std::vector<std::pair<std::string, std::shared_ptr<expr> > >& tuple_expression::get_elements() {
         return m_elements;
     }
 }

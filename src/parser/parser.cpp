@@ -35,6 +35,7 @@
 #include "hir/ast/expr/cast_expression.hpp"
 #include "hir/ast/expr/call_expression.hpp"
 #include "hir/ast/expr/list_expression.hpp"
+#include "hir/ast/expr/match_expression.hpp"
 #include "hir/ast/expr/unary_expression.hpp"
 #include "hir/ast/expr/tuple_expression.hpp"
 #include "hir/ast/expr/binary_expression.hpp"
@@ -1005,66 +1006,81 @@ parser::parser(
         std::shared_ptr<expr> l_expression = nullptr;
         std::shared_ptr<expr> lval = bitwise_or();
 
-        while(
-            match(IN)           ||
-            match(NOT_IN)       ||
-            match(NEXT_IN)      ||
-            match(PREV_IN)      ||
-            match(IS)           ||
-            match(IS_NOT)       ||
-            match(LESS)         ||
-            match(LESS_EQUAL)   ||
-            match(GREATER)      ||
-            match(GREATER_EQUAL)||
-            match(NOT_EQUAL)    ||
-            match(EQUAL_EQUAL)
-        ) {
+        if(match(IN) || match(NOT_IN) || match(NEXT_IN) || match(PREV_IN) || match(IS) || match(IS_NOT) || match(LESS) || match(LESS_EQUAL) || match(GREATER) || match(GREATER_EQUAL) || match(NOT_EQUAL) || match(EQUAL_EQUAL)) {
+            while(
+                match(IN)           ||
+                match(NOT_IN)       ||
+                match(NEXT_IN)      ||
+                match(PREV_IN)      ||
+                match(IS)           ||
+                match(IS_NOT)       ||
+                match(LESS)         ||
+                match(LESS_EQUAL)   ||
+                match(GREATER)      ||
+                match(GREATER_EQUAL)||
+                match(NOT_EQUAL)    ||
+                match(EQUAL_EQUAL)
+            ) {
+                std::shared_ptr<token>& op = lookback();
+                std::shared_ptr<expr> rval = bitwise_or();
+                std::shared_ptr<binary_expression> expr = nullptr;
+                switch(op -> get_type()) {
+                case IN:
+                    expr = std::make_shared<binary_expression>(* op, IN_EXPR, lval, rval);
+                    break;
+                case NOT_IN:
+                    expr = std::make_shared<binary_expression>(* op, NOT_IN_EXPR, lval, rval);
+                    break;
+                case NEXT_IN:
+                    expr = std::make_shared<binary_expression>(* op, NEXT_IN_EXPR, lval, rval);
+                    break;
+                case PREV_IN:
+                    expr = std::make_shared<binary_expression>(* op, PREV_IN_EXPR, lval, rval);
+                    break;
+                case IS:
+                    expr = std::make_shared<binary_expression>(* op, IS_EXPR, lval, rval);
+                    break;
+                case IS_NOT:
+                    expr = std::make_shared<binary_expression>(* op, IS_NOT_EXPR, lval, rval);
+                    break;
+                case LESS:
+                    expr = std::make_shared<binary_expression>(* op, LESS_EXPR, lval, rval);
+                    break;
+                case LESS_EQUAL:
+                    expr = std::make_shared<binary_expression>(* op, LESS_EQUAL_EXPR, lval, rval);
+                    break;
+                case GREATER:
+                    expr = std::make_shared<binary_expression>(* op, GREATER_EXPR, lval, rval);
+                    break;
+                case GREATER_EQUAL:
+                    expr = std::make_shared<binary_expression>(* op, GREATER_EQUAL_EXPR, lval, rval);
+                    break;
+                case NOT_EQUAL:
+                    expr = std::make_shared<binary_expression>(* op, NOT_EQUAL_EXPR, lval, rval);
+                    break;
+                case EQUAL_EQUAL:
+                    expr = std::make_shared<binary_expression>(* op, EQUAL_EQUAL_EXPR, lval, rval);
+                    break;
+                // empty default case to avoid warnings by [-Wswitch]
+                default:
+                    ;
+                }
+                lval = expr;
+            }
+        }
+        else if(match(MATCH) || match(NOT_MATCH)) {
             std::shared_ptr<token>& op = lookback();
             std::shared_ptr<expr> rval = bitwise_or();
-            std::shared_ptr<binary_expression> expr = nullptr;
-            switch(op -> get_type()) {
-            case IN:
-                expr = std::make_shared<binary_expression>(* op, IN_EXPR, lval, rval);
-                break;
-            case NOT_IN:
-                expr = std::make_shared<binary_expression>(* op, NOT_IN_EXPR, lval, rval);
-                break;
-            case NEXT_IN:
-                expr = std::make_shared<binary_expression>(* op, NEXT_IN_EXPR, lval, rval);
-                break;
-            case PREV_IN:
-                expr = std::make_shared<binary_expression>(* op, PREV_IN_EXPR, lval, rval);
-                break;
-            case IS:
-                expr = std::make_shared<binary_expression>(* op, IS_EXPR, lval, rval);
-                break;
-            case IS_NOT:
-                expr = std::make_shared<binary_expression>(* op, IS_NOT_EXPR, lval, rval);
-                break;
-            case LESS:
-                expr = std::make_shared<binary_expression>(* op, LESS_EXPR, lval, rval);
-                break;
-            case LESS_EQUAL:
-                expr = std::make_shared<binary_expression>(* op, LESS_EQUAL_EXPR, lval, rval);
-                break;
-            case GREATER:
-                expr = std::make_shared<binary_expression>(* op, GREATER_EXPR, lval, rval);
-                break;
-            case GREATER_EQUAL:
-                expr = std::make_shared<binary_expression>(* op, GREATER_EQUAL_EXPR, lval, rval);
-                break;
-            case NOT_EQUAL:
-                expr = std::make_shared<binary_expression>(* op, NOT_EQUAL_EXPR, lval, rval);
-                break;
-            case EQUAL_EQUAL:
-                expr = std::make_shared<binary_expression>(* op, EQUAL_EQUAL_EXPR, lval, rval);
-                break;
-            // empty default case to avoid warnings by [-Wswitch]
-            default:
-                ;
-            }
+            std::shared_ptr<match_expression> expr = nullptr;
+
+            if(op -> get_type() == MATCH)
+                expr = std::make_shared<match_expression>(* op, MATCH_EXPR, lval, rval);
+            else
+                expr = std::make_shared<match_expression>(* op, NOT_MATCH_EXPR, lval, rval);
+
             lval = expr;
         }
+        
 
         l_expression = lval;
         return l_expression;

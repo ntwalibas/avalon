@@ -17,6 +17,10 @@ namespace avalon {
         virtual bool is_binary_expression() {
             return false;
         }
+        /** match expression **/
+        virtual bool is_match_expression() {
+            return false;
+        }
         /** cast expression **/
         virtual bool is_cast_expression() {
             return false;

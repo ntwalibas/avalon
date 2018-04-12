@@ -249,7 +249,16 @@ lexer::lexer(
             case ':': add_token(COLON); break;
             case '=':
                 if(match('=')) {
-                    add_token(EQUAL_EQUAL);
+                    if(match('='))
+                        add_token(MATCH);
+                    else
+                        add_token(EQUAL_EQUAL);
+                }
+                else if(match('!')) {
+                    if(match('='))
+                        add_token(NOT_MATCH);
+                    else
+                        throw lexing_error(true, "Expected a not match operator.");
                 }
                 else {
                     add_token(EQUAL);

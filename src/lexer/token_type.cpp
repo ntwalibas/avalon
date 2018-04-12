@@ -33,7 +33,9 @@ namespace avalon {
         /* One or two character tokens - even if we get one character, we must make sure it is not actually part of a two or more character lexeme */
         "EQUAL",
         "EQUAL_EQUAL",
+        "MATCH",
         "NOT_EQUAL",
+        "NOT_MATCH",
         "GREATER",
         "GREATER_EQUAL",
         "LESS",

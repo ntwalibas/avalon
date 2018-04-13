@@ -4,8 +4,6 @@
 #include <memory>
 #include <vector>
 
-#include <boost/filesystem.hpp>
-
 /* Error */
 #include "error/error.hpp"
 
@@ -19,7 +17,7 @@
 
 namespace avalon {
     namespace fs = boost::filesystem;
-
+    
     class compiler {
     public:
         /**
@@ -35,21 +33,6 @@ namespace avalon {
          */
         void add_search_path(const std::string& path);
         void add_search_path(const fs::path& p);
-
-        /**
-         * source_exists
-         * given a source path, this function returns true if the path exists in
-         * one of the search paths.
-         */
-        bool source_exists(const std::string& source_path);
-
-        /**
-         * get_source_path
-         * given a source file, get the absolute path to it.
-         * returns a string containing said absolute path.
-         * in case the file was not found, throw "file_not_found" exception.
-         */
-        std::string get_source_path(const std::string& source_path);
 
         /**
          * scan
@@ -73,7 +56,7 @@ namespace avalon {
          * import
          * calls the importer to parse all dependencies and make sure there are cyclic dependencies
          */
-        gtable import(const std::string& source_path);
+        void import(const std::string& source_path);
 
         /**
          * check
@@ -82,7 +65,6 @@ namespace avalon {
         //void check(const std::string& source_path);
 
     private:
-
         /**
          * a vector of possible search paths
          */

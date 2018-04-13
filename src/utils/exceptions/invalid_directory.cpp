@@ -1,6 +1,6 @@
 #include <stdexcept>
 
-#include "compiler/exceptions/invalid_directory.hpp"
+#include "utils/exceptions/invalid_directory.hpp"
 
 
 namespace avalon {

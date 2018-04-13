@@ -17,17 +17,17 @@
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/symtable/fqn.hpp"
 
-/* Compiler */
-#include "compiler/exceptions/invalid_directory.hpp"
-#include "compiler/exceptions/file_not_found.hpp"
-#include "compiler/compiler.hpp"
-
 /* Parser */
 #include "parser/parser.hpp"
 
 /* Lexer */
 #include "lexer/token.hpp"
 #include "lexer/lexer.hpp"
+
+/* Utilities */
+#include "utils/exceptions/invalid_directory.hpp"
+#include "utils/exceptions/file_not_found.hpp"
+#include "utils/parse_util.hpp"
 
 /* Importer */
 #include "importer/importer.hpp"
@@ -72,7 +72,7 @@ import_error::import_error(error& error_handler, token tok, bool fatal, const st
 /**
  * the constructor expects the main program that's root to all dependencies and the compiler to compile those dependencies
  */
-importer::importer(program& prog, compiler& comp, error& error_handler) : m_program(prog), m_compiler(comp), m_error_handler(error_handler) {
+importer::importer(program& prog, std::vector<std::string>& search_paths, error& error_handler) : m_program(prog), m_search_paths(search_paths), m_error_handler(error_handler) {
 }
 
     /**
@@ -130,7 +130,7 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
             // first, we parse the file introduced by the dependency
             program import_prog;
             try {
-                import_prog = m_compiler.parse(import_fqn.get_path());
+                import_prog = parse_util::parse(import_fqn.get_path(), m_search_paths);
             } catch(file_not_found err) {
                 throw importing_error(true, import_decl -> get_token(), "Failed to import <" + import_fqn_name + ">. Does the file associated with it exist?");
             } catch(lex_error err) {
@@ -155,19 +155,6 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
         for(auto& dep : m_deps)
             if(m_dep_states.at(dep.first) == NOT_VISITED)
                 sort_deps_util(dep.first, dep.second);
-    }
-
-    /**
-     * run_imports
-     * performs imports of declarations from one program to another
-     */
-    void importer::run_imports() {
-        while(!m_sorted_deps.empty()) {
-            const std::string& fqn_name = m_sorted_deps.front();
-            program& prog = m_gtable.get_program(fqn_name);
-            run_imports_util(prog);
-            m_sorted_deps.pop();
-        }
     }
 
     /**
@@ -199,6 +186,19 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
     }
 
     /**
+     * run_imports
+     * performs imports of declarations from one program to another
+     */
+    void importer::run_imports() {
+        while(!m_sorted_deps.empty()) {
+            const std::string& fqn_name = m_sorted_deps.front();
+            program& prog = m_gtable.get_program(fqn_name);
+            run_imports_util(prog);
+            m_sorted_deps.pop();
+        }
+    }
+
+    /**
      * run_imports_util
      * goes through all top declarations in a program, finds import declarations and imports those declarations into the current program's scope
      */
@@ -208,21 +208,21 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
             if(declaration -> is_import()) {
                 const std::shared_ptr<import>& import_decl = std::static_pointer_cast<import>(declaration);
                 program& imported_prog = m_gtable.get_program(import_decl -> get_fqn_name());
-                import_declarations(imported_prog, prog);
+                import_declarations(imported_prog, prog, false);
             }
         }
+
+        import_declarations(prog, prog, true);
     }
 
     /**
      * import_declarations
      * given two programs, import all the declarations in "from" program into "to" program's scope
      */
-    void importer::import_declarations(program& from, program& to) {
+    void importer::import_declarations(program& from, program& to, bool include_privates) {
         // declarations defined in from with hope of find namespaces with declarations in them
         std::vector<std::shared_ptr<decl> >& declarations = from.get_declarations();
         std::vector<std::shared_ptr<ns> > namespace_decls;
-        // since said declarations exist only on the AST, we also add them into the "from" scope
-        std::shared_ptr<scope>& from_scope = from.get_scope();
         // the scope into which to insert the found declarations
         std::shared_ptr<scope>& to_scope = to.get_scope();
 
@@ -231,8 +231,6 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
             if(declaration -> is_namespace()) {
                 std::shared_ptr<ns> namespace_decl = std::static_pointer_cast<ns>(declaration);
                 namespace_decls.push_back(namespace_decl);
-                // we add all namespaces to the "from" and "to" scope
-                from_scope -> add_namespace(namespace_decl -> get_name());
                 to_scope -> add_namespace(namespace_decl -> get_name());
             }
         }
@@ -243,22 +241,25 @@ importer::importer(program& prog, compiler& comp, error& error_handler) : m_prog
             for(auto& l_declaration : l_declarations) {
                 if(l_declaration -> is_type()) {
                     std::shared_ptr<type> type_decl = std::static_pointer_cast<type>(l_declaration);
-                    if(type_decl -> is_public()) {
-                        import_type(type_decl, from_scope, namespace_decl -> get_name());
+                    // if "include_privates" is true, it doesn't matter whether the declaration is public, we import it
+                    // if "include_privates" is false, we only import the declaration if it is public
+                    if(include_privates || type_decl -> is_public()) {
                         import_type(type_decl, to_scope, namespace_decl -> get_name());
                     }
                 }
                 else if(l_declaration -> is_function()) {
                     std::shared_ptr<function> function_decl = std::static_pointer_cast<function>(l_declaration);
-                    if(function_decl -> is_public()) {
-                        import_function(function_decl, from_scope, namespace_decl -> get_name());
+                    // if "include_privates" is true, it doesn't matter whether the declaration is public, we import it
+                    // if "include_privates" is false, we only import the declaration if it is public
+                    if(include_privates || function_decl -> is_public()) {
                         import_function(function_decl, to_scope, namespace_decl -> get_name());
                     }
                 }
                 else if(l_declaration -> is_variable()) {
                     std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(l_declaration);
-                    if(variable_decl -> is_public()) {
-                        import_variable(variable_decl, from_scope, namespace_decl -> get_name());
+                    // if "include_privates" is true, it doesn't matter whether the declaration is public, we import it
+                    // if "include_privates" is false, we only import the declaration if it is public
+                    if(include_privates || variable_decl -> is_public()) {
                         import_variable(variable_decl, to_scope, namespace_decl -> get_name());
                     }
                 }

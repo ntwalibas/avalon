@@ -3,14 +3,19 @@
 #include <fstream>
 #include <vector>
 
-#include "compiler/exceptions/file_not_found.hpp"
+#include "utils/exceptions/file_not_found.hpp"
 #include "scanner/scanner.hpp"
 
 
 namespace avalon {
 scanner::scanner(const std::string& source_path) : m_source_path(source_path) {        
 }
-
+    
+    /**
+     * scan
+     * this function reads the content of a file and returns it (via return or via argument)
+     * throws a "file_not_found" exception if the file to scan was not found.
+     */
     std::string scanner::scan() {
         std::ifstream source_file(m_source_path.c_str(), std::ios::in | std::ios::ate);
 
@@ -32,7 +37,7 @@ scanner::scanner(const std::string& source_path) : m_source_path(source_path) {
         // 3. put the bytes read into the string
         std::string source(&bytes[0], file_size);
 
-        // return the source string
+        // 4. return the source string
         return source;
     }
 }

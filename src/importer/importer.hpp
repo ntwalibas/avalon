@@ -20,9 +20,6 @@
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/symtable/gtable.hpp"
 
-/* Compiler */
-#include "compiler/compiler.hpp"
-
 
 namespace avalon {
     class import_error : public std::runtime_error {
@@ -80,7 +77,7 @@ namespace avalon {
         /**
          * the constructor expects the main program that's root to all dependencies and the compiler to compile those dependencies
          */
-        importer(program& prog, compiler& comp, error& error_handler);
+        importer(program& prog, std::vector<std::string>& search_paths, error& error_handler);
 
         /**
          * import_all
@@ -126,9 +123,9 @@ namespace avalon {
         program m_program;
 
         /*
-         * the compiler we need to call in order to compile dependencies starting with the main prgram's
+         * possible search paths where to look for imports
          */
-        compiler m_compiler;
+        std::vector<std::string> m_search_paths;
 
         /*
          * the error handler to call in case of an error
@@ -159,7 +156,7 @@ namespace avalon {
          * import_declarations
          * given two programs, import all the declarations in "from" program into "to" program's scope
          */
-        void import_declarations(program& from, program& to);
+        void import_declarations(program& from, program& to, bool include_privates);
 
         /**
          * import_type

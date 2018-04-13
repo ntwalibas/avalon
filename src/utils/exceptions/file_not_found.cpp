@@ -1,6 +1,6 @@
 #include <stdexcept>
 
-#include "compiler/exceptions/file_not_found.hpp"
+#include "utils/exceptions/file_not_found.hpp"
 
 
 namespace avalon {

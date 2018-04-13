@@ -29,9 +29,12 @@
 /* Scanner */
 #include "scanner/scanner.hpp"
 
+/* Utils */
+#include "utils/exceptions/invalid_directory.hpp"
+#include "utils/exceptions/file_not_found.hpp"
+#include "utils/file_util.hpp"
+
 /* Compiler */
-#include "compiler/exceptions/invalid_directory.hpp"
-#include "compiler/exceptions/file_not_found.hpp"
 #include "compiler/compiler.hpp"
 
 
@@ -67,48 +70,17 @@ namespace avalon {
     }
 
     /**
-     * source_exists
-     * given a source path, this function returns true if the path exists in
-     * one of the search paths.
-     */
-    bool compiler::source_exists(const std::string& source_path) {
-        for(auto it = m_search_paths.begin(); it != m_search_paths.end(); ++it) {
-            fs::path p((*it) + "/" + source_path);
-            if(fs::exists(p) && fs::is_regular_file(p))
-                return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * get_source_path
-     * given a source file, get the absolute path to it.
-     * returns a string containing said absolute path.
-     * in case the file was not found, throw "file_not_found" exception.
-     */
-    std::string compiler::get_source_path(const std::string& source_path) {
-        for(auto it = m_search_paths.begin(); it != m_search_paths.end(); ++it) {
-            fs::path p((*it) + "/" + source_path);
-            if(fs::exists(p) && fs::is_regular_file(p)) {
-                return p.string();
-            }
-        }
-
-        throw file_not_found("Failed to open file: <" + source_path + ">. Possible reasons: file does not exist or file is not available for reading.");
-    }
-
-    /**
      * scan
      * calls the scanner to get the text to scan
      */
     std::string compiler::scan(const std::string& source_path) {
         error error_handler(source_path);
+        file_util futil(m_search_paths);
 
         // make sure the file given exists and the absolute path to it
         std::string source_abs_path;
         try {
-            source_abs_path = get_source_path(source_path);
+            source_abs_path = futil.get_source_path(source_path);
         } catch(file_not_found err) {
             throw err;
         }
@@ -130,11 +102,12 @@ namespace avalon {
      */
     std::vector<std::shared_ptr<token> > compiler::lex(const std::string& source_path) {
         error error_handler(source_path);
+        file_util futil(m_search_paths);
 
         // make sure the file given exists and the absolute path to it
         std::string source_abs_path;
         try {
-            source_abs_path = get_source_path(source_path);
+            source_abs_path = futil.get_source_path(source_path);
         } catch(file_not_found err) {
             throw err;
         }
@@ -165,11 +138,12 @@ namespace avalon {
      */
     program compiler::parse(const std::string& source_path) {
         error error_handler(source_path);
+        file_util futil(m_search_paths);
 
         // make sure the file given exists and the absolute path to it
         std::string source_abs_path;
         try {
-            source_abs_path = get_source_path(source_path);
+            source_abs_path = futil.get_source_path(source_path);
         } catch(file_not_found err) {
             throw err;
         }
@@ -207,13 +181,14 @@ namespace avalon {
      * import
      * calls the importer to parse all dependencies and make sure there are cyclic dependencies
      */
-    gtable compiler::import(const std::string& source_path) {
+    void compiler::import(const std::string& source_path) {
         error error_handler(source_path);
+        file_util futil(m_search_paths);
 
         // make sure the file given exists and the absolute path to it
         std::string source_abs_path;
         try {
-            source_abs_path = get_source_path(source_path);
+            source_abs_path = futil.get_source_path(source_path);
         } catch(file_not_found err) {
             throw err;
         }
@@ -233,7 +208,7 @@ namespace avalon {
         try {
             tokens = lxr.lex();
         } catch(lex_error err) {
-            throw err;
+            err.show();
         }
 
         // parse the file
@@ -242,21 +217,20 @@ namespace avalon {
         try {            
             prog = psr.parse();
         } catch(parse_error err) {
-            throw err;
+            err.show();
         }
 
         // import all other files
-        importer ipr(prog, *this, error_handler);
+        importer ipr(prog, m_search_paths, error_handler);
         gtable gtab;
         try {
             gtab = ipr.import_all();
-            return gtab;
         } catch(import_error err) {
-            throw err;
+            err.show();
         } catch(parse_error err) {
-            throw err;
+            err.show();
         } catch(lex_error err) {
-            throw err;
+            err.show();
         } catch(std::runtime_error err) {
             throw err;
         }
@@ -268,14 +242,14 @@ namespace avalon {
      *
     void compiler::check(const std::string& source_path) {
         error error_handler(source_path);
+        file_util futil(m_search_paths);
 
         // make sure the file given exists and the absolute path to it
         std::string source_abs_path;
         try {
-            source_abs_path = get_source_path(source_path);
+            source_abs_path = futil.get_source_path(source_path);
         } catch(file_not_found err) {
-            error_handler.log(err.what());
-            return;
+            throw err;
         }
 
         // scan the file for content
@@ -309,7 +283,7 @@ namespace avalon {
         }
 
         // import all dependencies
-        importer ipr(prog, *this, error_handler);
+        importer ipr(prog, m_search_paths, error_handler);
         gtable gtab;
         try {
             gtab = ipr.import_all();

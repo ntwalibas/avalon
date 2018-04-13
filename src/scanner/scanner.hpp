@@ -1,6 +1,8 @@
 #ifndef AVALON_SCANNER_HPP_
 #define AVALON_SCANNER_HPP_
 
+#include <string>
+
 
 namespace avalon {
     class scanner {
@@ -12,11 +14,8 @@ namespace avalon {
 
         /**
          * scan
-         * this function is called by the lexer to get the next chunk of
-         * text to be tokenized.
-         * at the moment, it reads the whole file and returns
-         * the content of the file.
-         * throws a "std::runtime_exception" exception if the file to scan was not found.
+         * this function reads the content of a file and returns it (via return or via argument)
+         * throws a "file_not_found" exception if the file to scan was not found.
          */
         std::string scan();
 

@@ -1,7 +1,5 @@
-#include <utility>
 #include <memory>
 #include <vector>
-#include <string>
 
 /* Symtable */
 #include "representer/mir/symtable/mir_scope.hpp"
@@ -61,13 +59,8 @@ namespace avalon {
      * 
      * a program sits at the top of the AST and it holds a series of those declarations.
      */
-    void mir_program::add_declaration(const std::string& decl_name, std::shared_ptr<mir_decl>& declaration) {
-        for(auto& hir_decl : m_hir_declarations) {
-            if(hir_decl.first == decl_name)
-                return;
-        }
-
-        m_hir_declarations.emplace_back(decl_name, declaration);
+    void mir_program::add_declaration(std::shared_ptr<mir_decl>& declaration) {
+        m_declarations.emplace_back(declaration);
     }
 
     /**
@@ -77,14 +70,5 @@ namespace avalon {
      */
     std::vector<std::shared_ptr<mir_decl> >& mir_program::get_declarations() {
         return m_declarations;
-    }
-
-    /**
-     * flatten
-     * transforms the MIR-MIR map into the MIR vector
-     */
-    void mir_program::flatten() {
-        for(auto& hir_decl : m_hir_declarations)
-            m_declarations.push_back(hir_decl.second);
     }
 }

@@ -1,6 +1,7 @@
 #ifndef AVALON_MIR_AST_DECL_NAMESPACE_HPP_
 #define AVALON_MIR_AST_DECL_NAMESPACE_HPP_
 
+#include <utility>
 #include <memory>
 #include <vector>
 #include <string>
@@ -43,19 +44,28 @@ namespace avalon {
         fqn& get_fqn();
 
         /**
-         * add_declaration
-         * a namespace can contain the following declarations:
-         * - type declarations
-         * - function declarations
-         * - variable declarations
+         * add_hir_declaration
+         * given an HIR declaration name, create the corresponding entry in the HIR vector
          */
-        void add_declaration(std::shared_ptr<mir_decl>& declaration);
+        void add_hir_declaration(const std::string& decl_name);
+
+        /**
+         * add_mir_declaration
+         * given a MIR declaration name, add it to the HIR-MIR vector
+         */
+        void add_mir_declaration(const std::string& decl_name, std::shared_ptr<mir_decl>& declaration);
 
         /**
          * get_declarations
          * for futher processing, this function is called to get all the declarations that can be found in the namespace
          */
         std::vector<std::shared_ptr<mir_decl> >& get_declarations();
+
+        /**
+         * flatten
+         * transforms the MIR-MIR map into the MIR vector
+         */
+        void flatten();
 
         /*
          * is_namespace
@@ -121,9 +131,22 @@ namespace avalon {
         fqn m_fqn;
 
         /*
+         * a vector with declaration names as they appear in the HIR and a vector of their MIR equivalent
+         * this is important because we want to preserve the order of declarations in the MIR as they appear in the HIR
+         */
+        std::vector<std::pair<std::string, std::vector<std::shared_ptr<mir_decl> > > > m_hir_declarations;
+
+        /*
          * a vector of declarations found in this namespace
          */
-        std::vector<std::shared_ptr<mir_decl> > m_declarations;
+        std::vector<std::shared_ptr<mir_decl> > m_mir_declarations;
+
+        /*
+         * a boolean that is true if HIR declarations have been flattened
+         * in case it is false and the client requests MIR declarations, we flatten HIR declarations first
+         * if a new HIR declaration is added, we set this flag to false even if it was true before
+         */
+        bool m_is_flat;
     };
 }
 

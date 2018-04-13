@@ -29,6 +29,12 @@ namespace avalon {
         program& get_program(const std::string& fqn_name);
 
         /**
+         * get_programs
+         * returns an unordered map of all programs available in this table
+         */
+        std::unordered_map<std::string, program>& get_programs();
+
+        /**
          * program_exists
          * given an fqn name, return true if it contains a program
          */

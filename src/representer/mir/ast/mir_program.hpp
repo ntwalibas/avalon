@@ -1,10 +1,8 @@
 #ifndef AVALON_MIR_AST_PROG_H_
 #define AVALON_MIR_AST_PROG_H_
 
-#include <utility>
 #include <memory>
 #include <vector>
-#include <string>
 
 /* Symtable */
 #include "representer/mir/symtable/mir_scope.hpp"
@@ -12,6 +10,9 @@
 
 /* AST */
 #include "representer/mir/ast/decl/mir_decl.hpp"
+
+/* FQN */
+#include "representer/hir/symtable/fqn.hpp"
 
 
 namespace avalon {
@@ -54,7 +55,7 @@ namespace avalon {
          * 
          * a program sits at the top of the AST and it holds a series of those declarations.
          */
-        void add_declaration(const std::string& decl_name, std::shared_ptr<mir_decl>& declaration);
+        void add_declaration(std::shared_ptr<mir_decl>& declaration);
 
         /**
          * get_declarations
@@ -62,12 +63,6 @@ namespace avalon {
          * make up a program.
          */
         std::vector<std::shared_ptr<mir_decl> >& get_declarations();
-
-        /**
-         * flatten
-         * transforms the MIR-MIR map into the MIR vector
-         */
-        void flatten();
 
     private:
         /*
@@ -79,11 +74,6 @@ namespace avalon {
          * scope introduced by the program, i.e. global scope
          */
         std::shared_ptr<mir_scope> m_scope;
-
-        /*
-         * a map between declaration names in the MIR and their corresponding MIR equivalents
-         */
-        std::vector<std::pair<std::string, std::shared_ptr<mir_decl> > > m_hir_declarations;
 
         /*
          * a vector of MIR declarations

@@ -39,6 +39,14 @@ gtable::gtable() {
     }
 
     /**
+     * get_programs
+     * returns an unordered map of all programs available in this table
+     */
+    std::unordered_map<std::string, program>& gtable::get_programs() {
+        return m_programs;
+    }
+
+    /**
      * program_exists
      * given an fqn name, return true if it contains a program
      */

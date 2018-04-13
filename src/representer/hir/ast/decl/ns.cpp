@@ -2,6 +2,7 @@
 #include <memory>
 
 #include "representer/hir/ast/decl/decl.hpp"
+#include "representer/hir/symtable/fqn.hpp"
 #include "representer/hir/ast/decl/ns.hpp"
 #include "lexer/token.hpp"
 
@@ -27,6 +28,22 @@ namespace avalon {
      */
     const token& ns::get_token() const {
         return m_tok;
+    }
+
+    /**
+     * set_fqn
+     * sets the fqn where this namespace was found
+     */
+    void ns::set_fqn(fqn& l_fqn) {
+        m_fqn = l_fqn;
+    }
+
+    /**
+     * get_fqn
+     * returns the fqn where this namespace was found
+     */
+    fqn& ns::get_fqn() {
+        return m_fqn;
     }
     
     /**

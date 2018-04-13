@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "representer/hir/ast/decl/decl.hpp"
+#include "representer/hir/symtable/fqn.hpp"
 #include "lexer/token.hpp"
 
 
@@ -27,6 +28,18 @@ namespace avalon {
          * returns a token with the namespace source information
          */
         const token& get_token() const;
+
+        /**
+         * set_fqn
+         * sets the fqn where this declaration was found
+         */
+        void set_fqn(fqn& l_fqn);
+
+        /**
+         * get_fqn
+         * returns the fqn where this declaration was found
+         */
+        fqn& get_fqn();
 
         /**
          * add_declaration
@@ -100,6 +113,11 @@ namespace avalon {
          * the token with source file information about the type
          */
         token m_tok;
+
+        /*
+         * the fqn of the compilation unit where this declaration was found
+         */
+        fqn m_fqn;
 
         /*
          * a vector of declarations found in this namespace

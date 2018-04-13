@@ -1,7 +1,8 @@
 #include <string>
 
-#include "lexer/token.hpp"
 #include "representer/hir/ast/decl/import.hpp"
+#include "representer/hir/symtable/fqn.hpp"
+#include "lexer/token.hpp"
 
 
 namespace avalon {
@@ -17,6 +18,22 @@ import::import(token tok, const std::string& fqn_name) : m_tok(tok), m_fqn_name(
      */
     const token& import::get_token() const {
         return m_tok;
+    }
+
+    /**
+     * set_fqn
+     * sets the fqn where this namespace was found
+     */
+    void import::set_fqn(fqn& l_fqn) {
+        m_fqn = l_fqn;
+    }
+
+    /**
+     * get_fqn
+     * returns the fqn where this namespace was found
+     */
+    fqn& import::get_fqn() {
+        return m_fqn;
     }
 
     /**

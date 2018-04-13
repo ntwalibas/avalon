@@ -15,10 +15,10 @@
 #include "lexer/token.hpp"
 
 /* AST */
-#include "hir/ast/program.hpp"
+#include "representer/hir/ast/program.hpp"
 /* Symbol table */
-#include "hir/symtable/scope.hpp"
-#include "hir/symtable/gtable.hpp"
+#include "representer/hir/symtable/scope.hpp"
+#include "representer/hir/symtable/gtable.hpp"
 
 /* Compiler */
 #include "compiler/compiler.hpp"

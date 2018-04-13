@@ -8,14 +8,14 @@
 #include "error/error.hpp"
 
 /* AST */
-#include "hir/ast/program.hpp"
-#include "hir/ast/decl/decl.hpp"
-#include "hir/ast/decl/import.hpp"
+#include "representer/hir/ast/program.hpp"
+#include "representer/hir/ast/decl/decl.hpp"
+#include "representer/hir/ast/decl/import.hpp"
 /* Symbol table */
-#include "hir/symtable/exceptions/symbol_already_declared.hpp"
-#include "hir/symtable/gtable.hpp"
-#include "hir/symtable/scope.hpp"
-#include "hir/symtable/fqn.hpp"
+#include "representer/exceptions/symbol_already_declared.hpp"
+#include "representer/hir/symtable/gtable.hpp"
+#include "representer/hir/symtable/scope.hpp"
+#include "representer/hir/symtable/fqn.hpp"
 
 /* Compiler */
 #include "compiler/exceptions/invalid_directory.hpp"

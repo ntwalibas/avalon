@@ -9,8 +9,8 @@
 #include "error/error.hpp"
 
 /* Program */
-#include "hir/symtable/gtable.hpp"
-#include "hir/ast/program.hpp"
+#include "representer/hir/symtable/gtable.hpp"
+#include "representer/hir/ast/program.hpp"
 
 /* Checker */
 //#include "checker/check_error.hpp"

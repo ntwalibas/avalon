@@ -155,4 +155,16 @@ fqn::fqn(const std::string& name, const std::string& path) : m_name(name), m_pat
     std::string fqn::get_path() const {
         return m_path;
     }
+
+    /**
+     * is_builtin
+     * returns true if this FQN is built into the compiler, hence doesn't not correspond to a filesystem path
+     */
+    bool fqn::is_builtin() {
+        return (m_name == "__bifqn__" || m_path == "__bifqn__") ? true : false;
+    }
+
+    bool fqn::is_builtin() const {
+        return is_builtin();
+    }
 }

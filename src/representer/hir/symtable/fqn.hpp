@@ -45,6 +45,13 @@ namespace avalon {
         std::string get_path();
         std::string get_path() const;
 
+        /**
+         * is_builtin
+         * returns true if this FQN is built into the compiler, hence doesn't not correspond to a filesystem path
+         */
+        bool is_builtin();
+        bool is_builtin() const;
+
     private:
         /**
          * a string representation of a fqn

@@ -9,7 +9,7 @@ namespace avalon {
 /**
  * the constructor expects the import token and the fqn to import declaration from
  */
-import::import(token tok, const std::string& fqn_name) : m_tok(tok), m_fqn_name(fqn_name) {
+import::import(token& tok, const std::string& fqn_name) : m_tok(tok), m_fqn_name(fqn_name) {
 }
 
     /**

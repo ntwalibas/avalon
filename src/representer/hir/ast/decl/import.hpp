@@ -14,7 +14,7 @@ namespace avalon {
         /**
          * the constructor expects the import token and the fqn to import declaration from
          */
-        import(token tok, const std::string& fqn_name);
+        import(token& tok, const std::string& fqn_name);
 
         /**
          * get_token

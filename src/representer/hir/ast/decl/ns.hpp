@@ -15,7 +15,7 @@ namespace avalon {
         /**
          * the constructor expects the token with source code information
          */
-        ns(token tok);
+        ns(token& tok);
 
         /**
          * get_name

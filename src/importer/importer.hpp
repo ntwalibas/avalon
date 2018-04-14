@@ -153,6 +153,12 @@ namespace avalon {
         void run_imports_util(program& prog);
 
         /**
+         * run_builtin_imports
+         * imports built in declarations into the given program
+         */
+        void run_builtin_imports(program& to);
+
+        /**
          * import_declarations
          * given two programs, import all the declarations in "from" program into "to" program's scope
          */

@@ -8,9 +8,19 @@
 #include "error/error.hpp"
 
 /* AST */
-#include "representer/hir/ast/program.hpp"
-#include "representer/hir/ast/decl/decl.hpp"
 #include "representer/hir/ast/decl/import.hpp"
+#include "representer/hir/ast/decl/decl.hpp"
+#include "representer/hir/ast/program.hpp"
+
+/* Built-in types */
+#include "representer/hir/builtins/avalon_string.hpp"
+#include "representer/hir/builtins/avalon_float.hpp"
+#include "representer/hir/builtins/avalon_unit.hpp"
+#include "representer/hir/builtins/avalon_void.hpp"
+#include "representer/hir/builtins/avalon_bool.hpp"
+#include "representer/hir/builtins/avalon_dec.hpp"
+#include "representer/hir/builtins/avalon_int.hpp"
+
 /* Symbol table */
 #include "representer/exceptions/symbol_already_declared.hpp"
 #include "representer/hir/symtable/gtable.hpp"
@@ -190,6 +200,7 @@ importer::importer(program& prog, std::vector<std::string>& search_paths, error&
      * performs imports of declarations from one program to another
      */
     void importer::run_imports() {
+        // we then add user defined declarations
         while(!m_sorted_deps.empty()) {
             const std::string& fqn_name = m_sorted_deps.front();
             program& prog = m_gtable.get_program(fqn_name);
@@ -203,6 +214,10 @@ importer::importer(program& prog, std::vector<std::string>& search_paths, error&
      * goes through all top declarations in a program, finds import declarations and imports those declarations into the current program's scope
      */
     void importer::run_imports_util(program& prog) {
+        // 1. we import built in declarations
+        run_builtin_imports(prog);
+
+        // 2. we then import custom imported declarations
         std::vector<std::shared_ptr<decl> >& declarations = prog.get_declarations();
         for(auto& declaration : declarations) {
             if(declaration -> is_import()) {
@@ -212,7 +227,49 @@ importer::importer(program& prog, std::vector<std::string>& search_paths, error&
             }
         }
 
+        // 3. we last perform a self-import (essentally we add defined declarations from the current program into its scope)
         import_declarations(prog, prog, true);
+    }
+
+    /**
+     * run_builtin_imports
+     * imports built in declarations into the given program
+     */
+    void importer::run_builtin_imports(program& to) {
+        // void declarations
+        avalon_void avl_void;
+        program& void_prog = avl_void.get_program();
+        import_declarations(void_prog, to, false);
+
+        // unit declarations
+        avalon_unit avl_unit;
+        program& unit_prog = avl_unit.get_program();
+        import_declarations(unit_prog, to, false);
+
+        // bool declarations
+        avalon_bool avl_bool;
+        program& bool_prog = avl_bool.get_program();
+        import_declarations(bool_prog, to, false);
+
+        // integer declarations
+        avalon_int avl_int;
+        program& int_prog = avl_int.get_program();
+        import_declarations(int_prog, to, false);
+
+        // decimal declarations
+        avalon_dec avl_dec;
+        program& dec_prog = avl_dec.get_program();
+        import_declarations(dec_prog, to, false);
+
+        // floating point declarations
+        avalon_float avl_float;
+        program& float_prog = avl_float.get_program();
+        import_declarations(float_prog, to, false);
+
+        // string declarations
+        avalon_string avl_string;
+        program& string_prog = avl_string.get_program();
+        import_declarations(string_prog, to, false);
     }
 
     /**

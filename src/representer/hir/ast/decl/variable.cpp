@@ -17,7 +17,7 @@ namespace avalon {
      * - the token with source code information, including the variable name
      * - whether the variable is mutable
      */
-    variable::variable(token& tok, bool is_mutable) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_type_instance(nullptr), m_value(nullptr), m_is_valid(UNKNOWN), m_is_public(true), m_reachable(false), m_terminates(false) {
+    variable::variable(token& tok, bool is_mutable) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_type_instance(nullptr), m_value(nullptr), m_is_valid(UNKNOWN), m_is_function_param(false), m_is_public(true), m_reachable(false), m_terminates(false) {
     }
 
     /**
@@ -142,5 +142,17 @@ namespace avalon {
      */
     std::shared_ptr<expr>& variable::get_value() {
         return m_value;
+    }
+
+    /**
+     * is_function_param
+     * returns true if this variable is a function parameter
+     */
+    void variable::is_function_param(bool is_function_param_) {
+        m_is_function_param = is_function_param_;
+    }
+
+    bool variable::is_function_param() {
+        return m_is_function_param;
     }
 }

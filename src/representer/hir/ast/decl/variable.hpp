@@ -113,6 +113,13 @@ namespace avalon {
         std::shared_ptr<expr>& get_value();
 
         /**
+         * is_function_param
+         * returns true if this variable is a function parameter
+         */
+        void is_function_param(bool is_function_param_);
+        bool is_function_param();
+
+        /**
          * is_variable
          * a function used to allow safe casting of pointers from decl to this class
          */
@@ -204,6 +211,11 @@ namespace avalon {
          * the current validation state of the type
          */
         validation_state m_is_valid;
+
+        /*
+         * this variable is true if this variable declaration is a function parameter
+         */
+        bool m_is_function_param;
 
         /*
          * whether this type is available for public use outside of the namespace where it was declared

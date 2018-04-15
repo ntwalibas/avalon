@@ -32,7 +32,7 @@ namespace avalon {
      * get_type
      * returns the unit type
      */
-    const std::shared_ptr<type>& avalon_unit::get_type() const {
+    std::shared_ptr<type>& avalon_unit::get_type() {
         return m_unit_type;
     }
 
@@ -40,7 +40,7 @@ namespace avalon {
      * get_type_instance
      * returns the unit type instance
      */
-    const type_instance& avalon_unit::get_type_instance() const {
+    type_instance& avalon_unit::get_type_instance() {
         return m_unit_instance;
     }
 

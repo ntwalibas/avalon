@@ -30,7 +30,7 @@ namespace avalon {
      * get_type
      * returns the void type
      */
-    const std::shared_ptr<type>& avalon_void::get_type() const {
+    std::shared_ptr<type>& avalon_void::get_type() {
         return m_void_type;
     }
 
@@ -38,7 +38,7 @@ namespace avalon {
      * get_type_instance
      * returns the void type instance
      */
-    const type_instance& avalon_void::get_type_instance() const {
+    type_instance& avalon_void::get_type_instance() {
         return m_void_instance;
     }
 

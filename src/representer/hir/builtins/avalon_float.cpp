@@ -30,7 +30,7 @@ namespace avalon {
      * get_type
      * returns the int type
      */
-    const std::shared_ptr<type>& avalon_float::get_type() const {
+    std::shared_ptr<type>& avalon_float::get_type() {
         return m_float_type;
     }
 
@@ -38,7 +38,7 @@ namespace avalon {
      * get_type_instance
      * returns the int type instance
      */
-    const type_instance& avalon_float::get_type_instance() const {
+    type_instance& avalon_float::get_type_instance() {
         return m_float_instance;
     }
 

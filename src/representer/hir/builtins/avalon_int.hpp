@@ -23,13 +23,13 @@ namespace avalon {
          * get_type
          * returns the int type
          */
-        const std::shared_ptr<type>& get_type() const;
+        std::shared_ptr<type>& get_type();
 
         /**
          * get_type_instance
          * returns the int type instance
          */
-        const type_instance& get_type_instance() const;
+        type_instance& get_type_instance();
 
         /**
          * get_program

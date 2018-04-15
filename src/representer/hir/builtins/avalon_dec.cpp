@@ -30,7 +30,7 @@ namespace avalon {
      * get_type
      * returns the dec type
      */
-    const std::shared_ptr<type>& avalon_dec::get_type() const {
+    std::shared_ptr<type>& avalon_dec::get_type() {
         return m_dec_type;
     }
 
@@ -38,7 +38,7 @@ namespace avalon {
      * get_type_instance
      * returns the dec type instance
      */
-    const type_instance& avalon_dec::get_type_instance() const {
+    type_instance& avalon_dec::get_type_instance() {
         return m_dec_instance;
     }
 

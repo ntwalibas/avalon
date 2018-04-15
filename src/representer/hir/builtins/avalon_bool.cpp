@@ -34,7 +34,7 @@ namespace avalon {
      * get_type
      * returns the bool type
      */
-    const std::shared_ptr<type>& avalon_bool::get_type() const {
+    std::shared_ptr<type>& avalon_bool::get_type() {
         return m_bool_type;
     }
 
@@ -42,7 +42,7 @@ namespace avalon {
      * get_type_instance
      * returns the bool type instance
      */
-    const type_instance& avalon_bool::get_type_instance() const {
+    type_instance& avalon_bool::get_type_instance() {
         return m_bool_instance;
     }
 

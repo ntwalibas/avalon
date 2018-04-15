@@ -508,6 +508,13 @@ namespace avalon {
     bool type_instance_weak_compare(type_instance& this_instance, type_instance& that_instance);
     bool type_instance_weak_compare(const type_instance& this_instance, const type_instance& that_instance);
 
+    /**
+     * weight
+     * calculates the "weight" of one type instance relative to another.
+     */
+    std::size_t type_instance_weight(type_instance& this_instance, type_instance& that_instance);
+    std::size_t type_instance_weight(const type_instance& this_instance, const type_instance& that_instance);
+
 
     class default_constructor {
     public:

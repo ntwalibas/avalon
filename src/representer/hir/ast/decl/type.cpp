@@ -645,6 +645,39 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
         return type_instance_weak_compare(const_cast<type_instance&>(this_instance), const_cast<type_instance&>(that_instance));
     }
 
+    /**
+     * weight
+     * calculates the "weight" of one type instance relative to another.
+     */
+    std::size_t type_instance_weight(type_instance& this_instance, type_instance& that_instance) {
+        const std::vector<type_instance>& this_params = this_instance.get_params();
+        const std::vector<type_instance>& that_params = that_instance.get_params();
+        std::size_t weight = 0;
+
+        // if both types don't even compare weakly, then their relative weight is zero
+        if(type_instance_weak_compare(this_instance, that_instance) == false)
+            return weight;
+
+        // if they don't admit parameters, then either they are exactly both the same types or one of them is abstract
+        if(this_params.size() == 0) {
+            if(this_instance.is_abstract() || that_instance.is_abstract())
+                weight = 1;
+            else
+                weight = 2;
+        }
+        // if they admit parameters, we take them into account
+        else {
+            for(auto this_it = this_params.begin(), that_it = that_params.begin(); this_it != this_params.end() && that_it != that_params.end(); ++this_it, ++that_it)
+                weight = 1 + weight + type_instance_weight(const_cast<type_instance&>(* this_it), const_cast<type_instance&>(* that_it));
+        }
+
+        return weight;
+    }
+
+    std::size_t type_instance_weight(const type_instance& this_instance, const type_instance& that_instance) {
+        return type_instance_weight(const_cast<type_instance&>(this_instance), const_cast<type_instance&>(that_instance));
+    }
+
 
 /**
  * the constructor expects:

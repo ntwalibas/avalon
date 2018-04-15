@@ -280,6 +280,9 @@ token int_type_tok(TYPE, "int", 0, 0, "__bit__");
 token dec_type_tok(TYPE, "dec", 0, 0, "__bit__");
 token float_type_tok(TYPE, "float", 0, 0, "__bit__");
 token string_type_tok(TYPE, "string", 0, 0, "__bit__");
+token tuple_type_tok(TYPE, "(", 0, 0, "__bit__");
+token list_type_tok(TYPE, "[", 0, 0, "__bit__");
+token map_type_tok(TYPE, "{", 0, 0, "__bit__");
 
 /**
  * constructor tokens
@@ -312,4 +315,10 @@ token hash_function_tok(FUNCTION, "__hash__", 0, 0, "__bif__");
  */
 token var_one_tok(IDENTIFIER, "__var_one__", 0, 0, "__biv__");
 token var_two_tok(IDENTIFIER, "__var_two__", 0, 0, "__biv__");
+
+/**
+ * constraint parameters tokens
+ */
+token param_a_tok(IDENTIFIER, "__param_a__", 0, 0, "__bip__");
+token param_b_tok(IDENTIFIER, "__param_a__", 0, 0, "__bip__");
 }

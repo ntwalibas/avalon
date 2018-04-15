@@ -316,6 +316,9 @@ namespace avalon {
     extern token dec_type_tok;
     extern token float_type_tok;
     extern token string_type_tok;
+    extern token tuple_type_tok;
+    extern token list_type_tok;
+    extern token map_type_tok;
 
     /**
      * constructor tokens
@@ -348,6 +351,12 @@ namespace avalon {
      */
     extern token var_one_tok;
     extern token var_two_tok;
+
+    /**
+     * constraint parameters tokens
+     */
+    extern token param_a_tok;
+    extern token param_b_tok;
 }
 
 #endif

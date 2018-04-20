@@ -35,6 +35,12 @@ namespace avalon {
         std::shared_ptr<expr>& get_expression();
 
         /**
+         * has_expression
+         * return true if an expression was supplied to the return statement
+         */
+        bool has_expression();
+
+        /**
          * is_return
          * returns true as this is a return statement
          */

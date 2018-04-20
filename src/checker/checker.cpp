@@ -132,11 +132,11 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
         try {
             fun = find_function(name, param_instances, ret_instance, l_scope, ns_name, standins);
         } catch(symbol_not_found err) {
-            throw checking_error(true, err.what());
+            throw checking_error(true, "The <__main__> function could not be found");
         } catch(symbol_can_collide err) {
-            throw checking_error(true, err.what());
+            throw checking_error(true, "The <__main__> function could not be found");
         } catch(invalid_type err) {
-            throw checking_error(false, err.get_token(), err.what());
+            throw checking_error(false, err.get_token(), "The <__main__> function could not be found. Reason: " + std::string(err.what()));
         }
 
         // if we found the function, we proceed to check it taking into account the new type instances of the parameters

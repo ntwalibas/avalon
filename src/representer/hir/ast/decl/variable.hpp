@@ -90,13 +90,14 @@ namespace avalon {
          * returns the type instance of this variable
          * throws a "type_error" exception if no type instance has been set.
          */
-        type_instance get_type_instance() const;
+        type_instance& get_type_instance();
+        const type_instance& get_type_instance() const;
 
         /**
          * has_type_instance
          * returns true if the variable declaration has a type instance, false otherwise
          */
-        bool has_type_instance() const;
+        bool has_type_instance();
 
         /**
          * set_value
@@ -200,7 +201,7 @@ namespace avalon {
          * shared pointer to the type instance
          * it is a nullptr if no type instance was provided
          */
-        std::shared_ptr<type_instance> m_type_instance;
+        type_instance m_type_instance;
         
         /*
          * shared pointer to the expression that is held in this variable

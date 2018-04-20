@@ -17,7 +17,7 @@ namespace avalon {
      * - the token with source code information, including the variable name
      * - whether the variable is mutable
      */
-    variable::variable(token& tok, bool is_mutable) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_type_instance(nullptr), m_value(nullptr), m_is_valid(UNKNOWN), m_is_function_param(false), m_is_public(true), m_reachable(false), m_terminates(false) {
+    variable::variable(token& tok, bool is_mutable) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_namespace("*"), m_type_instance(star_instance), m_value(nullptr), m_is_valid(UNKNOWN), m_is_function_param(false), m_is_public(true), m_reachable(false), m_terminates(false) {
     }
 
     /**
@@ -26,7 +26,7 @@ namespace avalon {
      * - whether the variable is mutable
      * - the validation state of the variable
      */
-    variable::variable(token& tok, bool is_mutable, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_type_instance(nullptr), m_value(nullptr), m_is_valid(is_valid), m_is_public(true), m_reachable(false), m_terminates(false) {        
+    variable::variable(token& tok, bool is_mutable, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_namespace("*"), m_type_instance(star_instance), m_value(nullptr), m_is_valid(is_valid), m_is_public(true), m_reachable(false), m_terminates(false) {        
     }
 
     /**
@@ -100,7 +100,7 @@ namespace avalon {
      * or when the variable is initialized
      */
     void variable::set_type_instance(type_instance& instance) {
-        m_type_instance = std::make_shared<type_instance>(instance);
+        m_type_instance = instance;
     }
 
     /**
@@ -108,19 +108,23 @@ namespace avalon {
      * returns the type instance of this variable
      * throws a "type_error" exception if no type instance has been set.
      */
-    type_instance variable::get_type_instance() const {
-        if(m_type_instance == nullptr)
-            throw type_error("Variable has no type instance set.");
-        else
-            return * m_type_instance;
+    type_instance& variable::get_type_instance() {
+        //if(m_type_instance.is_star())
+        //    throw type_error("Variable has no type instance set.");
+        //else
+            return m_type_instance;
+    }
+
+    const type_instance& variable::get_type_instance() const {
+        return get_type_instance();
     }
 
     /**
      * has_type_instance
      * returns true if the variable declaration has a type instance, false otherwise
      */
-    bool variable::has_type_instance() const {
-        if(m_type_instance == nullptr)
+    bool variable::has_type_instance() {
+        if(m_type_instance.is_star())
             return false;
         else
             return true;

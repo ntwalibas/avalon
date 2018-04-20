@@ -89,17 +89,11 @@ namespace avalon {
         void check();
 
         /**
-         * check_function
-         * given a function name, parameters' type instances and the return type,
+         * check_main
+         * given the main function name, parameters' type instances and the return type,
          * find the function that matches the same and check said function under those assumptions
          */
-        void check_function(const std::string& name, std::vector<type_instance>& param_instances, type_instance& ret_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
-
-        /**
-         * check_function
-         * given a function, parameters' type instances and return type instance, validate the function
-         */
-        void check_function(std::shared_ptr<function>& fun, std::vector<type_instance>& param_instances, type_instance& ret_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        void check_main(const std::string& name, std::vector<type_instance>& param_instances, type_instance& ret_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
     private:
         /*

@@ -116,15 +116,15 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
         const std::string& ns_name = "*";
 
         // find the main function and check it
-        check_function(function_name, function_params, ret_instance, l_scope, ns_name);
+        check_main(function_name, function_params, ret_instance, l_scope, ns_name);
     }
 
     /**
-     * check_function
-     * given a function name, parameters' type instances and the return type,
+     * check_main
+     * given the main function name, parameters' type instances and the return type,
      * find the function that matches the same and check said function under those assumptions
      */
-    void checker::check_function(const std::string& name, std::vector<type_instance>& param_instances, type_instance& ret_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+    void checker::check_main(const std::string& name, std::vector<type_instance>& param_instances, type_instance& ret_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<function> fun = nullptr;
         std::vector<token> standins;
 
@@ -132,22 +132,14 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
         try {
             fun = find_function(name, param_instances, ret_instance, l_scope, ns_name, standins);
         } catch(symbol_not_found err) {
-            throw checking_error(true, "The <__main__> function could not be found");
+            throw checking_error(true, "The <__main__> function could not be found.");
         } catch(symbol_can_collide err) {
-            throw checking_error(true, "The <__main__> function could not be found");
+            throw checking_error(true, "The <__main__> function could not be found.");
         } catch(invalid_type err) {
             throw checking_error(false, err.get_token(), "The <__main__> function could not be found. Reason: " + std::string(err.what()));
         }
 
         // if we found the function, we proceed to check it taking into account the new type instances of the parameters
-        check_function(fun, param_instances, ret_instance, l_scope, ns_name);
-    }
-
-    /**
-     * check_function
-     * given a function, parameters' type instances and return type instance, validate the function
-     */
-    void checker::check_function(std::shared_ptr<function>& fun, std::vector<type_instance>& param_instances, type_instance& ret_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         // we get a copy of our function
         function new_fun = * fun;
         std::vector<type_instance> constraint_instances;

@@ -313,7 +313,10 @@ function_checker::function_checker() {
         } catch(invalid_expression err) {
             // if any expression inside the function sucks
             throw invalid_function(err.get_token(), err.what());
-        }        
+        } catch(invalid_type err) {
+            // temporary
+            throw invalid_function(err.get_token(), err.what());
+        }
     }
 
     /**

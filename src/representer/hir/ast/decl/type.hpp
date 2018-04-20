@@ -360,6 +360,12 @@ namespace avalon {
         const type_instance_category& get_category() const;
 
         /**
+         * set_namespace
+         * set the namespace where to find the type that builds this type instance
+         */
+        void set_namespace(const std::string& namespace_name);
+
+        /**
          * get_namespace
          * returns the namespace where to find the type declaration that builds this type instance
          */
@@ -479,6 +485,11 @@ namespace avalon {
      */
     friend std::ostream& operator<<(std::ostream& os, const type_instance& instance);
     };
+
+    /*
+     * a dummy type instance that can be used as the we use the star token
+     */
+    extern type_instance star_instance;
 
     /**
      * mangle_type_constructor

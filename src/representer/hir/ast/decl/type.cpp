@@ -343,6 +343,14 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
     }
 
     /**
+     * set_namespace
+     * set the namespace where to find the type that builds this type instance
+     */
+    void type_instance::set_namespace(const std::string& namespace_name) {
+        m_namespace = namespace_name;
+    }
+
+    /**
      * get_namespace
      * returns the namespace where to find the type declaration that builds this type instance
      */
@@ -459,6 +467,11 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
         else
             return false;
     }
+
+    /*
+     * a dummy type instance that can be used as the we use the star token
+     */
+    type_instance star_instance;
 
     /**
      * mangle_type_constructor

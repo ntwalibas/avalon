@@ -26,7 +26,7 @@ namespace avalon {
             return false;
         }
         /** primary expressions **/
-        virtual bool is_groupeds_expression() {
+        virtual bool is_grouped_expression() {
             return false;
         }
         /* identifier expressions */

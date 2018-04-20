@@ -382,6 +382,7 @@ namespace avalon {
          * returns the type that corresponds to this type instance
          */
         std::shared_ptr<type>& get_type();
+        const std::shared_ptr<type>& get_type() const;
 
         /**
          * is_builtby
@@ -404,20 +405,6 @@ namespace avalon {
         const std::vector<type_instance>& get_params() const;
 
         /**
-         * set_return_type_instance
-         * if this is a functional type instance, this function allows us to set its return type instance
-         */
-        void set_return_type_instance(type_instance return_type_instance);
-
-        /**
-         * get_return_type_instance
-         * return the return type instance if this type instance is a functional type instance
-         * if it is not a functional type instance, this function throws a "type_error" exception
-         */
-        type_instance get_return_type_instance();
-        type_instance get_return_type_instance() const;
-
-        /**
          * is_parametrized
          * if the type instance was declared within a type that depends on parametric types,
          * this function marks it as such.
@@ -433,6 +420,12 @@ namespace avalon {
         void is_abstract(bool is_abstract);
         bool is_abstract();
         bool is_abstract() const;
+
+        /**
+         * is_star
+         * returns true if this type instance is the dummy type instance
+         */
+        bool is_star();
 
     private:
         /*
@@ -469,11 +462,6 @@ namespace avalon {
          * type instances this type instance depends on
          */
         std::vector<type_instance> m_params;
-
-        /*
-         * if this type instance is a functional type instance, it will admit a return type instance
-         */
-        std::shared_ptr<type_instance> m_return_type_instance;
         
         /*
          * flag indicating whether this type instance depends on an abstract type instance

@@ -261,21 +261,21 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
 /**
  * the default constructor expects nothing
  */
-type_instance::type_instance() : m_name(star_tok.get_lexeme()), m_tok(star_tok), m_old_tok(star_tok), m_category(USER), m_namespace("*"), m_type(nullptr), m_return_type_instance(nullptr), m_is_parametrized(false) {    
+type_instance::type_instance() : m_name(star_tok.get_lexeme()), m_tok(star_tok), m_old_tok(star_tok), m_category(USER), m_namespace("*"), m_type(nullptr), m_is_parametrized(false) {    
 }
 
 /*
  * type instance
  */
-type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(nullptr), m_return_type_instance(nullptr), m_is_parametrized(false) {
+type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(nullptr), m_is_parametrized(false) {
 }
 
 /**
  * this constructor expects the token with source code information, the type that buils this instance and the namespace where to find that type
  */
-type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(ty), m_return_type_instance(nullptr), m_is_parametrized(false)  {
+type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(ty), m_is_parametrized(false)  {
 }
-    
+
     /**
      * set_name
      * updates the name of this type
@@ -374,6 +374,10 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
         return m_type;
     }
 
+    const std::shared_ptr<type>& type_instance::get_type() const {
+        return m_type;
+    }
+
     /**
      * is_builtby
      * given a type declaration, return true if that type builds this type instance
@@ -404,33 +408,6 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
 
     const std::vector<type_instance>& type_instance::get_params() const {
         return m_params;
-    }
-
-    /**
-     * set_return_type_instance
-     * if this is a functional type instance, this function allows us to set its return type instance
-     */
-    void type_instance::set_return_type_instance(type_instance return_type_instance) {
-        m_return_type_instance = std::make_shared<type_instance>(return_type_instance);
-    }
-
-    /**
-     * get_return_type_instance
-     * return the return type instance if this type instance is a functional type instance
-     * if it is not a functional type instance, this function throws a "type_error" exception
-     */
-    type_instance type_instance::get_return_type_instance() {
-        if(m_return_type_instance == nullptr)
-            throw type_error("This type instance is does not have a return type instance.");
-        else
-            return * m_return_type_instance;
-    }
-
-    type_instance type_instance::get_return_type_instance() const {
-        if(m_return_type_instance == nullptr)
-            throw type_error("This type instance is does not have a return type instance.");
-        else
-            return * m_return_type_instance;
     }
 
     /**
@@ -468,6 +445,17 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
             return false;
     }
 
+    /**
+     * is_star
+     * returns true if this type instance is the dummy type instance
+     */
+    bool type_instance::is_star() {
+        if(m_name == "*")
+            return true;
+        else
+            return false;
+    }
+
     /*
      * a dummy type instance that can be used as the we use the star token
      */
@@ -478,7 +466,7 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
      * returns a string representation of a type instance
      */
     std::string mangle_type_instance(const type_instance& instance) {
-        std::vector<type_instance> params = instance.get_params();
+        const std::vector<type_instance>& params = instance.get_params();
         std::string mangled_name = "";
 
         if(instance.is_abstract()) {

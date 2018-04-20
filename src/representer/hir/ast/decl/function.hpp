@@ -1,6 +1,7 @@
 #ifndef AVALON_HIR_AST_DECL_FUNCTION_HPP_
 #define AVALON_HIR_AST_DECL_FUNCTION_HPP_
 
+#include <utility>
 #include <memory>
 #include <vector>
 #include <map>

@@ -157,7 +157,7 @@ namespace avalon {
      * adds a parameter to the function
      */
     void function::add_param(variable& param) {
-        m_params.emplace_back(std::make_pair(param.get_name(), param));
+        m_params.emplace_back(param.get_name(), param);
     }
 
     /**

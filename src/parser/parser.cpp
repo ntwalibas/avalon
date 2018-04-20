@@ -1440,6 +1440,15 @@ parser::parser(
         std::shared_ptr<call_expression> call_expr = std::make_shared<call_expression>(* function_name);
         bool type_instance_provided = false;
 
+        // we check for specializations
+        if(match(LESS)) {
+            do {
+                type_instance specialization = parse_type_instance();
+                call_expr -> add_specialization(specialization);
+            } while(match(COMMA));
+            consume(GREATER, "Expected a closing chevron after function specialization type instances.");
+        }
+
         consume(LEFT_PAREN, "Expected an opening parenthesis before the function call arguments.");
         do {
             if(check(IDENTIFIER) && check_next(EQUAL)) {

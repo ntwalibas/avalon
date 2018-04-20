@@ -95,6 +95,22 @@ namespace avalon {
     }
 
     /**
+     * add_specialization
+     * add a type a type instance that corresponds to a constraint
+     */
+    void call_expression::add_specialization(type_instance& specialization) {
+        m_specializations.push_back(specialization);
+    }
+
+    /**
+     * get_specializations
+     * returns a vector of type instances that will be used to specialize a function against constraints
+     */
+    std::vector<type_instance>& call_expression::get_specializations() {
+        return m_specializations;
+    }
+
+    /**
      * add_argument
      * adds an argument to the function call
      */
@@ -124,6 +140,17 @@ namespace avalon {
      */
     type_instance& call_expression::get_return_type_instance() {
         return m_return_type;
+    }
+
+    /**
+     * has_return_type_instance
+     * returns true if this call expression has a return type instance specified
+     */
+    bool call_expression::has_return_type_instance() {
+        if(m_return_type.get_name() == "*")
+            return false;
+        else
+            return true;
     }
 
     /**

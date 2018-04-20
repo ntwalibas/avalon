@@ -82,6 +82,18 @@ namespace avalon {
         const call_expression_type& get_expression_type() const;
 
         /**
+         * add_specialization
+         * add a type a type instance that corresponds to a constraint
+         */
+        void add_specialization(type_instance& specialization);
+
+        /**
+         * get_specializations
+         * returns a vector of type instances that will be used to specialize a function against constraints
+         */
+        std::vector<type_instance>& get_specializations();
+
+        /**
          * add_argument
          * adds an argument to the function call
          */
@@ -104,6 +116,12 @@ namespace avalon {
          * returns the expected return type instance of the function that corresponds to this function call
          */
         type_instance& get_return_type_instance();
+
+        /**
+         * has_return_type_instance
+         * returns true if this call expression has a return type instance specified
+         */
+        bool has_return_type_instance();
 
         /**
          * has_record_syntax
@@ -134,6 +152,13 @@ namespace avalon {
          * type instance of this expression
          */
         type_instance m_instance;
+
+        /*
+         * if we have a function call, the user might need to give a list of type instances
+         * that will help select the function to call as in f<t_1, t_2, ..., t_n>(...)
+         * these must correspond to the list of constraints passed to the function declaration
+         */
+        std::vector<type_instance> m_specializations;
 
         /*
          * the type of call this expression is

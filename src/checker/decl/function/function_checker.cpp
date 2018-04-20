@@ -1,5 +1,6 @@
 #include <unordered_map>
 #include <algorithm>
+#include <stdexcept>
 #include <utility>
 #include <memory>
 #include <string>
@@ -29,8 +30,9 @@
 
 namespace avalon {
 static void fill_duplicates(std::vector<std::pair<std::size_t, std::size_t> >& weights, std::vector<std::size_t>& duplicates) {
+    std::size_t uber_weight = weights[0].second;
     std::size_t max_weight = weights[0].second;
-    for(auto weight : weights) {
+    for(auto& weight : weights) {
         if(weight.second > max_weight) {
             if(duplicates.size() > 1) {
                 weights.clear();
@@ -43,11 +45,17 @@ static void fill_duplicates(std::vector<std::pair<std::size_t, std::size_t> >& w
                 duplicates[0] = weight.first;
             }
             max_weight = weight.second;
+            uber_weight = max_weight > uber_weight ? max_weight : uber_weight;
         }
         else if(weight.second == max_weight) {
             duplicates.push_back(weight.first);
         }
     }
+
+    // if the "maxest" weight (whatever the hell that means), aka uber_weight is 0,
+    // then issue an exception because it means none of the weigths given matched the type instance(s) passed to us
+    if(uber_weight == 0)
+        throw std::logic_error("No duplicates could be filled");
 }
 
 /*
@@ -93,24 +101,16 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
             }
 
             std::size_t weight = type_instance_weight(fun_instance, param_instance);
-            if(weight == 0) {
-                goto next_function;
-            }
-            else {
-                std::size_t index = it - candidates.begin();
-                try {
-                    std::vector<std::size_t>& fun_weights = weights.at(index);
-                    fun_weights.push_back(weight);
-                } catch(std::out_of_range err) {
-                    std::vector<std::size_t> fun_weights;
-                    fun_weights.push_back(weight);
-                    weights.emplace(index, fun_weights);
-                }
+            std::size_t index = it - candidates.begin();
+            try {
+                std::vector<std::size_t>& fun_weights = weights.at(index);
+                fun_weights.push_back(weight);
+            } catch(std::out_of_range err) {
+                std::vector<std::size_t> fun_weights;
+                fun_weights.push_back(weight);
+                weights.emplace(index, fun_weights);
             }
         }
-
-        // used above to simulate a continue in the outer loop
-        next_function:;
     }
 
     // 2. if we have at least one weight, we work on them looking for possible matches
@@ -127,7 +127,11 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
         }
 
         // 2.2. find all the duplicates so we can look at their return types for discrimination
-        fill_duplicates(total_weights, duplicate_weights);
+        try {
+            fill_duplicates(total_weights, duplicate_weights);
+        } catch(std::logic_error err) {
+            throw symbol_not_found("No function matches the name and parameters' type instances given.");
+        }        
 
         // 2.3. if we got a valid return type instance, we match it against the possible duplicate candidates
         if(ret_instance.is_star() == false) {
@@ -152,10 +156,14 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
 
             // if we got no weight, then no function matches
             if(ret_candidates.size() == 0)
-                throw symbol_not_found("No function found that matches the given name, parameters' type instances and return type.");
+                throw symbol_not_found("At least one function was found that match the name and parameters' given but none that match the return type instance given.");
 
             // we find duplicates for the return type instances
-            fill_duplicates(ret_candidates, ret_duplicates);
+            try {
+                fill_duplicates(ret_candidates, ret_duplicates);
+            } catch(std::logic_error err) {
+                throw symbol_not_found("At least one function was found that match the name and parameters' given but none that match the return type instance given.");
+            }
 
             // if we got any duplicates, we scream
             if(ret_duplicates.size() > 1)
@@ -204,7 +212,11 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
                 throw symbol_not_found("No function found that matches the given name, parameters' type instances and return type.");
 
             // we figure out if we have duplicates - basically meaning more than one return type instance can match what we were given
-            fill_duplicates(ret_candidates, ret_duplicates);
+            try{
+                fill_duplicates(ret_candidates, ret_duplicates);
+            } catch(std::logic_error err) {
+                throw symbol_not_found("At least one function was found that match the name and parameters' given but none that match the return type instance given.");
+            }
 
             // if we got any duplicates, we scream (basically two functions can return the given type)
             if(ret_duplicates.size() > 1)

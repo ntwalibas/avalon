@@ -62,7 +62,7 @@ namespace avalon {
          * check
          * calls the checker to validate the entire program
          */
-        //void check(const std::string& source_path);
+        void check(const std::string& source_path);
 
     private:
         /**

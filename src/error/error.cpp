@@ -33,11 +33,14 @@ error::error(const std::string& source_path) : m_source_path(source_path) {
      * the message from the unit that raised the error.
      */
     void error::log(const int line, const int column, const std::string& message) {
-        std::cerr << m_source_path << ":" << line << ":" << column << ": " << message << std::endl;
+        if(line == 0 || column == 0)
+            std::cerr << m_source_path << ":" << message << std::endl;
+        else
+            std::cerr << m_source_path << ":" << line << ":" << column << ": " << message << std::endl;
     }
 
     void error::log(const int line, const int column, const std::string& message) const {
-        std::cerr << m_source_path << ":" << line << ":" << column << ": " << message << std::endl;
+        log(line, column, message);
     }
 
     /**

@@ -1,10 +1,10 @@
 #ifndef AVALON_LEXER_TOKEN_HPP_
 #define AVALON_LEXER_TOKEN_HPP_
 
+#include <iostream>
 #include <utility>
 #include <memory>
-#include <utility>
-#include <iostream>
+#include <string>
 
 #include <gmp.h>
 

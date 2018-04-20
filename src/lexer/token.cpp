@@ -1,6 +1,6 @@
-#include <utility>
 #include <algorithm>
 #include <iostream>
+#include <utility>
 #include <string>
 
 #include "lexer/token_type.hpp"
@@ -25,7 +25,6 @@ token::token(
     // we remove new lines, carriage returns and empty spaces in lexemes to facilitate display
     m_lexeme.erase(std::remove(m_lexeme.begin(), m_lexeme.end(), '\n'), m_lexeme.end());
     m_lexeme.erase(std::remove(m_lexeme.begin(), m_lexeme.end(), '\r'), m_lexeme.end());
-    //m_lexeme.erase(std::remove(m_lexeme.begin(), m_lexeme.end(), ' '), m_lexeme.end());
 }
 
     /**

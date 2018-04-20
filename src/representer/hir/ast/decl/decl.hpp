@@ -12,6 +12,7 @@ namespace avalon {
     enum validation_state {
         VALID,
         INVALID,
+        VALIDATING,
         UNKNOWN
     };
 

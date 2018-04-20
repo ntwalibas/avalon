@@ -1,6 +1,7 @@
 #ifndef AVALON_HIR_AST_DECL_FUNCTION_HPP_
 #define AVALON_HIR_AST_DECL_FUNCTION_HPP_
 
+#include <unordered_map>
 #include <utility>
 #include <memory>
 #include <vector>
@@ -168,13 +169,13 @@ namespace avalon {
          * add_specialization
          * add a function that was generated from this function
          */
-        void add_specialization(function& specialization);
+        void add_specialization(const std::string& name, function& specialization);
 
         /**
          * get_specializations
-         * returns a vector of function specializations that were generated from this function
+         * returns a map of function specializations that were generated from this function
          */
-        std::vector<function>& get_specializations();
+        std::unordered_map<std::string, std::shared_ptr<function> >& get_specializations();
 
         /**
          * is_reachable
@@ -269,9 +270,9 @@ namespace avalon {
         bool m_is_used;
 
         /*
-         * vector of functions generated from this one
+         * map of functions generated from this one
          */
-        std::vector<function> m_specializations;
+        std::unordered_map<std::string, std::shared_ptr<function> > m_specializations;
 
         /*
          * this variable is true if this variable declaration can end the execution of a function

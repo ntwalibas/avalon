@@ -4,6 +4,7 @@
 #include <utility>
 #include <iostream>
 #include <stdexcept>
+#include <unordered_map>
 
 #include "lexer/token.hpp"
 #include "representer/hir/ast/decl/type.hpp"
@@ -251,15 +252,15 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
      * add_specialization
      * add a type that was generated from a complete type instance
      */
-    void type::add_specialization(type& specialization) {
-        m_specializations.push_back(specialization);
+    void type::add_specialization(const std::string& name, type& specialization) {
+        m_specializations.emplace(name, std::make_shared<type>(specialization));
     }
 
     /**
      * get_specializations
-     * returns a vector of type specializations that were generated from this type
+     * returns a map of type specializations that were generated from this type
      */
-    std::vector<type>& type::get_specializations() {
+    std::unordered_map<std::string, std::shared_ptr<type> >& type::get_specializations() {
         return m_specializations;
     }
 

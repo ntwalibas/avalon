@@ -1,6 +1,7 @@
 #ifndef AVALON_HIR_AST_TYPE_HPP_
 #define AVALON_HIR_AST_TYPE_HPP_
 
+#include <unordered_map>
 #include <utility>
 #include <memory>
 #include <vector>
@@ -13,7 +14,6 @@
 
 
 namespace avalon {
-    class type;
     class type_instance;
     class record_constructor;
     class default_constructor;
@@ -200,13 +200,13 @@ namespace avalon {
          * add_specialization
          * add a type that was generated from a complete type instance
          */
-        void add_specialization(type& specialization);
+        void add_specialization(const std::string& name, type& specialization);
 
         /**
          * get_specializations
-         * returns a vector of type specializations that were generated from this type
+         * returns a map of type specializations that were generated from this type
          */
-        std::vector<type>& get_specializations();
+        std::unordered_map<std::string, std::shared_ptr<type> >& get_specializations();
 
         /**
          * is_reachable
@@ -290,9 +290,9 @@ namespace avalon {
         bool m_is_used;
 
         /*
-         * vector of types generated from this one
+         * map of types generated from this one
          */
-        std::vector<type> m_specializations;
+        std::unordered_map<std::string, std::shared_ptr<type> > m_specializations;
     };
     
     /**

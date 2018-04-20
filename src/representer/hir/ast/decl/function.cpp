@@ -1,3 +1,4 @@
+#include <unordered_map>
 #include <algorithm>
 #include <cstddef>
 #include <utility>
@@ -244,15 +245,15 @@ namespace avalon {
      * add_specialization
      * add a function that was generated from this function
      */
-    void function::add_specialization(function& specialization) {
-        m_specializations.push_back(specialization);
+    void function::add_specialization(const std::string& name, function& specialization) {
+        m_specializations.emplace(name, std::make_shared<function>(specialization));
     }
 
     /**
      * get_specializations
-     * returns a vector of function specializations that were generated from this function
+     * returns a map of function specializations that were generated from this function
      */
-    std::vector<function>& function::get_specializations() {
+    std::unordered_map<std::string, std::shared_ptr<function> >& function::get_specializations() {
         return m_specializations;
     }
 }

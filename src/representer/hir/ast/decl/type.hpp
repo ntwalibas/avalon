@@ -189,6 +189,26 @@ namespace avalon {
         }
 
         /**
+         * is_used
+         * sets and returns a boolean indicating whether this declaration was used anywhere
+         * this is useful during code generation to emit messages about unused declarations and to avoid generating dead code
+         */
+        void is_used(bool used);
+        bool is_used() const;
+
+        /**
+         * add_specialization
+         * add a type that was generated from a complete type instance
+         */
+        void add_specialization(type& specialization);
+
+        /**
+         * get_specializations
+         * returns a vector of type specializations that were generated from this type
+         */
+        std::vector<type>& get_specializations();
+
+        /**
          * is_reachable
          * sets and returns a boolean indicating whether this type declaration will be executed
          */
@@ -263,6 +283,16 @@ namespace avalon {
          * true if it is, false otherwise
          */
         bool m_is_public;
+
+        /*
+         * whether this type has been used for any expression
+         */
+        bool m_is_used;
+
+        /*
+         * vector of types generated from this one
+         */
+        std::vector<type> m_specializations;
     };
     
     /**

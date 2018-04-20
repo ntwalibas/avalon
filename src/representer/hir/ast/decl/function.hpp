@@ -157,6 +157,26 @@ namespace avalon {
         }
 
         /**
+         * is_used
+         * sets and returns a boolean indicating whether this declaration was used anywhere
+         * this is useful during code generation to emit messages about unused declarations and to avoid generating dead code
+         */
+        void is_used(bool used);
+        bool is_used() const;
+
+        /**
+         * add_specialization
+         * add a function that was generated from this function
+         */
+        void add_specialization(function& specialization);
+
+        /**
+         * get_specializations
+         * returns a vector of function specializations that were generated from this function
+         */
+        std::vector<function>& get_specializations();
+
+        /**
          * is_reachable
          * sets and returns a boolean indicating whether this function declaration will be executed
          */
@@ -244,9 +264,14 @@ namespace avalon {
         bool m_is_public;
 
         /*
-         * flag set to true if the function depends entirely on concrete types
+         * whether this function has been used for any expression
          */
-        bool m_is_concrete;
+        bool m_is_used;
+
+        /*
+         * vector of functions generated from this one
+         */
+        std::vector<function> m_specializations;
 
         /*
          * this variable is true if this variable declaration can end the execution of a function

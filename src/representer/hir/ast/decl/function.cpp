@@ -55,13 +55,13 @@ namespace avalon {
     /**
      * the constructor expects the token with function information
      */
-    function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(UNKNOWN), m_is_public(true), m_terminates(false) {
+    function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(UNKNOWN), m_is_public(true), m_is_used(false), m_terminates(false) {
     }
 
     /**
      * the constructor expects the token with function information and the validation state
      */
-    function::function(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true), m_terminates(false) {    
+    function::function(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true), m_is_used(false), m_terminates(false) {    
     }
 
     /**
@@ -225,5 +225,34 @@ namespace avalon {
         }
         
         return false;
+    }
+
+    /**
+     * is_used
+     * sets and returns a boolean indicating whether this declaration was used anywhere
+     * this is useful during code generation to emit messages about unused declarations and to avoid generating dead code
+     */
+    void function::is_used(bool used) {
+        m_is_used = used;
+    }
+
+    bool function::is_used() const {
+        return m_is_used;
+    }
+
+    /**
+     * add_specialization
+     * add a function that was generated from this function
+     */
+    void function::add_specialization(function& specialization) {
+        m_specializations.push_back(specialization);
+    }
+
+    /**
+     * get_specializations
+     * returns a vector of function specializations that were generated from this function
+     */
+    std::vector<function>& function::get_specializations() {
+        return m_specializations;
     }
 }

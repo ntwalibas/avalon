@@ -17,7 +17,7 @@ namespace avalon {
      * - the token with source code information, including the variable name
      * - whether the variable is mutable
      */
-    variable::variable(token& tok, bool is_mutable) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_namespace("*"), m_type_instance(star_instance), m_value(nullptr), m_is_valid(UNKNOWN), m_is_function_param(false), m_is_public(true), m_reachable(false), m_terminates(false) {
+    variable::variable(token& tok, bool is_mutable) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_namespace("*"), m_type_instance(star_instance), m_value(nullptr), m_is_valid(UNKNOWN), m_is_function_param(false), m_is_public(true), m_is_used(false), m_reachable(false), m_terminates(false) {
     }
 
     /**
@@ -26,7 +26,7 @@ namespace avalon {
      * - whether the variable is mutable
      * - the validation state of the variable
      */
-    variable::variable(token& tok, bool is_mutable, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_namespace("*"), m_type_instance(star_instance), m_value(nullptr), m_is_valid(is_valid), m_is_public(true), m_reachable(false), m_terminates(false) {        
+    variable::variable(token& tok, bool is_mutable, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_namespace("*"), m_type_instance(star_instance), m_value(nullptr), m_is_valid(is_valid), m_is_public(true), m_is_used(false), m_reachable(false), m_terminates(false) {        
     }
 
     /**
@@ -159,4 +159,18 @@ namespace avalon {
     bool variable::is_function_param() {
         return m_is_function_param;
     }
+
+    /**
+     * is_used
+     * sets and returns a boolean indicating whether this declaration was used anywhere
+     * this is useful during code generation to emit messages about unused declarations and to avoid generating dead code
+     */
+    void variable::is_used(bool used) {
+        m_is_used = used;
+    }
+
+    bool variable::is_used() const {
+        return m_is_used;
+    }
+
 }

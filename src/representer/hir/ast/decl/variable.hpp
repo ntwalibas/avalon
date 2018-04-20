@@ -140,6 +140,14 @@ namespace avalon {
         }
 
         /**
+         * is_used
+         * sets and returns a boolean indicating whether this declaration was used anywhere
+         * this is useful during code generation to emit messages about unused declarations and to avoid generating dead code
+         */
+        void is_used(bool used);
+        bool is_used() const;
+
+        /**
          * is_reachable
          * sets and returns a boolean indicating whether this variable declaration will be executed
          */
@@ -223,6 +231,11 @@ namespace avalon {
          * true if it is, false otherwise
          */
         bool m_is_public;
+
+        /*
+         * whether this variable has been used for any expression
+         */
+        bool m_is_used;
 
         /*
          * this variable is true if this variable declaration will be executable

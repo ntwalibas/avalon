@@ -21,7 +21,7 @@ namespace avalon {
  * - the token with type information
  * - the validation state
  */
-type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true) {
+type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true), m_is_used(false) {
 }
     /**
      * set_name
@@ -232,6 +232,35 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
      */
     bool type::is_valid(validation_state state) {
         return m_is_valid == state;
+    }
+
+    /**
+     * is_used
+     * sets and returns a boolean indicating whether this declaration was used anywhere
+     * this is useful during code generation to emit messages about used declarations and to avoid generating dead code
+     */
+    void type::is_used(bool used) {
+        m_is_used = used;
+    }
+
+    bool type::is_used() const {
+        return m_is_used;
+    }
+
+    /**
+     * add_specialization
+     * add a type that was generated from a complete type instance
+     */
+    void type::add_specialization(type& specialization) {
+        m_specializations.push_back(specialization);
+    }
+
+    /**
+     * get_specializations
+     * returns a vector of type specializations that were generated from this type
+     */
+    std::vector<type>& type::get_specializations() {
+        return m_specializations;
     }
 
     /**

@@ -534,6 +534,10 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
     bool type_instance_strong_compare(type_instance& this_instance, type_instance& that_instance) {
         const std::vector<type_instance>& this_params = this_instance.get_params();
         const std::vector<type_instance>& that_params = that_instance.get_params();
+
+        // if the type instances belong to different categories, they are not equal
+        if(this_instance.get_category() != that_instance.get_category())
+            return false;
         
         // get this type instance type and parameters
         std::shared_ptr<type> this_type = nullptr;
@@ -598,6 +602,10 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
     bool type_instance_weak_compare(type_instance& this_instance, type_instance& that_instance) {
         const std::vector<type_instance>& this_params = this_instance.get_params();
         const std::vector<type_instance>& that_params = that_instance.get_params();
+
+        // if the type instances belong to different categories, they are not equal
+        if(this_instance.get_category() != that_instance.get_category())
+            return false;
         
         // get this type instance type and parameters
         std::shared_ptr<type> this_type = nullptr;

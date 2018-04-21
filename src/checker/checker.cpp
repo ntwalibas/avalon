@@ -157,7 +157,7 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
         // we are here, it means we have a function that doesn't depend on constraints anymore, we perform proper semantic analysis
         function_checker f_checker;
         try {
-            f_checker.check(new_fun, l_scope, ns_name);
+            f_checker.check(new_fun, ns_name);
         } catch(invalid_function err) {
             throw checking_error(true, err.get_token(), err.what());
         }

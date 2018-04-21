@@ -35,7 +35,7 @@ namespace avalon {
          * - all declarations that make up a function are reachable (conservatively)
          * - all branches do terminate normally (conservatively)
          */
-        void check(function& function_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        void check(function& function_decl, const std::string& ns_name);
 
         /**
          * check_header

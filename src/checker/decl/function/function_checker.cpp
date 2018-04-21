@@ -267,7 +267,9 @@ function_checker::function_checker() {
      * - all declarations that make up a function are reachable (conservatively)
      * - all branches do terminate normally (conservatively)
      */
-    void function_checker::check(function& function_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+    void function_checker::check(function& function_decl, const std::string& ns_name) {
+        std::shared_ptr<scope>& l_scope = function_decl.get_scope();
+
         try {
             // we check the header aka function signature
             check_header(function_decl, l_scope, ns_name);

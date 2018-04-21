@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <utility>
+#include <cstddef>
 #include <memory>
 #include <vector>
 #include <map>
@@ -445,6 +446,18 @@ namespace avalon {
         bool is_builtby(std::shared_ptr<type>& ty);
 
         /**
+         * set_count
+         * set the number of elements of this type instances in case of lists and maps
+         */
+        void set_count(std::size_t count);
+
+        /**
+         * set_count
+         * returns the number of elements allowed for this type instance
+         */
+        std::size_t get_count();
+
+        /**
          * add_param
          * a type instance depends on other type instances if
          * the type constructor that builds it is parametric.
@@ -511,6 +524,13 @@ namespace avalon {
          * the type the constructs this type instance
          */
         std::shared_ptr<type> m_type;
+
+        /**
+         * the number of elements of this type instance
+         * if we worked with dependent types, this would have made perfect sense.
+         * anyways, this is only applicable to lists and maps
+         */
+        std::size_t m_count;
 
         /*
          * type instances this type instance depends on

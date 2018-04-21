@@ -308,19 +308,19 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
 /**
  * the default constructor expects nothing
  */
-type_instance::type_instance() : m_name(star_tok.get_lexeme()), m_tok(star_tok), m_old_tok(star_tok), m_category(USER), m_namespace("*"), m_type(nullptr), m_is_parametrized(false) {    
+type_instance::type_instance() : m_name(star_tok.get_lexeme()), m_tok(star_tok), m_old_tok(star_tok), m_category(USER), m_namespace("*"), m_type(nullptr), m_count(0), m_is_parametrized(false) {    
 }
 
 /*
  * type instance
  */
-type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(nullptr), m_is_parametrized(false) {
+type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(nullptr), m_count(0), m_is_parametrized(false) {
 }
 
 /**
  * this constructor expects the token with source code information, the type that buils this instance and the namespace where to find that type
  */
-type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(ty), m_is_parametrized(false)  {
+type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_category(USER), m_namespace(namespace_name), m_type(ty), m_count(0), m_is_parametrized(false)  {
 }
 
     /**
@@ -487,6 +487,22 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
             return true;
         else
             return false;
+    }
+
+    /**
+     * set_count
+     * set the number of elements of this type instances in case of lists and maps
+     */
+    void type_instance::set_count(std::size_t count) {
+        m_count = count;
+    }
+
+    /**
+     * set_count
+     * returns the number of elements allowed for this type instance
+     */
+    std::size_t type_instance::get_count() {
+        return m_count;
     }
 
     /**

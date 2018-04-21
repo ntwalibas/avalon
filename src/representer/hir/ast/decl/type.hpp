@@ -489,6 +489,13 @@ namespace avalon {
         bool is_abstract() const;
 
         /**
+         * is_complete
+         * returns true if the type instance is neither parametric nor abstract
+         */
+        bool is_complete();
+        bool is_complete() const;
+
+        /**
          * is_star
          * returns true if this type instance is the dummy type instance
          */

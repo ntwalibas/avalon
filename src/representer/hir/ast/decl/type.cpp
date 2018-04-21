@@ -562,6 +562,21 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
     }
 
     /**
+     * is_complete
+     * returns true if the type instance is neither parametric nor abstract
+     */
+    bool type_instance::is_complete() {
+        if(m_type == nullptr || m_is_parametrized)
+            return false;
+        else
+            return true;
+    }
+
+    bool type_instance::is_complete() const {
+        return is_complete();
+    }
+
+    /**
      * is_star
      * returns true if this type instance is the dummy type instance
      */

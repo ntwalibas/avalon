@@ -38,6 +38,11 @@ namespace avalon {
 
         // we can only look for user defined type instances in the scope we have
         if(instance.get_category() == USER) {
+            // we only run type deduction if the type instance doesn't already have the type attached
+            if(instance.get_type() != nullptr) {
+                return std::make_pair(false, instance.is_parametrized());
+            }
+
             // we try to find if the type instance has an associated type that builds
             try {
                 instance_type = l_scope -> get_type(ns_name, instance);

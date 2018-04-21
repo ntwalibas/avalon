@@ -6,19 +6,23 @@
 
 /* AST */
 #include "representer/hir/ast/decl/type.hpp"
-#include "representer/hir/ast/program.hpp"
 
 /* Symtable */
-#include "representer/exceptions/symbol_not_found.hpp"
 #include "representer/hir/symtable/scope.hpp"
 
 /* Lexer */
 #include "lexer/token.hpp"
 
+/* Generator */
+#include "checker/decl/type/type_generator.hpp"
+
 /* Checker */
+#include "checker/decl/type/type_checker.hpp"
+
+/* Exceptions */
+#include "representer/exceptions/symbol_not_found.hpp"
 #include "checker/exceptions/invalid_constructor.hpp"
 #include "checker/exceptions/invalid_type.hpp"
-#include "checker/decl/type/type_checker.hpp"
 
 
 namespace avalon {
@@ -37,6 +41,21 @@ namespace avalon {
             // we try to find if the type instance has an associated type that builds
             try {
                 instance_type = l_scope -> get_type(ns_name, instance);
+
+                if(instance_type -> is_valid(UNKNOWN)) {
+                    type_checker t_checker;
+
+                    // check the type
+                    try {
+                        t_checker.check(instance_type, l_scope, ns_name);
+                    } catch(invalid_type err) {
+                        throw err;
+                    }
+                }
+                else if(instance_type -> is_valid(INVALID)) {
+                    throw invalid_type(instance_type -> get_token(), "Type <" + mangle_type(instance_type) + "> is not valid. Please make sure all the type instances its constructors depend on are valid. This means they must have type constructors (also called type builders) that exist in the current scope.");
+                }
+
                 // the type instance has a type that builds it,
                 // we make sure the parameters it depends on are also valid
                 for(auto& instance_param : instance_params) {
@@ -50,8 +69,16 @@ namespace avalon {
                         throw err;
                     }
                 }
-                // so all parameters to this type instance have valid type builders, we set the type builder on this
+                // the type instances this type instance depend on are valid
+                // 1. we attach it to the type instance
                 instance.set_type(instance_type);
+
+                // 2. we generate the type that corresponds to the type instance
+                std::shared_ptr<type> generated_type = type_generator::generate(instance);
+                instance_type -> add_specialization(generated_type -> get_name(), generated_type);
+
+                // 3. we mark the type declaration as used
+                instance_type -> is_used(true);
             }
             catch(symbol_not_found err) {
                 // the type was not found in the scope given the namespace,
@@ -259,8 +286,8 @@ type_checker::type_checker() {
      * - makes sure all type parameters are valid
      * - make sure all constructors are valid
      */
-    void type_checker::check(std::shared_ptr<type>& type_decl, program& prog, const std::string& ns_name) {
-        std::shared_ptr<scope>& l_scope = prog.get_scope();
+    void type_checker::check(std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        type_decl -> set_is_valid(VALIDATING);
 
         // check type parameters making sure no parameter appears twice
         // and no parameter correponds to any type in all the available namespaces
@@ -275,11 +302,6 @@ type_checker::type_checker() {
             if(l_scope -> type_exists(type_param.get_lexeme(), 0)) {
                 throw invalid_type(type_param, "The type parameter <" + type_param.get_lexeme() + "> has the same name as a concrete type available in the current scope.");
             }
-        }
-        
-        // make sure there are no other types with the same name and arity        
-        if(l_scope -> type_exists(ns_name, type_decl)) {
-            throw invalid_type(type_decl -> get_token(), "Another type with the same name and arity already exists within this program.");
         }
 
         // check default constructors

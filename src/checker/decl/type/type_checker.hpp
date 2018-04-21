@@ -7,7 +7,6 @@
 
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/ast/decl/type.hpp"
-#include "representer/hir/ast/program.hpp"
 
 
 namespace avalon {
@@ -64,7 +63,7 @@ namespace avalon {
          * - makes sure all type parameters are valid
          * - make sure all constructors are valid
          */
-        void check(std::shared_ptr<type>& type_decl, program& prog, const std::string& ns_name);
+        void check(std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
     };
 }
 

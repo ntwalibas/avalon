@@ -246,7 +246,8 @@ namespace avalon {
      * add a function that was generated from this function
      */
     void function::add_specialization(const std::string& name, function& specialization) {
-        m_specializations.emplace(name, std::make_shared<function>(specialization));
+        if(m_specializations.count(name) == 0)
+            m_specializations.emplace(name, std::make_shared<function>(specialization));
     }
 
     /**

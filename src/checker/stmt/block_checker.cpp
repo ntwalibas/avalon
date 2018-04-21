@@ -43,38 +43,16 @@ namespace avalon {
 
         // we iterate over all declarations, validating variables and statements and ignoring the rest (functions and types)
         for(auto& block_decl : block_decls) {
-            if(block_decl -> is_variable()) {
-                check_variable(block_decl, l_scope, ns_name);
-            }
-            else if(block_decl -> is_statement()) {
+            if(block_decl -> is_statement()) {
                 check_statement(block_decl, l_scope, ns_name);
+            }
+            else if(block_decl -> is_variable()) {
+                // we don't immediately check variable declarations
+                // instead, we wait until they are encountered so we can run checks from the variable expression
             }
             else {
                 throw invalid_block("Block statements must contain variable or statement declarations alone.");
             }
-        }
-    }
-
-    /**
-     * check_variable
-     * given a variable declaration in the block, check if it is valid
-     */
-    void block_checker::check_variable(std::shared_ptr<decl>& declaration, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(declaration);
-        variable_checker v_checker;
-
-        // check the variable
-        try {
-            v_checker.check(variable_decl, l_scope, ns_name);
-        } catch(invalid_variable err) {
-            throw err;
-        }
-
-        // add the variable to the provided scope
-        try {
-            l_scope -> add_variable(ns_name, variable_decl);
-        } catch(symbol_already_declared err) {
-            throw invalid_variable(variable_decl -> get_token(), err.what());
         }
     }
 
@@ -113,14 +91,6 @@ namespace avalon {
     }
 
     /**
-     * check_switch
-     * given a statement, check if it a valid switch statement
-     */
-    void block_checker::check_switch(std::shared_ptr<stmt>& a_statement) {
-
-    }
-
-    /**
      * check_while
      * given a statement, check if it is a vali while statement
      */
@@ -133,14 +103,6 @@ namespace avalon {
      * given a statement, check if it is a valid if statement
      */
     void block_checker::check_if(std::shared_ptr<stmt>& a_statement) {
-
-    }
-
-    /**
-     * check_for
-     * given a statement, check if it is a valid for statement
-     */
-    void block_checker::check_for(std::shared_ptr<stmt>& a_statement) {
 
     }
 

@@ -30,12 +30,6 @@ namespace avalon {
 
     private:
         /**
-         * check_variable
-         * given a variable declaration in the block, check if it is valid
-         */
-        void check_variable(std::shared_ptr<decl>& declaration, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
-
-        /**
          * check_statement
          * given a statement declaration, check if it is valid
          */
@@ -60,12 +54,6 @@ namespace avalon {
         bool m_inside_loop;
 
         /**
-         * check_switch
-         * given a statement, check if it a valid switch statement
-         */
-        void check_switch(std::shared_ptr<stmt>& a_statement);
-
-        /**
          * check_while
          * given a statement, check if it is a vali while statement
          */
@@ -76,12 +64,6 @@ namespace avalon {
          * given a statement, check if it is a valid if statement
          */
         void check_if(std::shared_ptr<stmt>& a_statement);
-
-        /**
-         * check_for
-         * given a statement, check if it is a valid for statement
-         */
-        void check_for(std::shared_ptr<stmt>& a_statement);
 
         /**
          * check_break

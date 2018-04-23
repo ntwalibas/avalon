@@ -38,11 +38,6 @@ namespace avalon {
 
         // we can only look for user defined type instances in the scope we have
         if(instance.get_category() == USER) {
-            // we only run type deduction if the type instance doesn't already have the type attached
-            if(instance.get_type() != nullptr) {
-                return std::make_pair(false, instance.is_parametrized());
-            }
-
             // we try to find if the type instance has an associated type that builds
             try {
                 instance_type = l_scope -> get_type(ns_name, instance);
@@ -80,9 +75,7 @@ namespace avalon {
 
                 // 2. we generate the type that corresponds to the type instance
                 std::shared_ptr<type> generated_type = type_generator::generate(instance);
-                instance_type -> add_specialization(generated_type -> get_name(), generated_type);
-
-                // 3. we mark the type declaration as used
+                instance_type -> add_specialization(generated_type);
                 instance_type -> is_used(true);
             }
             catch(symbol_not_found err) {

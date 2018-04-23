@@ -35,7 +35,7 @@ namespace avalon {
         /*
          * the function for which to generate type instances
          */
-        function m_fun_decl;
+        function& m_fun_decl;
 
         /*
          * a vector of constraint instances that is supplied by the user

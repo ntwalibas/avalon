@@ -572,6 +572,11 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
      * returns true if this type instance is dependent on the given set of constraints
      */
     bool type_instance::depends_on(std::vector<token>& constraints) {
+        // if the type instance admits no parameter, we check if it matches the constraint
+        if(m_params.size() == 0)
+            return std::find(constraints.begin(), constraints.end(), m_tok) != constraints.end();
+
+        // if it admits parameters, then one of its parameter might match the constraint
         for(auto& param : m_params) {
             if(std::find(constraints.begin(), constraints.end(), param.get_token()) != constraints.end()) {
                 return true;

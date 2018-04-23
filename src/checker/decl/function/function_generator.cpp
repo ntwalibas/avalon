@@ -52,6 +52,10 @@ namespace avalon {
     static void replace_instance(type_instance& dest, type_instance& orig) {
         std::vector<type_instance>& orig_params = orig.get_params();
 
+        // update the name
+        const std::string& orig_name = orig.get_name();
+        dest.set_name(orig_name);
+
         // we update the token
         const token& orig_tok = orig.get_token();
         dest.set_token(orig_tok);
@@ -84,11 +88,11 @@ namespace avalon {
         std::vector<token>& constraints = m_fun_decl.get_constraints();
         std::vector<std::pair<std::string, variable> >& params = m_fun_decl.get_params();
         type_instance& fun_ret_instance = m_fun_decl.get_return_type_instance();
-        block_stmt& body = m_fun_decl.get_body();
+        block_stmt& body = m_fun_decl.get_body();        
 
         // if the vector of constraints instances supplied by the user is not empty,
         // we make sure that it has the same size as the vector of constraints
-        if(!m_instances.empty()) {
+        if(m_instances.empty() == false) {
             if(m_instances.size() != constraints.size()) {
                 throw invalid_function(m_fun_decl.get_token(), "The supplied list of type instances for constraints resolution doesn't have the same size as the list of constraints the function expects.");
             }
@@ -96,8 +100,17 @@ namespace avalon {
                 // if they are the same size, we proceed to fill the constraints map
                 auto cons_ins_it = m_instances.begin(), cons_ins_end = m_instances.end();
                 auto cons_it = constraints.begin(), cons_end = constraints.end();
-                for(; cons_ins_it != cons_ins_end && cons_it != cons_end; ++cons_ins_it, ++cons_it)
+                for(; cons_ins_it != cons_ins_end && cons_it != cons_end; ++cons_ins_it, ++cons_it) {
+                    try {
+                        std::pair<bool,bool> res = type_instance_checker::complex_check(* cons_ins_it, m_scope, m_namespace, constraints);
+                        if(res.second == true) {
+                            cons_ins_it -> is_parametrized(true);
+                        }
+                    } catch(invalid_type err) {
+                        throw err;
+                    }
                     m_constraint_instances.emplace(cons_it -> get_lexeme(), * cons_ins_it);
+                }
             }
         }
 
@@ -121,12 +134,10 @@ namespace avalon {
         std::vector<token>& constraints = m_fun_decl.get_constraints();
 
         for(; param_it != param_end && param_ins_it != param_ins_end; ++param_it, ++param_ins_end) {
-            type_instance param_instance = param_it -> second.get_type_instance();
+            type_instance& param_instance = param_it -> second.get_type_instance();
             if(param_instance.depends_on(constraints)) {
                 build_instance(param_instance, * param_ins_it);
             }
-            
-            param_it -> second.set_type_instance(param_instance);
         }
     }
 
@@ -135,9 +146,9 @@ namespace avalon {
      * generates a new return type instance replacing the constraints with the given type instances
      */
     void function_generator::generate_return(type_instance& fun_ret_instance, type_instance& new_ret_instance) {
-        std::vector<token>& constraints = m_fun_decl.get_constraints();
+        std::vector<token>& constraints = m_fun_decl.get_constraints();        
         if(fun_ret_instance.depends_on(constraints)) {
-            build_instance(fun_ret_instance, new_ret_instance);
+            build_instance(fun_ret_instance, new_ret_instance);            
         }
     }
 
@@ -592,16 +603,19 @@ namespace avalon {
             try {
                 type_instance& exist_instance = m_constraint_instances.at(dest.get_name());
                 // if the orig is not an abstract type instance, we make sure it matches exactly the one in the constraint map
-                if(orig.is_abstract() == false) {
+                if(orig.is_abstract() == false) {                    
                     try {
                         type_instance_checker::complex_check(orig, m_scope, m_namespace);
-                    } catch(invalid_type err) {
+                    } catch(invalid_type err) {                        
                         throw err;
                     }
 
                     if(type_instance_strong_compare(exist_instance, orig) ==  false) {
                         throw invalid_type(orig.get_token(), "Expected type instance <" + mangle_type_instance(exist_instance) + "> but got type instance <" + mangle_type_instance(orig) + ">.");
                     }
+
+                    // perform the replacement
+                    replace_instance(dest, orig);
                 }
                 // if the origin type instance is abstract, we don't mind and make the replacement based on what we have in the constraint map
                 else {

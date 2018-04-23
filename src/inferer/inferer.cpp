@@ -696,7 +696,7 @@ namespace avalon {
         fun -> is_used(true);
 
         // the return type of the function is the type instance of the expression
-        type_instance fun_instance = new_fun.get_return_type_instance();
+        type_instance& fun_instance = new_fun.get_return_type_instance();
 
         // typecheck the infered type instance
         try {

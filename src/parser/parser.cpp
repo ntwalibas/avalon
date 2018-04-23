@@ -1336,7 +1336,7 @@ parser::parser(
     std::shared_ptr<expr> parser::primary() {
         std::shared_ptr<expr> l_expression = nullptr;
 
-        if(check(IDENTIFIER) && check_next(LEFT_PAREN)) {
+        if(check(IDENTIFIER) && (check_next(LEFT_PAREN) || check_next(LESS))) {
             l_expression = parse_call_expression();
         }
         else if(check(IDENTIFIER)) {

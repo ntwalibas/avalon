@@ -672,9 +672,9 @@ namespace avalon {
         try {
             fun = find_function(call_name, args_instances, ret_instance, l_scope, sub_ns_name, standins);
         } catch(symbol_not_found err) {
-            throw invalid_expression(call_expr -> get_token(), "No function declaration that corresponds to this function call was found.");
+            throw invalid_expression(call_expr -> get_token(), err.what());
         } catch(symbol_can_collide err) {
-            throw invalid_expression(call_expr -> get_token(), "Multiple function declarations that correspond to this call were found. Please specify a return type.");
+            throw invalid_expression(call_expr -> get_token(), err.what());
         } catch(invalid_type err) {
             throw invalid_expression(err.get_token(), "No function declaration that corresponds to this function call was found. Reason: " + std::string(err.what()));
         }

@@ -9,16 +9,15 @@
 #include "representer/hir/ast/decl/decl.hpp"
 
 /* Symbol table */
-#include "representer/exceptions/symbol_already_declared.hpp"
 #include "representer/hir/symtable/scope.hpp"
 
 /* Checker */
-#include "checker/decl/variable/variable_checker.hpp"
 #include "checker/expr/expression_checker.hpp"
 #include "checker/stmt/block_checker.hpp"
+
 /* Exceptions */
+#include "representer/exceptions/symbol_already_declared.hpp"
 #include "checker/exceptions/invalid_expression.hpp"
-#include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_block.hpp"
 
 
@@ -43,13 +42,19 @@ namespace avalon {
 
         // we iterate over all declarations, validating variables and statements and ignoring the rest (functions and types)
         for(auto& block_decl : block_decls) {
-            if(block_decl -> is_statement()) {
+            // if we encounter a variable declaration, we just add it to the current scope but perform checking when it is actually used
+            if(block_decl -> is_variable()) {                
+                std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(block_decl);
+                try {
+                    l_scope -> add_variable(ns_name, variable_decl);
+                } catch(symbol_already_declared err) {
+                    throw err;
+                }
+            }
+            else if(block_decl -> is_statement()) {
                 check_statement(block_decl, l_scope, ns_name);
             }
-            else if(block_decl -> is_variable()) {
-                // we don't immediately check variable declarations
-                // instead, we wait until they are encountered so we can run checks from the variable expression
-            }
+            
             else {
                 throw invalid_block("Block statements must contain variable or statement declarations alone.");
             }

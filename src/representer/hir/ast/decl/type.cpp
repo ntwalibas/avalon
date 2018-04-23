@@ -252,7 +252,8 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
      * add_specialization
      * add a type that was generated from a complete type instance
      */
-    void type::add_specialization(const std::string& name, std::shared_ptr<type>& specialization) {
+    void type::add_specialization(std::shared_ptr<type>& specialization) {
+        const std::string& name = specialization -> get_name();
         if(m_specializations.count(name) == 0)
             m_specializations.emplace(name, specialization);
     }
@@ -294,7 +295,7 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
             mangled_name += it -> get_lexeme();
 
             if(it != end && it + 1 != end)
-                mangled_name += ", ";
+                mangled_name += ",";
         }
 
         mangled_name += ")";
@@ -355,18 +356,7 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
         if(m_is_parametrized)
             throw type_error("Unable to return the mangled name of an incomplete type instance.");
 
-        std::string mangled_name = m_name;
-        mangled_name += "(";
-
-        for(auto it = m_params.begin(), end = m_params.end(); it != end; ++it) {
-            mangled_name += it -> get_mangled_name();
-
-            if(it != end && it + 1 != end)
-                mangled_name += ", ";
-        }
-
-        mangled_name += ")";
-        return mangled_name;
+        return mangle_type_instance(* this);
     }
 
     /**
@@ -601,45 +591,45 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
         std::string mangled_name = "";
 
         if(instance.is_abstract()) {
-            mangled_name += "*";
+            mangled_name += instance.get_name();
         }
         else {
             if(instance.get_category() == USER) {
                 mangled_name += instance.get_name();                
                 if(!params.empty()) {
-                    mangled_name += std::string("(");
-                    for(auto it = params.begin(); it != params.end(); ++it) {
+                    mangled_name += "(";
+                    for(auto it = params.begin(), end = params.end(); it != end; ++it) {
                         mangled_name += mangle_type_instance(* it);
 
-                        if((it != params.end()) && (it + 1 != params.end()))
-                            mangled_name += std::string(",");
+                        if(it != end && it + 1 != end)
+                            mangled_name += ",";
                     }
-                    mangled_name += std::string(")");
+                    mangled_name += ")";
                 }
             }
             else if(instance.get_category() == TUPLE) {
                 mangled_name += "(";
                 if(!params.empty()) {
-                    for(auto it = params.begin(); it != params.end(); ++it) {
+                    for(auto it = params.begin(), end = params.end(); it != end; ++it) {
                         mangled_name += mangle_type_instance(* it);
 
-                        if((it != params.end()) && (it + 1 != params.end()))
-                            mangled_name += std::string(",");
+                        if(it != end && it + 1 != end)
+                            mangled_name += ",";
                     }
                 }
-                mangled_name += std::string(")");
+                mangled_name += ")";
             }
             else if(instance.get_category() == LIST) {
                 mangled_name += "[";
                 mangled_name += mangle_type_instance(params[0]);
-                mangled_name += std::string("]");
+                mangled_name += "]";
             }
             else if(instance.get_category() == MAP) {
                 mangled_name += "{";
                 mangled_name += mangle_type_instance(params[0]);
                 mangled_name += ":";
                 mangled_name += mangle_type_instance(params[1]);
-                mangled_name += std::string("}");
+                mangled_name += "}";
             }
             
         }

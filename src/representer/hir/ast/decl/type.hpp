@@ -201,7 +201,7 @@ namespace avalon {
          * add_specialization
          * add a type that was generated from a complete type instance
          */
-        void add_specialization(const std::string& name, std::shared_ptr<type>& specialization);
+        void add_specialization(std::shared_ptr<type>& specialization);
 
         /**
          * get_specialization

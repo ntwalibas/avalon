@@ -568,23 +568,21 @@ parser::parser(
         do {
             // it is possible that the next definition was put on a new line so we expect a NEWLINE and INDENT tokens to be generated
             // but we do not allow this for the first definition
-            if (check(NEWLINE)) {
-                if (is_first_def) {
+            if(match(NEWLINE)) {
+                if(is_first_def) {
                     throw parsing_error(false, lookback(), "The first variable definition must come immediately after the mutability specifier.");
                 }
                 else {
                     // consume the new line
                     advance();
                     // an INDENT token will be generated only after the first line
-                    if(check(INDENT)) {
-                        advance(); // consume the indentation
+                    if(match(INDENT)) {
                         indent_found = true;
                     }
 
                     // if instead we found a dedentation, we consume it and let the user continue writing ugly code
-                    if (check(DEDENT)) {
+                    if(match(DEDENT)) {
                         if(indent_found) {
-                            advance();
                             indent_found = false;
                         }
                         // if there was no previous indentation, this is an error because it appears the user is leaving a block

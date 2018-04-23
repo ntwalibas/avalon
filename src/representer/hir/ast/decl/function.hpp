@@ -169,7 +169,7 @@ namespace avalon {
          * add_specialization
          * add a function that was generated from this function
          */
-        void add_specialization(const std::string& name, function& specialization);
+        void add_specialization(function& specialization);
 
         /**
          * get_specializations
@@ -318,6 +318,12 @@ namespace avalon {
     inline bool operator!=(const function& lhs, const function& rhs) {
         return !(lhs == rhs);
     }
+
+    /**
+     * mangle_function
+     * returns a string that's unique to the function being mangled
+     */
+    std::string mangle_function(const function& fun_decl);
 }
 
 #endif

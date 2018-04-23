@@ -245,7 +245,8 @@ namespace avalon {
      * add_specialization
      * add a function that was generated from this function
      */
-    void function::add_specialization(const std::string& name, function& specialization) {
+    void function::add_specialization(function& specialization) {
+        const std::string& name = specialization.get_name();
         if(m_specializations.count(name) == 0)
             m_specializations.emplace(name, std::make_shared<function>(specialization));
     }
@@ -256,5 +257,33 @@ namespace avalon {
      */
     std::unordered_map<std::string, std::shared_ptr<function> >& function::get_specializations() {
         return m_specializations;
+    }
+
+    /**
+     * mangle_function
+     * returns a string that's unique to the function being mangled
+     */
+    std::string mangle_function(const function& fun_decl) {
+        const std::string& name = fun_decl.get_name();
+        const std::vector<std::pair<std::string, variable> >& params = fun_decl.get_params();
+        const type_instance& ret_instance = fun_decl.get_return_type_instance();
+
+        std::string mangled_name = name;
+        mangled_name += "(";
+
+        // we work on parameters first
+        for(auto it = params.begin(), end = params.end(); it != end; ++it) {
+            mangled_name += mangle_type_instance(it -> second.get_type_instance());
+
+            if(it != end && it + 1 != end)
+                mangled_name += ",";
+        }
+
+        // we then work on the return type
+        mangled_name += "->";
+        mangled_name += mangle_type_instance(ret_instance);
+
+        mangled_name += ")";
+        return mangled_name;
     }
 }

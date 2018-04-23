@@ -573,8 +573,6 @@ parser::parser(
                     throw parsing_error(false, lookback(), "The first variable definition must come immediately after the mutability specifier.");
                 }
                 else {
-                    // consume the new line
-                    advance();
                     // an INDENT token will be generated only after the first line
                     if(match(INDENT)) {
                         indent_found = true;
@@ -594,7 +592,7 @@ parser::parser(
             }
 
             // we clear the is_first_def flag
-            is_first_def = false;            
+            is_first_def = false;
 
             // get the variable name and construct the variable
             std::shared_ptr<token>& var_tok = consume(IDENTIFIER, "Expected a variable name.");
@@ -621,11 +619,11 @@ parser::parser(
         } while(match(COMMA));
 
         // we expect a new line after variable definitions
-        consume(NEWLINE, "Expected a new line after variable definition(s).");
+        consume(NEWLINE, "Expected a new line after variable declaration(s).");
 
         // if an indentation was done by the user, we consume a DEDENT token here
         if (indent_found)
-            consume(DEDENT, "Expected a dedentation after variable definition(s).");
+            consume(DEDENT, "Expected a dedentation after variable declaration(s).");
 
         return var_decls;
     }

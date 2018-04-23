@@ -603,5 +603,12 @@ namespace avalon {
                 }
             }
         }
+
+        // typecheck the built type instance
+        try {
+            type_instance_checker::complex_check(dest, m_scope, m_namespace);
+        } catch(invalid_type err) {
+            throw err;
+        }
     }
 }

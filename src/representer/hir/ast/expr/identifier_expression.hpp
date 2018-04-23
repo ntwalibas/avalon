@@ -9,6 +9,11 @@
 
 
 namespace avalon {
+    enum identifier_expression_type {
+        VAR_EXPR,
+        CONSTRUCTOR_EXPR
+    };
+
     class identifier_expression : public expr {
     public:
         /**
@@ -59,6 +64,27 @@ namespace avalon {
          * this will happen when the user specifies a type directly on an expression
          */
         bool type_instance_from_parser() const;
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
+
+        /*
+         * set_expression_type
+         * sets the type of expression this is
+         */
+        void set_expression_type(identifier_expression_type expr_type);
+
+        /**
+         * get_expression_type
+         * returns the type of expression we are dealing
+         */
+        const identifier_expression_type& get_expression_type() const;
         
         /**
          * is_identifier_expression
@@ -88,6 +114,11 @@ namespace avalon {
          * type instance of this expression
          */
         type_instance m_instance;
+
+        /*
+         * the type of call this expression is
+         */
+        identifier_expression_type m_expr_type;
     };
 }
 

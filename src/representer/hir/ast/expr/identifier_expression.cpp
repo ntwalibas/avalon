@@ -10,7 +10,7 @@ namespace avalon {
     /**
      * the constructor expects the token with source code information
      */
-    identifier_expression::identifier_expression(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_type_instance_from_parser(false) {
+    identifier_expression::identifier_expression(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_type_instance_from_parser(false), m_expr_type(VAR_EXPR) {
     }
 
     /**
@@ -73,5 +73,21 @@ namespace avalon {
      */
     bool identifier_expression::type_instance_from_parser() const {
         return m_type_instance_from_parser;
+    }
+
+    /*
+     * set_expression_type
+     * sets the type of expression this is
+     */
+    void identifier_expression::set_expression_type(identifier_expression_type expr_type) {
+        m_expr_type = expr_type;
+    }
+
+    /**
+     * get_expression_type
+     * returns the type of expression we are dealing
+     */
+    const identifier_expression_type& identifier_expression::get_expression_type() const {
+        return m_expr_type;
     }
 }

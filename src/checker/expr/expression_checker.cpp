@@ -362,11 +362,14 @@ namespace avalon {
 
                 // check for arguments constness
                 // 1. we check for plain variable expression
-                if(arg_it -> second -> get_expression_type() == VAR_EXPR) {
-                    std::shared_ptr<variable>& var_decl = l_scope -> get_variable(ns_name, arg_it -> second -> get_name());
-                    // if the parameter is mutable, the argument must be mutable as well
-                    if(param_it -> second.is_mutable() == true && var_decl -> is_mutable() == false)
-                        throw invalid_expression(arg_it -> first, "This argument is immutable while the function expects a mutable variable expression if one is given.");
+                if(arg_it -> second -> is_identifier_expression()) {
+                    std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(arg_it -> second);
+                    if(id_expr -> get_expression_type() == VAR_EXPR) {
+                        std::shared_ptr<variable>& var_decl = l_scope -> get_variable(ns_name, id_expr -> get_name());
+                        // if the parameter is mutable, the argument must be mutable as well
+                        if(param_it -> second.is_mutable() == true && var_decl -> is_mutable() == false)
+                            throw invalid_expression(arg_it -> first, "This argument is immutable while the function expects a mutable variable expression if one is given.");
+                    }
                 }
 
                 // 2. we check for dot expressions

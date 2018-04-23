@@ -703,7 +703,7 @@ namespace avalon {
      * infer_identifier
      * infers the type instance of an identifier expression
      */
-    type_instance inferer::infer_identifier(std::shared_ptr<identifier_expression> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance inferer::infer_identifier(std::shared_ptr<expr> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
         std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(an_expression);
         
         if(id_expr -> get_expression_type() == VAR_EXPR) {

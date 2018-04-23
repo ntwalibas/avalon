@@ -97,7 +97,7 @@ namespace avalon {
          * infer_identifier
          * infers the type instance of an identifier expression
          */
-        static type_instance infer_identifier(std::shared_ptr<identifier_expression> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+        static type_instance infer_identifier(std::shared_ptr<expr> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
     };
 }
 

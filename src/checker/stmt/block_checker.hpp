@@ -4,10 +4,13 @@
 #include <memory>
 #include <string>
 
+/* AST */
 #include "representer/hir/ast/stmt/block_stmt.hpp"
-#include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/ast/decl/decl.hpp"
 #include "representer/hir/ast/decl/type.hpp"
+
+/* Symtable */
+#include "representer/hir/symtable/scope.hpp"
 
 
 namespace avalon {
@@ -29,6 +32,12 @@ namespace avalon {
         void check(block_stmt& l_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
     private:
+        /**
+         * check_variable
+         * given a variable declaration in the block, check if it is valid
+         */
+        void check_variable(std::shared_ptr<decl>& declaration, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        
         /**
          * check_statement
          * given a statement declaration, check if it is valid

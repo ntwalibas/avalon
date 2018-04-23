@@ -12,12 +12,14 @@
 #include "representer/hir/symtable/scope.hpp"
 
 /* Checker */
+#include "checker/decl/variable/variable_checker.hpp"
 #include "checker/expr/expression_checker.hpp"
 #include "checker/stmt/block_checker.hpp"
 
 /* Exceptions */
 #include "representer/exceptions/symbol_already_declared.hpp"
 #include "checker/exceptions/invalid_expression.hpp"
+#include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_block.hpp"
 
 
@@ -42,14 +44,9 @@ namespace avalon {
 
         // we iterate over all declarations, validating variables and statements and ignoring the rest (functions and types)
         for(auto& block_decl : block_decls) {
-            // if we encounter a variable declaration, we just add it to the current scope but perform checking when it is actually used
+            // we check variable declarations
             if(block_decl -> is_variable()) {                
-                std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(block_decl);
-                try {
-                    l_scope -> add_variable(ns_name, variable_decl);
-                } catch(symbol_already_declared err) {
-                    throw err;
-                }
+                check_variable(block_decl, l_scope, ns_name);
             }
             else if(block_decl -> is_statement()) {
                 check_statement(block_decl, l_scope, ns_name);
@@ -58,6 +55,29 @@ namespace avalon {
             else {
                 throw invalid_block("Block statements must contain variable or statement declarations alone.");
             }
+        }
+    }
+
+    /**
+     * check_variable
+     * given a variable declaration in the block, check if it is valid
+     */
+    void block_checker::check_variable(std::shared_ptr<decl>& declaration, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<variable> variable_decl = std::static_pointer_cast<variable>(declaration);
+        variable_checker v_checker;
+
+        // add the variable to the provided scope
+        try {
+            l_scope -> add_variable(ns_name, variable_decl);
+        } catch(symbol_already_declared err) {
+            throw err;
+        }
+
+        // check the variable
+        try {
+            v_checker.check(variable_decl, l_scope, ns_name);
+        } catch(invalid_variable err) {
+            throw err;
         }
     }
 

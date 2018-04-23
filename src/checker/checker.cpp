@@ -137,7 +137,7 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
             throw checking_error(true, "The <__main__> function could not be found.");
         } catch(invalid_type err) {
             throw checking_error(false, err.get_token(), "The <__main__> function could not be found. Reason: " + std::string(err.what()));
-        }
+        }        
 
         // if we found the function, we proceed to check it taking into account the new type instances of the parameters
         // we get a copy of our function
@@ -153,6 +153,12 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
         } catch(invalid_function err) {
             throw checking_error(false, err.get_token(), err.what());
         }
+
+        // we make sure the function only parameter is a value parameter
+        const std::vector<std::pair<std::string, variable> >& params = new_fun.get_params();
+        variable param_var = params[0].second;
+        if(param_var.is_mutable())
+            throw checking_error(true, param_var.get_token(), "The only parameter to <__main__> must be a value parameter.");
 
         // we are here, it means we have a function that doesn't depend on constraints anymore, we perform proper semantic analysis
         function_checker f_checker;

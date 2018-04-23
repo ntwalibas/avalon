@@ -161,6 +161,23 @@ namespace avalon {
     }
 
     /**
+     * set_is_valid
+     * updates the variable validation state.
+     */
+    void variable::set_is_valid(validation_state state) {
+        m_is_valid = state;
+    }
+
+    /**
+     * is_valid
+     * given a validation state,
+     * this function returns true if the variable has the given validation state.
+     */
+    bool variable::is_valid(validation_state state) {
+        return m_is_valid;
+    }
+
+    /**
      * is_used
      * sets and returns a boolean indicating whether this declaration was used anywhere
      * this is useful during code generation to emit messages about unused declarations and to avoid generating dead code

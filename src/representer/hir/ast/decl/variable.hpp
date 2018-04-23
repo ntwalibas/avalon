@@ -121,6 +121,19 @@ namespace avalon {
         bool is_function_param();
 
         /**
+         * set_is_valid
+         * updates the variable validation state.
+         */
+        void set_is_valid(validation_state state);
+
+        /**
+         * is_valid
+         * given a validation state,
+         * this function returns true if the variable has the given validation state.
+         */
+        bool is_valid(validation_state state);
+
+        /**
          * is_variable
          * a function used to allow safe casting of pointers from decl to this class
          */

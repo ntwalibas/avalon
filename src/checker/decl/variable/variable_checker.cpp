@@ -27,12 +27,19 @@ namespace avalon {
     void variable_checker::check(const std::shared_ptr<variable>& variable_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<expr>& variable_val = variable_decl -> get_value();
 
-        // if the variable is immutable, we make sure it is initalized
-        if(variable_decl -> is_mutable() && variable_val == nullptr) {
-            throw invalid_variable(variable_decl -> get_token(), "A immutable variable must be initialized on declaration.");
+        // we only proceed to check the variable if we don't know that it is valid or invalid
+        if(variable_decl -> is_valid(UNKNOWN) == false)
+            return;
+
+        // we automatically mark the variable as invalid and let it be valid only after the checks below are finished running
+        variable_decl -> set_is_valid(INVALID);
+
+        // we make sure it is initalized
+        if(variable_val == nullptr) {
+            throw invalid_variable(variable_decl -> get_token(), "Variable declarations must be initialized.");
         }
 
-        // if the variable has a type instance, we make sure it has a type
+        // if the variable has a type instance, we make check it
         if(variable_decl -> has_type_instance()) {
             type_instance variable_type_instance = variable_decl -> get_type_instance();
             try {
@@ -44,32 +51,33 @@ namespace avalon {
             }
         }
 
-        // if the variable is initialized, we check the initializer expression
-        if(variable_val != nullptr) {            
-            expression_checker checker;
-            try {
-                type_instance expr_instance = checker.check(variable_val, l_scope, ns_name);
-                // if the expression has a type instance after checking is done, we work with the variable type instance if any
-                if(expr_instance.get_name() != "*") {                    
-                    // if the variable has a type instance set, we make sure it is the same as the one on the expression
-                    if(variable_decl -> has_type_instance()) {
-                        type_instance variable_type_instance = variable_decl -> get_type_instance();
-                        if(type_instance_weak_compare(variable_type_instance, expr_instance) == false) {
-                            throw invalid_variable(variable_decl -> get_token(), "The variable has a different type instance than the expression it is initialized with.");
-                        }
-                    }
-                    else {
-                        variable_decl -> set_type_instance(expr_instance);
+        // we check the initializer expression
+        expression_checker checker;
+        try {
+            type_instance expr_instance = checker.check(variable_val, l_scope, ns_name);
+            // if the expression has a type instance after checking is done, we work with the variable type instance if any
+            if(expr_instance.is_star() == false) {                    
+                // if the variable has a type instance set, we make sure it is the same as the one on the expression
+                if(variable_decl -> has_type_instance()) {
+                    type_instance variable_type_instance = variable_decl -> get_type_instance();
+                    if(type_instance_weak_compare(variable_type_instance, expr_instance) == false) {
+                        throw invalid_variable(variable_decl -> get_token(), "The variable has a different type instance than the expression it is initialized with.");
                     }
                 }
-                // if the expression has no type instance and the variable has none as well, this is an error
-                // this prevents code like "var x = []" because we can't deduce the type of "x"
-                else if(expr_instance.get_name() == "*" && variable_decl -> has_type_instance() ==  false) {
-                    throw invalid_variable(variable_decl -> get_token(), "Variable declaration lacks type instance and none could be derived from the initializer expression. Please provide one.");
+                else {
+                    variable_decl -> set_type_instance(expr_instance);
                 }
-            } catch(invalid_expression err) {
-                throw err;
             }
+            // if the expression has no type instance and the variable has none as well, this is an error
+            // this prevents code like "var x = []" because we can't deduce the type of "x"
+            else if(expr_instance.get_name() == "*" && variable_decl -> has_type_instance() ==  false) {
+                throw invalid_variable(variable_decl -> get_token(), "Variable declaration lacks type instance and none could be derived from the initializer expression. Please provide one.");
+            }
+        } catch(invalid_expression err) {
+            throw err;
         }
+
+        // if we are here, then the variable is valid
+        variable_decl -> set_is_valid(VALID);
     }
 }

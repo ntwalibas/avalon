@@ -695,8 +695,21 @@ namespace avalon {
         fun -> add_specialization(new_fun);
         fun -> is_used(true);
 
+        // the return type of the function is the type instance of the expression
+        type_instance fun_instance = new_fun.get_return_type_instance();
+
+        // typecheck the infered type instance
+        try {
+            type_instance_checker::complex_check(fun_instance, l_scope, ns_name);
+        } catch(invalid_type err) {
+            throw invalid_expression(err.get_token(), err.what());
+        }
+
+        // set the type instance on the expression
+        call_expr -> set_type_instance(fun_instance, false);
+
         // we got the function, its return type is the type instance of a function call expression
-        return new_fun.get_return_type_instance();
+        return fun_instance;
     }
 
     /**
@@ -760,6 +773,9 @@ namespace avalon {
                     throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one infered <" + mangle_type_instance(var_instance) + ">.");
             }
 
+            // set the type instance on the expression
+            id_expr -> set_type_instance(var_instance, false);
+
             return var_instance;
         } catch(symbol_not_found err) {
             throw invalid_expression(id_expr -> get_token(), err.what());
@@ -804,7 +820,7 @@ namespace avalon {
         // typecheck the infered type instance
         try {
             type_instance_checker::complex_check(cons_instance, l_scope, ns_name);
-        } catch(invalid_type err) {
+        } catch(invalid_type err) {            
             throw invalid_expression(err.get_token(), err.what());
         }
 
@@ -814,6 +830,8 @@ namespace avalon {
                 throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one infered <" + mangle_type_instance(cons_instance) + ">.");
         }
 
+        // set the type instance on the expression
+        id_expr -> set_type_instance(cons_instance, false);
         return cons_instance;
     }
 }

@@ -39,13 +39,11 @@ namespace avalon {
             throw invalid_variable(variable_decl -> get_token(), "Variable declarations must be initialized.");
         }
 
-        // if the variable has a type instance, we make check it
+        // if the variable has a type instance, we check it
         if(variable_decl -> has_type_instance()) {
-            type_instance variable_type_instance = variable_decl -> get_type_instance();
+            type_instance& variable_type_instance = variable_decl -> get_type_instance();
             try {
                 type_instance_checker::complex_check(variable_type_instance, l_scope, ns_name);
-                // if the type instance checked out, we replace it with the new one that has the type builder attached
-                variable_decl -> set_type_instance(variable_type_instance);
             } catch(invalid_type err) {
                 throw err;
             }
@@ -56,10 +54,10 @@ namespace avalon {
         try {
             type_instance expr_instance = checker.check(variable_val, l_scope, ns_name);
             // if the expression has a type instance after checking is done, we work with the variable type instance if any
-            if(expr_instance.is_star() == false) {                    
+            if(expr_instance.is_star() == false) {
                 // if the variable has a type instance set, we make sure it is the same as the one on the expression
                 if(variable_decl -> has_type_instance()) {
-                    type_instance variable_type_instance = variable_decl -> get_type_instance();
+                    type_instance& variable_type_instance = variable_decl -> get_type_instance();
                     if(type_instance_weak_compare(variable_type_instance, expr_instance) == false) {
                         throw invalid_variable(variable_decl -> get_token(), "The variable has a different type instance than the expression it is initialized with.");
                     }

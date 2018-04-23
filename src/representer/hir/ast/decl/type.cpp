@@ -4,6 +4,7 @@
 #include <utility>
 #include <iostream>
 #include <stdexcept>
+#include <algorithm>
 #include <unordered_map>
 
 #include "lexer/token.hpp"
@@ -564,6 +565,23 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
 
     bool type_instance::is_complete() const {
         return is_complete();
+    }
+
+    /**
+     * depends_on
+     * returns true if this type instance is dependent on the given set of constraints
+     */
+    bool type_instance::depends_on(std::vector<token>& constraints) {
+        for(auto& param : m_params) {
+            if(std::find(constraints.begin(), constraints.end(), param.get_token()) != constraints.end()) {
+                return true;
+            }
+            else {
+                if(param.depends_on(constraints))
+                    return true;
+            }
+        }
+        return false;
     }
 
     /**

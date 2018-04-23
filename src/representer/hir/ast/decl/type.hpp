@@ -496,6 +496,12 @@ namespace avalon {
         bool is_complete() const;
 
         /**
+         * depends_on
+         * returns true if this type instance is dependent on the given set of constraints
+         */
+        bool depends_on(std::vector<token>& constraints);
+
+        /**
          * is_star
          * returns true if this type instance is the dummy type instance
          */

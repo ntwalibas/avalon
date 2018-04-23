@@ -109,14 +109,11 @@ namespace avalon {
      * throws a "type_error" exception if no type instance has been set.
      */
     type_instance& variable::get_type_instance() {
-        //if(m_type_instance.is_star())
-        //    throw type_error("Variable has no type instance set.");
-        //else
-            return m_type_instance;
+        return m_type_instance;
     }
 
     const type_instance& variable::get_type_instance() const {
-        return get_type_instance();
+        return m_type_instance;
     }
 
     /**

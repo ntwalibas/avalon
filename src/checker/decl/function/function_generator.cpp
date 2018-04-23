@@ -118,10 +118,14 @@ namespace avalon {
     void function_generator::generate_params(std::vector<std::pair<std::string, variable> >& params, std::vector<type_instance>& param_instances) {
         auto param_it = params.begin(), param_end = params.end();
         auto param_ins_it = param_instances.begin(), param_ins_end = param_instances.end();
+        std::vector<token>& constraints = m_fun_decl.get_constraints();
 
         for(; param_it != param_end && param_ins_it != param_ins_end; ++param_it, ++param_ins_end) {
             type_instance param_instance = param_it -> second.get_type_instance();
-            build_instance(param_instance, * param_ins_it);
+            if(param_instance.depends_on(constraints)) {
+                build_instance(param_instance, * param_ins_it);
+            }
+            
             param_it -> second.set_type_instance(param_instance);
         }
     }
@@ -131,7 +135,10 @@ namespace avalon {
      * generates a new return type instance replacing the constraints with the given type instances
      */
     void function_generator::generate_return(type_instance& fun_ret_instance, type_instance& new_ret_instance) {
-        build_instance(fun_ret_instance, new_ret_instance);
+        std::vector<token>& constraints = m_fun_decl.get_constraints();
+        if(fun_ret_instance.depends_on(constraints)) {
+            build_instance(fun_ret_instance, new_ret_instance);
+        }
     }
 
     /*
@@ -367,7 +374,9 @@ namespace avalon {
             if(res.second == true) {
                 instance.is_parametrized(true);
             }
-            build_instance(instance, star_instance);
+            if(instance.depends_on(constraints)) {
+                build_instance(instance, star_instance);
+            }
         }
 
         // if the tuple has some elements specified, we do the same to them
@@ -388,7 +397,9 @@ namespace avalon {
                 if(res.second == true) {
                     instance.is_parametrized(true);
                 }
-                build_instance(instance, star_instance);
+                if(instance.depends_on(constraints)) {
+                    build_instance(instance, star_instance);
+                }
             } catch(invalid_type err) {
                 throw err;
             }
@@ -412,7 +423,9 @@ namespace avalon {
                 if(res.second == true) {
                     instance.is_parametrized(true);
                 }
-                build_instance(instance, star_instance);
+                if(instance.depends_on(constraints)) {
+                    build_instance(instance, star_instance);
+                }
             } catch(invalid_type err) {
                 throw err;
             }
@@ -436,7 +449,9 @@ namespace avalon {
                 if(res.second == true) {
                     instance.is_parametrized(true);
                 }
-                build_instance(instance, star_instance);
+                if(instance.depends_on(constraints)) {
+                    build_instance(instance, star_instance);
+                }
             } catch(invalid_type err) {
                 throw err;
             }
@@ -455,7 +470,9 @@ namespace avalon {
                 if(res.second == true) {
                     ret_instance.is_parametrized(true);
                 }
-                build_instance(ret_instance, star_instance);
+                if(ret_instance.depends_on(constraints)) {
+                    build_instance(ret_instance, star_instance);
+                }
             } catch(invalid_type err) {
                 throw err;
             }
@@ -474,7 +491,9 @@ namespace avalon {
                 if(res.second == true) {
                     instance.is_parametrized(true);
                 }
-                build_instance(instance, star_instance);
+                if(instance.depends_on(constraints)) {
+                    build_instance(instance, star_instance);
+                }
             } catch(invalid_type err) {
                 throw err;
             }
@@ -492,7 +511,9 @@ namespace avalon {
             if(res.second == true) {
                 instance.is_parametrized(true);
             }
-            build_instance(instance, star_instance);
+            if(instance.depends_on(constraints)) {
+                build_instance(instance, star_instance);
+            }
         } catch(invalid_type err) {
             throw err;
         }
@@ -572,6 +593,12 @@ namespace avalon {
                 type_instance& exist_instance = m_constraint_instances.at(dest.get_name());
                 // if the orig is not an abstract type instance, we make sure it matches exactly the one in the constraint map
                 if(orig.is_abstract() == false) {
+                    try {
+                        type_instance_checker::complex_check(orig, m_scope, m_namespace);
+                    } catch(invalid_type err) {
+                        throw err;
+                    }
+
                     if(type_instance_strong_compare(exist_instance, orig) ==  false) {
                         throw invalid_type(orig.get_token(), "Expected type instance <" + mangle_type_instance(exist_instance) + "> but got type instance <" + mangle_type_instance(orig) + ">.");
                     }
@@ -582,8 +609,15 @@ namespace avalon {
                 }
             } catch(std::out_of_range err) {
                 // if the origin type instance is incomplete (parametrized or abstract), reject it
-                if(orig.is_parametrized() || orig.is_abstract()) {
+                if(orig.is_complete() == false) {
                     throw invalid_type(orig.get_token(), "The type instance <" + mangle_type_instance(orig) + "> must not be incomplete.");
+                }
+
+                // typecheck the origin type instances
+                try {
+                    type_instance_checker::complex_check(orig, m_scope, m_namespace);
+                } catch(invalid_type err) {
+                    throw err;
                 }
 
                 // perform the replacement

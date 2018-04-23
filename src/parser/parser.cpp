@@ -595,7 +595,7 @@ parser::parser(
             is_first_def = false;
 
             // get the variable name and construct the variable
-            std::shared_ptr<token>& var_tok = consume(IDENTIFIER, "Expected a variable name.");
+            std::shared_ptr<token>& var_tok = consume(IDENTIFIER, "Expected a variable name. On the line before this one, is the last character a new line? A comma maybe?");
             std::shared_ptr<variable> var_decl = std::make_shared<variable>(* var_tok, is_mutable);
             var_decl -> is_public(is_public);
             var_decl -> set_fqn(l_fqn);

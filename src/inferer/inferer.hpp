@@ -4,7 +4,9 @@
 #include <memory>
 #include <string>
 
+#include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
+#include "representer/hir/ast/decl/function.hpp"
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/ast/expr/expr.hpp"
 #include "representer/hir/ast/decl/type.hpp"
@@ -30,6 +32,24 @@ namespace avalon {
          * infers the type instance of a record constructor expression
          */
         static type_instance infer_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
+        /**
+         * infer_function_call
+         * infers the type instance of a function call expression
+         */
+        static type_instance infer_function_call(function& new_fun, std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
+        /**
+         * infer_variable
+         * infers the type instance of a variable expression
+         */
+        static type_instance infer_variable(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
+        /**
+         * infer_constructor
+         * infers the type instance of an identifier constructor expression
+         */
+        static type_instance infer_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
     private:
         /**
@@ -72,6 +92,12 @@ namespace avalon {
          * infers the type instance of a call expression
          */
         static type_instance infer_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
+        /**
+         * infer_identifier
+         * infers the type instance of an identifier expression
+         */
+        static type_instance infer_identifier(std::shared_ptr<identifier_expression> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
     };
 }
 

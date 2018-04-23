@@ -6,6 +6,7 @@
 #include <map>
 
 /* Expressions */
+#include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/expr/tuple_expression.hpp"
 #include "representer/hir/ast/expr/list_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
@@ -24,6 +25,7 @@
 #include "representer/hir/symtable/scope.hpp"
 
 /* Checker */
+#include "checker/decl/variable/variable_checker.hpp"
 #include "checker/expr/expression_checker.hpp"
 
 /* Inferer */
@@ -31,6 +33,7 @@
 
 /* Exceptions */
 #include "checker/exceptions/invalid_expression.hpp"
+#include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_type.hpp"
 
 
@@ -73,6 +76,9 @@ namespace avalon {
         }
         else if(an_expression -> is_call_expression()) {
             return check_call(an_expression, l_scope, ns_name, ns_name);
+        }
+        else if(an_expression -> is_identifier_expression()) {
+            return check_identifier(an_expression, l_scope, ns_name, ns_name);
         }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in expression checker.");
@@ -223,10 +229,10 @@ namespace avalon {
      * then dispatches the checking to the actual checker.
      */
     type_instance expression_checker::check_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
-        std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(an_expression);        
+        std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(an_expression);
 
         // we decide if we have a function call or a constructor call
-        if(l_scope -> function_exists(ns_name, call_expr -> get_name())) {
+        if(l_scope -> function_exists(sub_ns_name, call_expr -> get_name())) {
             call_expr -> set_expression_type(FUNCTION_CALL_EXPR);
             return check_function_call(call_expr, l_scope, ns_name, sub_ns_name);
         }
@@ -287,12 +293,14 @@ namespace avalon {
             throw invalid_expression(call_expr -> get_token(), "Failed to find a record constructor with the given name and arity in the given namespace.");
         }
 
+        // get the constructor
+        record_constructor& cons = l_scope -> get_record_constructor(sub_ns_name, call_name, args.size());
+        std::map<token,type_instance>& cons_params = cons.get_params();
+
         // we check the constructor's parameters
         for(auto& arg : args) {
             token& arg_tok = arg.first;
-            std::shared_ptr<expr>& arg_val = arg.second;
-            record_constructor& cons = l_scope -> get_record_constructor(sub_ns_name, call_name, args.size());
-            std::map<token,type_instance>& cons_params = cons.get_params();
+            std::shared_ptr<expr>& arg_val = arg.second;            
 
             // we make sure that the argument name is not "star" since in a record constructors, all arguments must have names
             if(arg_tok.get_lexeme() == "*") {
@@ -319,7 +327,107 @@ namespace avalon {
      * we also make sure that all arguments were named or none was
      */
     type_instance expression_checker::check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        std::vector<std::pair<token, std::shared_ptr<expr> > >& args = call_expr -> get_arguments();
+
+        // 1. we start by check the function call arguments
+        for(auto& arg : args) {
+            type_instance arg_instance = check(arg.second, l_scope, ns_name);            
+            if(arg_instance.is_complete() == false)
+                throw invalid_expression(arg.second -> expr_token(), "All expressions passed as arguments to a function call must have complete type instances.");
+        }
+
+        // 2. we get the function from the inferer as it carries the expression type as well
+        function new_fun(star_tok);
         type_instance instance;
+        try {
+            instance = inferer::infer_function_call(new_fun, call_expr, l_scope, ns_name, sub_ns_name);
+        } catch(invalid_expression err) {
+            throw err;
+        }
+
+        // 3. we make sure arguments name and parameters names coincide if the first argument has non-star token as argument name
+        // also, if we got a variable expression, we make sure that constness match
+        if(args.size() > 0) {
+            std::pair<token, std::shared_ptr<expr> > first_arg = args[0];
+            bool check_names = first_arg.first != star_tok ? true : false;
+            std::vector<std::pair<std::string, variable> >& params = new_fun.get_params();
+            auto arg_it = args.begin(), arg_end = args.end();
+            auto param_it = params.begin(), param_end = params.end();
+            for(; arg_it != arg_end && param_it != param_end; ++arg_it, ++param_it) {
+                // we check argument names but only if
+                if(check_names) {
+                    if(arg_it -> first.get_lexeme() != param_it -> first)
+                        throw invalid_expression(arg_it -> first, "Expected argument to have name <" + param_it -> first + "> as that is the name of the parameter but it has name <" + arg_it -> first.get_lexeme() + ">.");
+                }
+
+                // check for arguments constness
+                // 1. we check for plain variable expression
+                if(arg_it -> second -> get_expression_type() == VAR_EXPR) {
+                    std::shared_ptr<variable>& var_decl = l_scope -> get_variable(ns_name, arg_it -> second -> get_name());
+                    // if the parameter is mutable, the argument must be mutable as well
+                    if(param_it -> second.is_mutable() == true && var_decl -> is_mutable() == false)
+                        throw invalid_expression(arg_it -> first, "This argument is immutable while the function expects a mutable variable expression if one is given.");
+                }
+
+                // 2. we check for dot expressions
+            }
+        }
+
         return instance;
+    }
+
+    /**
+     * check_identifier
+     * this function determines the kind of identifier expression this is (default constructor or variable)
+     * then dispatches the checking to the appropriate checker.
+     */
+    type_instance expression_checker::check_identifier(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(an_expression);
+
+        // we determine whether we have a variable expression or a default constructor expression
+        if(l_scope -> variable_exists(sub_ns_name, id_expr -> get_name())) {
+            id_expr -> set_expression_type(VAR_EXPR);
+            return check_variable(id_expr, l_scope, ns_name, sub_ns_name);
+        }
+        else if(l_scope -> default_constructor_exists(sub_ns_name, id_expr -> get_name(), 0)) {
+            id_expr -> set_expression_type(CONSTRUCTOR_EXPR);
+            return check_constructor(id_expr, l_scope, ns_name, sub_ns_name);
+        }
+        else {
+            throw invalid_expression(id_expr -> get_token(), "This identifier isn't bound to any declaration. It is neither a variable or a constructor.");
+        }
+    }
+
+    /**
+     * check_variable
+     * we make sure that the variable declaration associated with this variable expression is valid
+     */
+    type_instance expression_checker::check_variable(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        // get the variable declaration this expression is bound to and check it
+        std::shared_ptr<variable>& var_decl = l_scope -> get_variable(sub_ns_name, id_expr -> get_name());
+
+        // check the variable declaration
+        variable_checker v_checker;
+        try {
+            v_checker.check(var_decl, l_scope, sub_ns_name);
+        } catch(invalid_variable err) {
+            throw invalid_expression(err.get_token(), err.what());
+        }
+
+        // we infer the type instance of the variable expression
+        type_instance var_instance = inferer::infer_variable(id_expr, l_scope, ns_name, sub_ns_name);
+
+        // set the variable as used
+        var_decl -> is_used(true);
+
+        return var_instance;
+    }
+
+    /**
+     * check_constructor
+     * we make sure that the default constructor associated with this identifier expression is valid
+     */
+    type_instance expression_checker::check_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        return inferer::infer_constructor(id_expr, l_scope, ns_name, sub_ns_name);
     }
 }

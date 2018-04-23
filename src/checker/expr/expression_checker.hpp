@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/stmt/expression_stmt.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
 #include "representer/hir/symtable/scope.hpp"
@@ -93,29 +94,23 @@ namespace avalon {
         type_instance check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
         /**
-         * check_list_constructor
-         * we validate the expressions that make up the list
-         */
-        type_instance check_list_constructor(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
-
-        /**
-         * check_map_constructor
-         * we validate the expressions that make up the map
-         */
-        type_instance check_map_constructor(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
-
-        /**
          * check_identifier
          * this function determines the kind of identifier expression this is (default constructor or variable)
          * then dispatches the checking to the appropriate checker.
          */
-        type_instance check_identifier(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_identifier(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
         /**
          * check_variable
-         * we make sure that the variable declaration associated with this variable expression has a type instance set.
+         * we make sure that the variable declaration associated with this variable expression is valid
          */
-        type_instance check_variable(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_variable(std::shared_ptr<identifier_expression> const & an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
+        /**
+         * check_constructor
+         * we make sure that the default constructor associated with this identifier expression is valid
+         */
+        type_instance check_constructor(std::shared_ptr<identifier_expression> const & an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
         /**
          * check_grouping

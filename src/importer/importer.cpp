@@ -27,6 +27,9 @@
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/symtable/fqn.hpp"
 
+/* Checker */
+#include "checker/decl/function/header_checker.hpp"
+
 /* Parser */
 #include "parser/parser.hpp"
 
@@ -309,6 +312,7 @@ importer::importer(program& prog, std::vector<std::string>& search_paths, error&
                     // if "include_privates" is true, it doesn't matter whether the declaration is public, we import it
                     // if "include_privates" is false, we only import the declaration if it is public
                     if(include_privates || function_decl -> is_public()) {
+                        header_checker::check_header(* function_decl, to_scope, namespace_decl -> get_name());
                         import_function(function_decl, to_scope, namespace_decl -> get_name());
                     }
                 }

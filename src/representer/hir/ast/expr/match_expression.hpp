@@ -47,6 +47,15 @@ namespace avalon {
          * returns the right operand to the match operator
          */
         std::shared_ptr<expr>& get_rval();
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
         
         /**
          * is_match_expression

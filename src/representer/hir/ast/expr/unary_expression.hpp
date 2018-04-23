@@ -58,6 +58,15 @@ namespace avalon {
          * returns the unary operator operand
          */
         std::shared_ptr<expr>& get_val();
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
         
         /**
          * is_unary_expression

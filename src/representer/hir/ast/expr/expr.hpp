@@ -1,10 +1,19 @@
 #ifndef AVALON_HIR_AST_EXPR_HPP_
 #define AVALON_HIR_AST_EXPR_HPP_
 
+#include "lexer/token.hpp"
+
 
 namespace avalon {
     class expr {
     public:
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const = 0;
+
         /** assignment expression **/
         virtual bool is_assignment_expression() {
             return false;

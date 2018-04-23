@@ -31,6 +31,15 @@ namespace avalon {
          * returns the type instance of this expression
          */
         type_instance& get_type_instance();
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
         
         /**
          * is_underscore_expression

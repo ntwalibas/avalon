@@ -68,6 +68,15 @@ namespace avalon {
          * returns a vector of all the elements in the tuple
          */
         std::vector<std::pair<std::string, std::shared_ptr<expr> > >& get_elements();
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
         
         /**
          * is_tuple_expression

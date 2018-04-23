@@ -45,6 +45,15 @@ namespace avalon {
          * returns true if the type instance is not star
          */
         bool has_type_instance();
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
         
         /**
          * is_grouped_expression

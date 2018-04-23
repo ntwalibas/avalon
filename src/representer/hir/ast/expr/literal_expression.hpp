@@ -72,6 +72,15 @@ namespace avalon {
          * returns the string representing the value stored within this literal
          */
         const std::string& get_value() const;
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
         
         /**
          * is_literal_expression

@@ -67,6 +67,15 @@ namespace avalon {
          * returns a vector of all the elements in the map
          */
         std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > >& get_elements();
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
         
         /**
          * is_map_expression

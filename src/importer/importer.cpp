@@ -22,7 +22,6 @@
 #include "representer/hir/builtins/avalon_int.hpp"
 
 /* Symbol table */
-#include "representer/exceptions/symbol_already_declared.hpp"
 #include "representer/hir/symtable/gtable.hpp"
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/symtable/fqn.hpp"
@@ -38,12 +37,16 @@
 #include "lexer/lexer.hpp"
 
 /* Utilities */
-#include "utils/exceptions/invalid_directory.hpp"
-#include "utils/exceptions/file_not_found.hpp"
 #include "utils/parse_util.hpp"
 
 /* Importer */
 #include "importer/importer.hpp"
+
+/* Exceptions */
+#include "representer/exceptions/symbol_already_declared.hpp"
+#include "checker/exceptions/invalid_function.hpp"
+#include "utils/exceptions/invalid_directory.hpp"
+#include "utils/exceptions/file_not_found.hpp"
 
 
 namespace avalon {
@@ -312,7 +315,11 @@ importer::importer(program& prog, std::vector<std::string>& search_paths, error&
                     // if "include_privates" is true, it doesn't matter whether the declaration is public, we import it
                     // if "include_privates" is false, we only import the declaration if it is public
                     if(include_privates || function_decl -> is_public()) {
-                        header_checker::check_header(* function_decl, to_scope, namespace_decl -> get_name());
+                        try {
+                            header_checker::check_header(* function_decl, to_scope, namespace_decl -> get_name());
+                        } catch(invalid_function err) {
+                            throw importing_error(true, err.get_token(), err.what());
+                        }
                         import_function(function_decl, to_scope, namespace_decl -> get_name());
                     }
                 }

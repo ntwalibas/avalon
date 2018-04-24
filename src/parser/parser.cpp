@@ -1222,13 +1222,16 @@ parser::parser(
         if(match(CAST)) {
             std::shared_ptr<token>& op = lookback();
             
-            // we get the type instance to cast to
+            // we get the expression to cast
             consume(LEFT_PAREN, "Excepted an opening parenthesis before the type to cast to.");
-            type_instance cast_type_instance = parse_type_instance();
+            std::shared_ptr<expr> val = parse_expression();
             consume(RIGHT_PAREN, "Excepted a closing parenthesis after the type to cast to.");
 
-            // we get the expression to cast to
-            std::shared_ptr<expr> val = parse_expression();
+            // we get the type instance to cast to
+            consume(RETURN_TYPE, "Excepted the return token in anticipation of the cast type instance.");
+            type_instance cast_type_instance = parse_type_instance();
+            
+            // create the cast expression
             std::shared_ptr<cast_expression> expr = std::make_shared<cast_expression>(* op, cast_type_instance, val);
             l_expression = expr;
         }

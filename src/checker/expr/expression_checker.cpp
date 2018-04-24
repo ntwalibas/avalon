@@ -460,6 +460,8 @@ namespace avalon {
         // check the cast type instance
         try {
             type_instance_checker::complex_check(cast_instance, l_scope, ns_name);
+            if(cast_instance.is_complete() == false)
+                throw invalid_expression(cast_instance.get_token(), "The cast to type instance must be complete.");
         } catch(invalid_type err) {
             throw invalid_expression(err.get_token(), err.what());
         }

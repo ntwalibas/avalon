@@ -35,6 +35,7 @@ namespace avalon {
         std::vector<type_instance>& instance_params = instance.get_params();
         std::shared_ptr<type> instance_type = nullptr;
         std::pair<bool,bool> ret(false, false);
+        instance.is_parametrized(false);
 
         // we can only look for user defined type instances in the scope we have
         if(instance.get_category() == USER) {
@@ -74,9 +75,11 @@ namespace avalon {
                 instance.set_type(instance_type);
 
                 // 2. we generate the type that corresponds to the type instance
-                std::shared_ptr<type> generated_type = type_generator::generate(instance);
-                instance_type -> add_specialization(generated_type);
-                instance_type -> is_used(true);
+                if(instance.is_complete()) {
+                    std::shared_ptr<type> generated_type = type_generator::generate(instance);
+                    instance_type -> add_specialization(generated_type);
+                    instance_type -> is_used(true);
+                }                
             }
             catch(symbol_not_found err) {
                 // the type was not found in the scope given the namespace,
@@ -180,10 +183,6 @@ namespace avalon {
         std::vector<type_instance>& cons_params = def_constructor.get_params();
         const std::vector<token>& type_params = type_decl -> get_params();
 
-        // make sure the new constructor is no duplicate of an existing constructor
-        if(l_scope -> default_constructor_exists(ns_name, def_constructor.get_name(), cons_params.size()))
-            throw invalid_constructor("There already exists a default constructor in this program with the same name and arity. Maybe brought in by an imported type?");
-
         // a constructor is judged to be valid if all the types it depends on are valid
         for(auto& cons_param : cons_params) {
             const std::string& l_ns_name = cons_param.get_namespace();
@@ -227,10 +226,6 @@ namespace avalon {
     void constructor_checker::check(record_constructor& rec_constructor, std::shared_ptr<type>& type_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::map<token, type_instance>& cons_params = rec_constructor.get_params();
         const std::vector<token>& type_params = type_decl -> get_params();
-
-        // make sure the new constructor is no duplicate of an existing constructor
-        if(l_scope -> record_constructor_exists(ns_name, rec_constructor.get_name(), cons_params.size()))
-            throw invalid_constructor("There already exists a record constructor in this program with the same name and arity. Maybe brought in by an imported type?");
 
         // a constructor is judged to be valid if all the types it depends on are valid        
         for(auto& cons_param : cons_params) {

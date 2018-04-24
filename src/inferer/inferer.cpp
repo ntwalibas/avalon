@@ -7,10 +7,12 @@
 /* Expressions */
 #include "representer/hir/ast/expr/underscore_expression.hpp"
 #include "representer/hir/ast/expr/identifier_expression.hpp"
+#include "representer/hir/ast/expr/grouped_expression.hpp"
 #include "representer/hir/ast/expr/literal_expression.hpp"
 #include "representer/hir/ast/expr/tuple_expression.hpp"
 #include "representer/hir/ast/expr/list_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
+#include "representer/hir/ast/expr/cast_expression.hpp"
 #include "representer/hir/ast/expr/map_expression.hpp"
 #include "representer/hir/ast/expr/expr.hpp"
 
@@ -113,6 +115,49 @@ namespace avalon {
         }
     }
 
+    static type_instance build_function(function& new_fun, const token& error_tok, const std::string& name, std::vector<type_instance>& args_instances, type_instance& ret_instance, std::vector<type_instance>& constraint_instances, std::vector<token>& standins, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<function> fun = nullptr;
+
+        // we try to find the function        
+        try {
+            fun = find_function(name, args_instances, ret_instance, l_scope, ns_name, standins);
+        } catch(symbol_not_found err) {
+            throw invalid_expression(error_tok, err.what());
+        } catch(symbol_can_collide err) {
+            throw invalid_expression(error_tok, err.what());
+        } catch(invalid_type err) {
+            throw invalid_expression(err.get_token(), "No function declaration that corresponds to this function call was found. Reason: " + std::string(err.what()));
+        }
+
+        // we generate a new function from the function we found
+        new_fun = * fun;
+        function_generator generator(new_fun, constraint_instances, l_scope, ns_name);
+        try {
+            generator.generate(args_instances, ret_instance);
+        } catch(invalid_type err) {
+            throw invalid_expression(err.get_token(), err.what());
+        } catch(invalid_function err) {
+            throw invalid_expression(err.get_token(), err.what());
+        }
+
+        // add the specialization to the root function
+        new_fun.set_name(mangle_function(new_fun));
+        fun -> add_specialization(new_fun);
+        fun -> is_used(true);
+
+        // the return type of the function is the type instance of the expression
+        type_instance& fun_instance = new_fun.get_return_type_instance();
+
+        // typecheck the infered type instance
+        try {
+            type_instance_checker::complex_check(fun_instance, l_scope, ns_name);
+        } catch(invalid_type err) {
+            throw invalid_expression(err.get_token(), err.what());
+        }
+
+        return fun_instance;
+    }
+
     /**
      * infer
      * given an expression, this function infers the type instance of said expression and returns it
@@ -138,6 +183,9 @@ namespace avalon {
         }
         else if(an_expression -> is_identifier_expression()) {
             return inferer::infer_identifier(an_expression, l_scope, ns_name, sub_ns_name);
+        }
+        else if(an_expression -> is_grouped_expression()) {
+            return inferer::infer_grouping(an_expression, l_scope, ns_name);
         }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
@@ -656,7 +704,6 @@ namespace avalon {
      */
     type_instance inferer::infer_function_call(function& new_fun, std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
         // we get all the data we can get from the call expression
-        const std::string& call_name = call_expr -> get_name();
         std::vector<std::pair<token, std::shared_ptr<expr> > >& call_args = call_expr -> get_arguments();
         type_instance& ret_instance = call_expr -> get_return_type_instance();
         std::vector<type_instance>& constraint_instances = call_expr -> get_specializations();
@@ -666,45 +713,9 @@ namespace avalon {
         for(auto& arg : call_args)
             args_instances.push_back(inferer::infer(arg.second, l_scope, ns_name, sub_ns_name));
         std::vector<token> standins;
-        std::shared_ptr<function> fun = nullptr;
-
-        // we try to find the function
-        try {
-            fun = find_function(call_name, args_instances, ret_instance, l_scope, sub_ns_name, standins);
-        } catch(symbol_not_found err) {
-            throw invalid_expression(call_expr -> get_token(), err.what());
-        } catch(symbol_can_collide err) {
-            throw invalid_expression(call_expr -> get_token(), err.what());
-        } catch(invalid_type err) {
-            throw invalid_expression(err.get_token(), "No function declaration that corresponds to this function call was found. Reason: " + std::string(err.what()));
-        }
-
-        // we generate a new function from the function we found
-        new_fun = * fun;
-        function_generator generator(new_fun, constraint_instances, l_scope, sub_ns_name);
-        try {
-            generator.generate(args_instances, ret_instance);
-        } catch(invalid_type err) {
-            throw invalid_expression(err.get_token(), err.what());
-        } catch(invalid_function err) {
-            throw invalid_expression(err.get_token(), err.what());
-        }
-
-        // add the specialization to the root function
-        new_fun.set_name(mangle_function(new_fun));
-        fun -> add_specialization(new_fun);
-        fun -> is_used(true);
-
-        // the return type of the function is the type instance of the expression
-        type_instance& fun_instance = new_fun.get_return_type_instance();
-
-        // typecheck the infered type instance
-        try {
-            type_instance_checker::complex_check(fun_instance, l_scope, ns_name);
-        } catch(invalid_type err) {
-            throw invalid_expression(err.get_token(), err.what());
-        }
-
+        
+        // get the type instance
+        type_instance fun_instance = build_function(new_fun, call_expr -> get_token(), call_expr -> get_name(), args_instances, ret_instance, constraint_instances, standins, l_scope, sub_ns_name);
         // set the type instance on the expression
         call_expr -> set_type_instance(fun_instance, false);
 
@@ -833,5 +844,44 @@ namespace avalon {
         // set the type instance on the expression
         id_expr -> set_type_instance(cons_instance, false);
         return cons_instance;
+    }
+
+    /**
+     * infer_grouping
+     * infers the type instance of a grouped expressino
+     */
+    type_instance inferer::infer_grouping(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<grouped_expression> const & group_expr = std::static_pointer_cast<grouped_expression>(an_expression);
+
+        // if the expression already has a type instance, we return it
+        if(group_expr -> has_type_instance())  {
+            return group_expr -> get_type_instance();
+        }
+
+        std::shared_ptr<expr>& value = group_expr -> get_value();
+        type_instance group_instance = inferer::infer(value, l_scope, ns_name, ns_name);
+        group_expr -> set_type_instance(group_instance);
+        return group_instance;
+    }
+
+    /**
+     * infer_cast
+     * infers the type instance of a cast expression
+     */
+    type_instance inferer::infer_cast(function& cast_fun, std::shared_ptr<cast_expression> const & cast_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        type_instance& cast_instance = cast_expr -> get_cast_type_instance();
+        const std::string& sub_ns_name = cast_instance.get_namespace();
+
+        std::shared_ptr<expr>& value = cast_expr -> get_val();
+        std::vector<type_instance> args_instances = {
+            inferer::infer(value, l_scope, ns_name, ns_name)
+        };
+        
+        std::string fun_name = "__cast__";        
+        std::vector<token> standins;        
+        std::vector<type_instance> constraint_instances;        
+
+        // infering the type instance of a cast expression amounts to finding the function that performs the cast
+        return build_function(cast_fun, cast_expr -> get_token(), fun_name, args_instances, cast_instance, constraint_instances, standins, l_scope, sub_ns_name);
     }
 }

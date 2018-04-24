@@ -7,9 +7,11 @@
 
 /* Expressions */
 #include "representer/hir/ast/expr/identifier_expression.hpp"
+#include "representer/hir/ast/expr/grouped_expression.hpp"
 #include "representer/hir/ast/expr/tuple_expression.hpp"
 #include "representer/hir/ast/expr/list_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
+#include "representer/hir/ast/expr/cast_expression.hpp"
 #include "representer/hir/ast/expr/map_expression.hpp"
 #include "representer/hir/ast/expr/expr.hpp"
 
@@ -27,6 +29,7 @@
 /* Checker */
 #include "checker/decl/variable/variable_checker.hpp"
 #include "checker/expr/expression_checker.hpp"
+#include "checker/decl/type/type_checker.hpp"
 
 /* Inferer */
 #include "inferer/inferer.hpp"
@@ -79,6 +82,12 @@ namespace avalon {
         }
         else if(an_expression -> is_identifier_expression()) {
             return check_identifier(an_expression, l_scope, ns_name, ns_name);
+        }
+        else if(an_expression -> is_grouped_expression()) {
+            return check_grouping(an_expression, l_scope, ns_name);
+        }
+        else if(an_expression -> is_cast_expression()) {
+            return check_cast(an_expression, l_scope, ns_name);
         }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in expression checker.");
@@ -327,6 +336,11 @@ namespace avalon {
      * we also make sure that all arguments were named or none was
      */
     type_instance expression_checker::check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+        // first, we make sure that no parser type instance was attached
+        if(call_expr -> type_instance_from_parser()) {
+            throw invalid_expression(call_expr -> get_token(), "Function calls cannot have type instances specified. Maybe you wish to specify the return type.");
+        }
+
         std::vector<std::pair<token, std::shared_ptr<expr> > >& args = call_expr -> get_arguments();
 
         // 1. we start by check the function call arguments
@@ -338,15 +352,9 @@ namespace avalon {
 
         // 2. we get the function from the inferer as it carries the expression type as well
         function new_fun(star_tok);
-        type_instance instance;
-        try {
-            instance = inferer::infer_function_call(new_fun, call_expr, l_scope, ns_name, sub_ns_name);
-        } catch(invalid_expression err) {
-            throw err;
-        }
+        type_instance instance = inferer::infer_function_call(new_fun, call_expr, l_scope, ns_name, sub_ns_name);
 
         // 3. we make sure arguments name and parameters names coincide if the first argument has non-star token as argument name
-        // also, if we got a variable expression, we make sure that constness match
         if(args.size() > 0) {
             std::pair<token, std::shared_ptr<expr> > first_arg = args[0];
             bool check_names = first_arg.first != star_tok ? true : false;
@@ -354,25 +362,16 @@ namespace avalon {
             auto arg_it = args.begin(), arg_end = args.end();
             auto param_it = params.begin(), param_end = params.end();
             for(; arg_it != arg_end && param_it != param_end; ++arg_it, ++param_it) {
-                // we check argument names but only if
+                // we check argument names but only if the first name of all arguments is provided
                 if(check_names) {
                     if(arg_it -> first.get_lexeme() != param_it -> first)
-                        throw invalid_expression(arg_it -> first, "Expected argument to have name <" + param_it -> first + "> as that is the name of the parameter but it has name <" + arg_it -> first.get_lexeme() + ">.");
+                        throw invalid_expression(arg_it -> first, "Expected argument to have name <" + param_it -> first + "> as that is the name of the parameter.");
                 }
-
-                // check for arguments constness
-                // 1. we check for plain variable expression
-                if(arg_it -> second -> is_identifier_expression()) {
-                    std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(arg_it -> second);
-                    if(id_expr -> get_expression_type() == VAR_EXPR) {
-                        std::shared_ptr<variable>& var_decl = l_scope -> get_variable(ns_name, id_expr -> get_name());
-                        // if the parameter is mutable, the argument must be mutable as well
-                        if(param_it -> second.is_mutable() == true && var_decl -> is_mutable() == false)
-                            throw invalid_expression(arg_it -> first, "This argument is immutable while the function expects a mutable variable expression if one is given.");
-                    }
+                // if the first argument name was not provided, we also forbid any other name from being provided
+                else {
+                    if(arg_it -> first != star_tok)
+                        throw invalid_expression(arg_it -> first, "Unexpected argument name. Either provide names for all arguments or none at all.");
                 }
-
-                // 2. we check for dot expressions
             }
         }
 
@@ -432,5 +431,47 @@ namespace avalon {
      */
     type_instance expression_checker::check_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
         return inferer::infer_constructor(id_expr, l_scope, ns_name, sub_ns_name);
+    }
+
+    /**
+     * check_grouping
+     * we make sure that the expression in the grouping is valid
+     */
+    type_instance expression_checker::check_grouping(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // we start by checking the subexpression
+        std::shared_ptr<grouped_expression> const & group_expr = std::static_pointer_cast<grouped_expression>(an_expression);
+        std::shared_ptr<expr>& value = group_expr -> get_value();
+        check(value, l_scope, ns_name);
+
+        // we return the infered type instance
+        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
+    }
+
+    /**
+     * check_cast
+     * we make sure there is a function in the will allow the cast given the type instance to cast to and the type instance of the expression
+     * it also makes sure the destination type instance has a type builder and the origin expression is valid
+     */
+    type_instance expression_checker::check_cast(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<cast_expression> const & cast_expr = std::static_pointer_cast<cast_expression>(an_expression);
+        type_instance& cast_instance = cast_expr -> get_cast_type_instance();
+        std::shared_ptr<expr>& value = cast_expr -> get_val();
+
+        // check the cast type instance
+        try {
+            type_instance_checker::complex_check(cast_instance, l_scope, ns_name);
+        } catch(invalid_type err) {
+            throw invalid_expression(err.get_token(), err.what());
+        }
+
+        // check the expression to cast
+        check(value, l_scope, ns_name);
+
+        // infer the type instance
+        function cast_fun(star_tok);
+        type_instance instance = inferer::infer_cast(cast_fun, cast_expr, l_scope, ns_name);
+
+        // return the infered type instance
+        return instance;
     }
 }

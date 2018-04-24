@@ -6,6 +6,7 @@
 
 #include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
+#include "representer/hir/ast/expr/cast_expression.hpp"
 #include "representer/hir/ast/decl/function.hpp"
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/ast/expr/expr.hpp"
@@ -50,6 +51,12 @@ namespace avalon {
          * infers the type instance of an identifier constructor expression
          */
         static type_instance infer_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
+        /**
+         * infer_cast
+         * infers the type instance of a cast expression
+         */
+        static type_instance infer_cast(function& cast_fun, std::shared_ptr<cast_expression> const & cast_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name);
 
     private:
         /**
@@ -98,6 +105,12 @@ namespace avalon {
          * infers the type instance of an identifier expression
          */
         static type_instance infer_identifier(std::shared_ptr<expr> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+
+        /**
+         * infer_grouping
+         * infers the type instance of a grouped expression
+         */
+        static type_instance infer_grouping(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
     };
 }
 

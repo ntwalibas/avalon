@@ -70,7 +70,7 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
 
     // 0. we make sure we have at least one candidate function to work with
     if(candidates.size() == 0)
-        throw symbol_not_found("No function found that matches the given name, parameters' type instances and return type.");
+        throw symbol_not_found("No function by the name <" + name + "> and given arguments and return type was found");
 
     // 1. we calculate the weights of all candidate functions relative to the given parameters
     for(auto it = candidates.begin(), end = candidates.end(); it != end; ++it) {
@@ -130,7 +130,7 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
         try {
             fill_duplicates(total_weights, duplicate_weights);
         } catch(std::logic_error err) {
-            throw symbol_not_found("No function matches the name and parameters' type instances given.");
+            throw symbol_not_found("No function by the name <" + name + "> and given arguments was found");
         }        
 
         // 2.3. if we got a valid return type instance, we match it against the possible duplicate candidates
@@ -156,18 +156,18 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
 
             // if we got no weight, then no function matches
             if(ret_candidates.size() == 0)
-                throw symbol_not_found("At least one function was found that match the name and parameters' given but none that match the return type instance given.");
+                throw symbol_not_found("At least one function was found that matches the name <" + name + "> and arguments' given but none that match the return type instance given.");
 
             // we find duplicates for the return type instances
             try {
                 fill_duplicates(ret_candidates, ret_duplicates);
             } catch(std::logic_error err) {
-                throw symbol_not_found("At least one function was found that match the name and parameters' given but none that match the return type instance given.");
+                throw symbol_not_found("At least one function was found with the name <" + name + "> and given arguments but none that match the return type instance given.");
             }
 
             // if we got any duplicates, we scream
             if(ret_duplicates.size() > 1)
-                throw symbol_can_collide("We found more than one function that matches the name, parameters' type instances and return type.");
+                throw symbol_can_collide("We found more than one function with the name <" + name + ">, arguments and return type.");
 
             // we got out function, we return it
             return candidates[ret_duplicates[0]];
@@ -175,7 +175,7 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
         // if on the other no valid return type instance was given, then we make sure only one duplicate exists and we return it if so
         else {
             if(duplicate_weights.size() > 1) {
-                throw symbol_not_found("Multiple functions match the given name and parameters' type instances. Please specify the return type to discrimate.");
+                throw symbol_not_found("Multiple functions match the name <" + name + "> and arguments. Please specify the return type to discrimate.");
             }
             else {
                 std::shared_ptr<function>& candidate = candidates[duplicate_weights[0]];
@@ -209,18 +209,18 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
 
             // if we got no weight, then no function matches
             if(ret_candidates.size() == 0)
-                throw symbol_not_found("No function found that matches the given name, parameters' type instances and return type.");
+                throw symbol_not_found("No function found that matches the name <" + name + ">, arguments and return type.");
 
             // we figure out if we have duplicates - basically meaning more than one return type instance can match what we were given
             try{
                 fill_duplicates(ret_candidates, ret_duplicates);
             } catch(std::logic_error err) {
-                throw symbol_not_found("At least one function was found that match the name and parameters' given but none that match the return type instance given.");
+                throw symbol_not_found("At least one function was found that match the name <" + name + "> and given arguments' given but none that match the return type instance given.");
             }
 
             // if we got any duplicates, we scream (basically two functions can return the given type)
             if(ret_duplicates.size() > 1)
-                throw symbol_can_collide("We found more than one function that matches the name, parameters' type instances and return type.");
+                throw symbol_not_found("Multiple functions with name <" + name + ">, with arguments and return type instances.");
 
             // we got out function, we return it
             return candidates[ret_duplicates[0]];
@@ -228,7 +228,7 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
         // no return type was specified, then only one function is amond candidates
         else {
             if(candidates.size() > 1) {
-               throw symbol_not_found("Multiple functions match the given name with no parameters. Please specify the return type to discrimate.");
+               throw symbol_not_found("Multiple functions with name <" + name + "> and no arguments was found. Please specify the return type to discrimate.");
             }
             else {
                 std::shared_ptr<function>& candidate = candidates[0];
@@ -238,7 +238,7 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
     }
 
     // 4. if we are here and we didn't return, then no function was found
-    throw symbol_not_found("No function found that matches the given name, parameters' type instances and return type.");
+    throw symbol_not_found("No function by the name <" + name + ">,  arguments and return type was found.");
 }
 
 /**

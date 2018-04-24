@@ -39,7 +39,7 @@ namespace avalon {
                 // if the type instance checked out, we replace the one on the parameter with the updated on
                 param.second.set_type_instance(param_type_instance);
             } catch(invalid_type err) {
-                throw err;
+                throw invalid_function(err.get_token(), err.what());
             }
         }
 
@@ -59,7 +59,7 @@ namespace avalon {
             // if the type instance checked out, we replace the previous return type instance
             function_decl.set_return_type_instance(return_type_instance);
         } catch(invalid_type err) {
-            throw err;
+            throw invalid_function(err.get_token(), err.what());
         }
     }
 }

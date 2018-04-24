@@ -187,6 +187,12 @@ namespace avalon {
         else if(an_expression -> is_grouped_expression()) {
             return inferer::infer_grouping(an_expression, l_scope, ns_name);
         }
+        else if(an_expression -> is_cast_expression()) {
+            return inferer::infer_cast(an_expression, l_scope, ns_name);
+        }
+        else if(an_expression -> is_unary_expression()) {
+            return inferer::infer_unary(an_expression, l_scope, ns_name);
+        }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
         }
@@ -550,7 +556,7 @@ namespace avalon {
                     throw invalid_expression(parser_type_instance.get_token(), "Parametrized types cannot be used on expressions.");
                 }
             } catch(invalid_type err) {
-                throw invalid_expression(err.get_token(), err.what());
+                throw invalid_expression(parser_type_instance.get_token(), err.what());
             }
         }
 
@@ -593,7 +599,7 @@ namespace avalon {
         try {
             type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name);
         } catch(invalid_type err) {
-            throw invalid_expression(err.get_token(), err.what());
+            throw invalid_expression(call_expr -> get_token(), err.what());
         }
 
         // if we have type instance from the parser we compare it with the infered type
@@ -637,7 +643,7 @@ namespace avalon {
                     throw invalid_expression(parser_type_instance.get_token(), "Parametrized types cannot be used on expressions.");
                 }
             } catch(invalid_type err) {
-                throw invalid_expression(err.get_token(), err.what());
+                throw invalid_expression(parser_type_instance.get_token(), err.what());
             }
         }
 
@@ -679,7 +685,7 @@ namespace avalon {
         try {
             type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name);
         } catch(invalid_type err) {
-            throw invalid_expression(err.get_token(), err.what());
+            throw invalid_expression(call_expr -> get_token(), err.what());
         }
 
         // if we have type instance from the parser we compare it with the infered type
@@ -763,7 +769,7 @@ namespace avalon {
                     throw invalid_expression(parser_type_instance.get_token(), "Parametrized types cannot be used on expressions.");
                 }
             } catch(invalid_type err) {
-                throw invalid_expression(err.get_token(), err.what());
+                throw invalid_expression(parser_type_instance.get_token(), err.what());
             }
         }
 
@@ -806,7 +812,7 @@ namespace avalon {
         // if on the other hand a type instance from the parser was posted, we type check check it
         type_instance parser_type_instance;
         bool has_parser_type_instance = false;
-        if(id_expr -> type_instance_from_parser() == true) {
+        if(id_expr -> type_instance_from_parser() == true) {            
             has_parser_type_instance = true;
             parser_type_instance = id_expr -> get_type_instance();
 
@@ -818,27 +824,43 @@ namespace avalon {
                     throw invalid_expression(parser_type_instance.get_token(), "Parametrized types cannot be used on expressions.");
                 }
             } catch(invalid_type err) {
-                throw invalid_expression(err.get_token(), err.what());
+                throw invalid_expression(parser_type_instance.get_token(), err.what());
             }
         }
 
         // we build the type instance from the default constructor we got
+        // cons data
         default_constructor& cons = l_scope -> get_default_constructor(sub_ns_name, id_expr -> get_name(), 0);
+        // type data
         std::shared_ptr<type>& cons_type = cons.get_type();
         const token& type_token = cons_type -> get_token();
+        const std::vector<token>& type_params = cons_type -> get_params();
+        // instance data
         type_instance cons_instance(const_cast<token&>(type_token), cons_type, sub_ns_name);
+        cons_instance.is_parametrized(false);
+        for(auto& type_param : type_params) {
+            type_instance instance_param(const_cast<token&>(type_param), "*");
+            instance_param.is_parametrized(true);
+            cons_instance.add_param(instance_param);
+        }
 
         // typecheck the infered type instance
         try {
-            type_instance_checker::complex_check(cons_instance, l_scope, ns_name);
-        } catch(invalid_type err) {            
-            throw invalid_expression(err.get_token(), err.what());
+            type_instance_checker::complex_check(cons_instance, l_scope, ns_name, type_params);
+        } catch(invalid_type err) {
+            throw invalid_expression(id_expr -> get_token(), err.what());
         }
 
         // make sure that if the user set their own type instance, it is equal to the one we infered
         if(has_parser_type_instance) {
-            if(type_instance_weak_compare(parser_type_instance, cons_instance) == false)
+            if(type_instance_weak_compare(parser_type_instance, cons_instance) == false) {                
                 throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one infered <" + mangle_type_instance(cons_instance) + ">.");
+            }
+            else {
+                if(parser_type_instance.is_complete()) {                    
+                    cons_instance = parser_type_instance;
+                }
+            }
         }
 
         // set the type instance on the expression
@@ -868,6 +890,12 @@ namespace avalon {
      * infer_cast
      * infers the type instance of a cast expression
      */
+    type_instance inferer::infer_cast(std::shared_ptr<expr> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<cast_expression> const & cast_expr = std::static_pointer_cast<cast_expression>(an_expression);
+        function cast_fun(star_tok);
+        return inferer::infer_cast(cast_fun, cast_expr, l_scope, ns_name);
+    }
+
     type_instance inferer::infer_cast(function& cast_fun, std::shared_ptr<cast_expression> const & cast_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
         type_instance& cast_instance = cast_expr -> get_cast_type_instance();
         const std::string& sub_ns_name = cast_instance.get_namespace();
@@ -877,11 +905,57 @@ namespace avalon {
             inferer::infer(value, l_scope, ns_name, ns_name)
         };
         
-        std::string fun_name = "__cast__";        
-        std::vector<token> standins;        
-        std::vector<type_instance> constraint_instances;        
+        std::string fun_name = "__cast__";
+        std::vector<token> standins;
+        std::vector<type_instance> constraint_instances;
 
         // infering the type instance of a cast expression amounts to finding the function that performs the cast
         return build_function(cast_fun, cast_expr -> get_token(), fun_name, args_instances, cast_instance, constraint_instances, standins, l_scope, sub_ns_name);
+    }
+
+    /**
+     * infer_unary
+     * infers the type instance of a unary expression
+     */
+    type_instance inferer::infer_unary(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<unary_expression> const & unary_expr = std::static_pointer_cast<unary_expression>(an_expression);
+        function unary_fun(star_tok);
+        return inferer::infer_unary(unary_fun, unary_expr, l_scope, ns_name);
+    }
+
+    type_instance inferer::infer_unary(function& unary_fun, std::shared_ptr<unary_expression> const & unary_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::string fun_name = "";
+        std::shared_ptr<expr>& value = unary_expr -> get_val();
+
+        // construct the name
+        if(unary_expr -> get_expression_type() == PLUS_SIGN_EXPR) {
+            fun_name = "__pos__";
+        }
+        else if(unary_expr -> get_expression_type() == MINUS_SIGN_EXPR) {
+            fun_name = "__neg__";
+        }
+        else if(unary_expr -> get_expression_type() == BITWISE_NOT_EXPR) {
+            fun_name = "__bitnot__";
+        }
+        else if(unary_expr -> get_expression_type() == LOGICAL_NOT_EXPR) {
+            fun_name = "__not__";
+        }
+        else {
+            throw std::runtime_error("[compiler error] unexpected unary operator.");
+        }
+
+        // infer the type of the operand
+        type_instance op_instance = inferer::infer(value, l_scope, ns_name, ns_name);
+
+        // construct the rest of parameters required to find the function
+        const std::string& sub_ns_name = op_instance.get_namespace();
+        std::vector<type_instance> args_instances = {
+            op_instance
+        };        
+        std::vector<token> standins;
+        std::vector<type_instance> constraint_instances;
+
+        // find the unary function that corresponds to the given parameters
+        return build_function(unary_fun, unary_expr -> get_token(), fun_name, args_instances, op_instance, constraint_instances, standins, l_scope, sub_ns_name);
     }
 }

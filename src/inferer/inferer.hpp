@@ -5,6 +5,7 @@
 #include <string>
 
 #include "representer/hir/ast/expr/identifier_expression.hpp"
+#include "representer/hir/ast/expr/unary_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
 #include "representer/hir/ast/expr/cast_expression.hpp"
 #include "representer/hir/ast/decl/function.hpp"
@@ -57,6 +58,12 @@ namespace avalon {
          * infers the type instance of a cast expression
          */
         static type_instance infer_cast(function& cast_fun, std::shared_ptr<cast_expression> const & cast_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name);
+
+        /**
+         * infer_unary
+         * infers the type instance of a unary expression
+         */
+        static type_instance infer_unary(function& unary_fun, std::shared_ptr<unary_expression> const & unary_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name);
 
     private:
         /**
@@ -111,6 +118,18 @@ namespace avalon {
          * infers the type instance of a grouped expression
          */
         static type_instance infer_grouping(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
+
+        /**
+         * infer_cast
+         * infers the type instance of a cast expression
+         */
+        static type_instance infer_cast(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
+
+        /**
+         * infer_unary
+         * infers the type instance of a unary expression
+         */
+        static type_instance infer_unary(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name);
     };
 }
 

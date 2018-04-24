@@ -8,6 +8,7 @@
 /* Expressions */
 #include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/expr/grouped_expression.hpp"
+#include "representer/hir/ast/expr/unary_expression.hpp"
 #include "representer/hir/ast/expr/tuple_expression.hpp"
 #include "representer/hir/ast/expr/list_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
@@ -88,6 +89,9 @@ namespace avalon {
         }
         else if(an_expression -> is_cast_expression()) {
             return check_cast(an_expression, l_scope, ns_name);
+        }
+        else if(an_expression -> is_unary_expression()) {
+            return check_unary(an_expression, l_scope, ns_name);
         }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in expression checker.");
@@ -474,6 +478,24 @@ namespace avalon {
         type_instance instance = inferer::infer_cast(cast_fun, cast_expr, l_scope, ns_name);
 
         // return the infered type instance
+        return instance;
+    }
+
+    /**
+     * check_unary
+     * we make sure that there is a function that corresponds to the unary expression
+     */
+    type_instance expression_checker::check_unary(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<unary_expression> const & unary_expr = std::static_pointer_cast<unary_expression>(an_expression);
+        std::shared_ptr<expr>& value = unary_expr -> get_val();
+
+        // check the value
+        check(value, l_scope, ns_name);
+
+        // infer the type instance
+        function unary_fun(star_tok);
+        type_instance instance = inferer::infer_unary(unary_fun, unary_expr, l_scope, ns_name);
+
         return instance;
     }
 }

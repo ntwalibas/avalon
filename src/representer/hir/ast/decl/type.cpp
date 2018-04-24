@@ -812,16 +812,24 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
             return weight;
 
         // if they don't admit parameters, then either they are exactly both the same types or one of them is abstract
-        if(this_params.size() == 0) {
+        if(this_params.size() == 0 && that_params.size() == 0) {
             if(this_instance.is_abstract() || that_instance.is_abstract())
                 weight = 1;
             else
                 weight = 2;
-        }
+        }        
         // if they admit parameters, we take them into account
         else {
-            for(auto this_it = this_params.begin(), that_it = that_params.begin(); this_it != this_params.end() && that_it != that_params.end(); ++this_it, ++that_it)
-                weight = 1 + weight + type_instance_weight(const_cast<type_instance&>(* this_it), const_cast<type_instance&>(* that_it));
+            // if they both admit parameters, we recurse on parameters
+            if(this_params.size() != 0 && that_params.size() != 0) {
+                for(auto this_it = this_params.begin(), that_it = that_params.begin(); this_it != this_params.end() && that_it != that_params.end(); ++this_it, ++that_it)
+                    weight = 1 + weight + type_instance_weight(const_cast<type_instance&>(* this_it), const_cast<type_instance&>(* that_it));
+            }
+            // if one of them admits parameters and the other doesn't, then one of them is either abstract or complete
+            // but we do know that both type instances compare weakly so we are sure that one of them is abstract
+            else {
+                weight += 1;
+            }            
         }
 
         return weight;

@@ -8,6 +8,9 @@
 /* Lexer */
 #include "lexer/token.hpp"
 
+/* Checker */
+#include "checker/decl/type/type_checker.hpp"
+
 /* Generator */
 #include "checker/decl/type/type_generator.hpp"
 
@@ -72,7 +75,7 @@ namespace avalon {
         token tok = instance.get_token();
 
         // first we make sure our type instance is complete
-        if(instance.is_abstract() || instance.is_parametrized())
+        if(instance.is_complete() == false)
             throw invalid_type(tok, "The type instance <" + mangle_type_instance(instance) + "> must be complete before generating a type declaration from it.");
 
         // we get the data we need

@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 
+#include <iostream>
+
 /* Expressions */
 #include "representer/hir/ast/expr/underscore_expression.hpp"
 #include "representer/hir/ast/expr/identifier_expression.hpp"
@@ -55,6 +57,10 @@ namespace avalon {
             for(auto& dest_param : dest_params) {
                 // if we find the constructor type instance, we perform the replacement
                 if(dest_param.get_token() == cons_instance.get_token()) {
+                    // we replace the name
+                    const std::string& expr_name = expr_instance.get_name();
+                    dest_param.set_name(const_cast<std::string&>(expr_name));
+
                     // we replace the token
                     const token& expr_tok = expr_instance.get_token();
                     dest_param.set_token(const_cast<token&>(expr_tok));
@@ -585,19 +591,18 @@ namespace avalon {
         auto param_it = cons_params.begin(), param_end = cons_params.end();
         auto arg_it = cons_args.begin(), arg_end = cons_args.end();
         for(; param_it != param_end && arg_it != arg_end; ++param_it, ++arg_it) {
-            if(arg_it -> second -> is_underscore_expression()) {
-                infered_type_instance.is_parametrized(true);
-                continue;
+            try {
+                type_instance_checker::complex_check(* param_it, l_scope, ns_name, type_params);
+            } catch(invalid_type err) {
+                throw invalid_expression(param_it -> get_token(), err.what());
             }
-            else {
-                type_instance arg_type_instance = inferer::infer(arg_it -> second, l_scope, ns_name, sub_ns_name);
-                build_type_instance(infered_type_instance, * param_it, arg_type_instance, call_expr -> get_token());
-            }
+            type_instance arg_type_instance = inferer::infer(arg_it -> second, l_scope, ns_name, sub_ns_name);
+            build_type_instance(infered_type_instance, * param_it, arg_type_instance, call_expr -> get_token());
         }
 
         // typecheck the infered type instance
         try {
-            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name);
+            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name, type_params);
         } catch(invalid_type err) {
             throw invalid_expression(call_expr -> get_token(), err.what());
         }
@@ -609,6 +614,7 @@ namespace avalon {
                 throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
             }
             else {
+                call_expr -> set_type_instance(parser_type_instance, false);
                 return parser_type_instance;
             }
         }
@@ -669,23 +675,24 @@ namespace avalon {
 
         // we have a type instance with abstract types from the type builder
         // now we need to replace them with actual types infered from the constructor expression
-        for(auto& cons_arg : cons_args) {
+        for(auto& cons_arg : cons_args) {            
             type_instance& cons_param = cons_params[cons_arg.first];
-            if(cons_arg.second -> is_underscore_expression()) {
+            try {
+                type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
+            } catch(invalid_type err) {
+                throw invalid_expression(cons_param.get_token(), err.what());
+            }
+            type_instance arg_type_instance = inferer::infer(cons_arg.second, l_scope, ns_name, sub_ns_name);
+            if(arg_type_instance.is_parametrized())
                 infered_type_instance.is_parametrized(true);
-                continue;
-            }
-            else {
-                type_instance arg_type_instance = inferer::infer(cons_arg.second, l_scope, ns_name, sub_ns_name);
-                build_type_instance(infered_type_instance, cons_param, arg_type_instance, call_expr -> get_token());
-            }
+            build_type_instance(infered_type_instance, cons_param, arg_type_instance, call_expr -> get_token());
         }
 
         // typecheck the infered type instance
         try {
-            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name);
+            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name, type_params);
         } catch(invalid_type err) {
-            throw invalid_expression(call_expr -> get_token(), err.what());
+            throw invalid_expression(err.get_token(), err.what());
         }
 
         // if we have type instance from the parser we compare it with the infered type
@@ -695,6 +702,7 @@ namespace avalon {
                 throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
             }
             else {
+                call_expr -> set_type_instance(parser_type_instance, false);
                 return parser_type_instance;
             }
         }

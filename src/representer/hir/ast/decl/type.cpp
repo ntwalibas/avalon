@@ -654,7 +654,6 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
                 mangled_name += mangle_type_instance(params[1]);
                 mangled_name += "}";
             }
-            
         }
 
         return mangled_name;

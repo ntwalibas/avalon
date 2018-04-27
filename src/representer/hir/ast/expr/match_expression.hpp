@@ -56,6 +56,14 @@ namespace avalon {
         virtual const token& expr_token() const {
             return m_tok;
         }
+
+        /**
+         * expr_type_instance
+         * returns the type instance of this expression, bypassing casting
+         */
+        virtual type_instance& expr_type_instance() {
+            return m_instance;
+        }
         
         /**
          * is_match_expression
@@ -70,6 +78,11 @@ namespace avalon {
          * the equal sign token to be used to show errors
          */
         token m_tok;
+
+        /*
+         * type instance of this expression
+         */
+        type_instance m_instance;
 
         /*
          * the type of match expression we have

@@ -65,15 +65,6 @@ namespace avalon {
          */
         bool type_instance_from_parser() const;
 
-        /**
-         * token
-         * returns this expression token
-         * this is useful because it prevents us from casting each expression just to display error messages
-         */
-        virtual const token& expr_token() const {
-            return m_tok;
-        }
-
         /*
          * set_expression_type
          * sets the type of expression this is
@@ -85,6 +76,23 @@ namespace avalon {
          * returns the type of expression we are dealing
          */
         const identifier_expression_type& get_expression_type() const;
+
+        /**
+         * token
+         * returns this expression token
+         * this is useful because it prevents us from casting each expression just to display error messages
+         */
+        virtual const token& expr_token() const {
+            return m_tok;
+        }
+
+        /**
+         * expr_type_instance
+         * returns the type instance of this expression, bypassing casting
+         */
+        virtual type_instance& expr_type_instance() {
+            return m_instance;
+        }
         
         /**
          * is_identifier_expression

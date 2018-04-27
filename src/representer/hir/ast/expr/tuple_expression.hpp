@@ -77,6 +77,14 @@ namespace avalon {
         virtual const token& expr_token() const {
             return m_tok;
         }
+
+        /**
+         * expr_type_instance
+         * returns the type instance of this expression, bypassing casting
+         */
+        virtual type_instance& expr_type_instance() {
+            return m_instance;
+        }
         
         /**
          * is_tuple_expression

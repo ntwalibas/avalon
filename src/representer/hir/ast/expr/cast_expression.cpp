@@ -9,7 +9,7 @@ namespace avalon {
     /**
      * the constructor expects the type instance to cast and the expression to cast
      */
-    cast_expression::cast_expression(token& tok, type_instance& cast_type_instance, std::shared_ptr<expr> val) : m_tok(tok), m_cast_type_instance(cast_type_instance), m_val(val) {        
+    cast_expression::cast_expression(token& tok, type_instance& cast_type_instance, std::shared_ptr<expr> val) : m_tok(tok), m_cast_type_instance(cast_type_instance), m_val(val) {
     }
 
     /**

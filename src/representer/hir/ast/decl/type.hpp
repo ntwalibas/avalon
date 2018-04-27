@@ -150,6 +150,7 @@ namespace avalon {
          * if this is a parametric type, this function allows us to add type parameters
          */
         void add_param(token& type_param);
+        void add_param(const token& type_param);
 
         /**
          * get_params

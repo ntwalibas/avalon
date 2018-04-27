@@ -38,7 +38,7 @@ namespace avalon {
         instance.is_parametrized(false);
 
         // we can only look for user defined type instances in the scope we have
-        if(instance.get_category() == USER) {
+        if(instance.get_category() == USER) {            
             // we try to find if the type instance has an associated type that builds
             try {
                 instance_type = l_scope -> get_type(ns_name, instance);
@@ -59,13 +59,19 @@ namespace avalon {
 
                 // the type instance has a type that builds it,
                 // we make sure the parameters it depends on are also valid
-                for(auto& instance_param : instance_params) {
+                const std::vector<token>& type_params = instance_type -> get_params();
+                auto ins_it = instance_params.begin(), ins_end = instance_params.end();
+                auto type_it = type_params.begin(), type_end = type_params.end();
+                for(; ins_it != ins_end && type_it != type_end; ++ins_it, ++type_it) {
                     try {
-                        std::pair<bool,bool> res = type_instance_checker::complex_check(instance_param, l_scope, ns_name, standins);
+                        std::pair<bool,bool> res = type_instance_checker::complex_check(* ins_it, l_scope, ns_name, standins);
+                        // if the parameter is parametrized, so is this type instance
                         if(res.first == true || res.second == true) {
                             instance.is_parametrized(true);
                             ret.second = true;
                         }
+                        // we set the old token on the param
+                        ins_it -> set_old_token(* type_it);
                     } catch(invalid_type err) {
                         throw err;
                     }

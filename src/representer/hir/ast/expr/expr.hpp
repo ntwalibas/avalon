@@ -1,7 +1,7 @@
 #ifndef AVALON_HIR_AST_EXPR_HPP_
 #define AVALON_HIR_AST_EXPR_HPP_
 
-#include "lexer/token.hpp"
+#include "representer/hir/ast/decl/type.hpp"
 
 
 namespace avalon {
@@ -13,6 +13,12 @@ namespace avalon {
          * this is useful because it prevents us from casting each expression just to display error messages
          */
         virtual const token& expr_token() const = 0;
+
+        /**
+         * expr_type_instance
+         * returns the type instance of this expression, bypassing casting
+         */
+        virtual type_instance& expr_type_instance() = 0;
 
         /** assignment expression **/
         virtual bool is_assignment_expression() {

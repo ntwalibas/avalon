@@ -211,6 +211,10 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
         m_params.push_back(type_param);
     }
 
+    void type::add_param(const token& type_param) {
+        m_params.push_back(type_param);
+    }
+
     /**
      * get_type_params
      * returns a vector with all type parameters if any.
@@ -289,8 +293,19 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
         const std::string& name = type_decl.get_name();
         const std::vector<token>& params =  type_decl.get_params();
 
-        std::string mangled_name = name;
-        mangled_name += "(";
+        std::string mangled_name;
+        if(name == "(") {
+            mangled_name += "(";
+        }
+        else if(name == "[") {
+            mangled_name += "[";
+        }
+        else if(name == "{") {
+            mangled_name += "{";
+        }
+        else {
+            mangled_name += "(";
+        }
 
         for(auto it = params.begin(), end = params.end(); it != end; ++it) {
             mangled_name += it -> get_lexeme();
@@ -298,8 +313,20 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
             if(it != end && it + 1 != end)
                 mangled_name += ",";
         }
+        
+        if(name == "(") {
+            mangled_name += ")";
+        }
+        else if(name == "[") {
+            mangled_name += "]";
+        }
+        else if(name == "{") {
+            mangled_name += "}";
+        }
+        else {
+            mangled_name += ")";
+        }
 
-        mangled_name += ")";
         return mangled_name;
     }
 
@@ -614,7 +641,7 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
         std::string mangled_name = "";
 
         if(instance.is_abstract()) {
-            mangled_name += instance.get_name();
+            mangled_name += instance.get_name() + "*";
         }
         else {
             if(instance.get_category() == USER) {

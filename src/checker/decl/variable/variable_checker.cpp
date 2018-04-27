@@ -41,11 +41,11 @@ namespace avalon {
 
         // if the variable has a type instance, we check it
         if(variable_decl -> has_type_instance()) {
-            type_instance& variable_type_instance = variable_decl -> get_type_instance();
+            type_instance& var_instance = variable_decl -> get_type_instance();
             try {
-                type_instance_checker::complex_check(variable_type_instance, l_scope, ns_name);
+                type_instance_checker::complex_check(var_instance, l_scope, ns_name);
             } catch(invalid_type err) {
-                throw err;
+                throw invalid_variable(err.get_token(), err.what());
             }
         }
 
@@ -53,26 +53,24 @@ namespace avalon {
         expression_checker checker;
         try {
             type_instance expr_instance = checker.check(variable_val, l_scope, ns_name);
-            // if the expression has a type instance after checking is done, we work with the variable type instance if any
-            if(expr_instance.is_star() == false) {
-                // if the variable has a type instance set, we make sure it is the same as the one on the expression
-                if(variable_decl -> has_type_instance()) {
-                    type_instance& variable_type_instance = variable_decl -> get_type_instance();
-                    if(type_instance_weak_compare(variable_type_instance, expr_instance) == false) {
-                        throw invalid_variable(variable_decl -> get_token(), "The variable has a different type instance than the expression it is initialized with.");
-                    }
-                }
-                else {
-                    variable_decl -> set_type_instance(expr_instance);
+            
+            // if the expression type instance is not complete after checking, we raise an error
+            if(expr_instance.is_complete() == false) {
+                throw invalid_variable(variable_decl -> get_token(), "The initializer expression to a variable expression must be complete.");
+            }
+            
+            // if the variable has a type instance set, we make sure it is the same as the one on the expression
+            if(variable_decl -> has_type_instance()) {
+                type_instance& var_instance = variable_decl -> get_type_instance();
+                if(type_instance_strong_compare(var_instance, expr_instance) == false) {
+                    throw invalid_variable(variable_decl -> get_token(), "The variable has a different type instance <" + mangle_type_instance(var_instance) + "> than the expression it is initialized with <" + mangle_type_instance(expr_instance) + ">.");
                 }
             }
-            // if the expression has no type instance and the variable has none as well, this is an error
-            // this prevents code like "var x = []" because we can't deduce the type of "x"
-            else if(expr_instance.get_name() == "*" && variable_decl -> has_type_instance() ==  false) {
-                throw invalid_variable(variable_decl -> get_token(), "Variable declaration lacks type instance and none could be derived from the initializer expression. Please provide one.");
-            }
+            else {
+                variable_decl -> set_type_instance(expr_instance);
+            }            
         } catch(invalid_expression err) {
-            throw err;
+            throw invalid_variable(err.get_token(), err.what());
         }
 
         // if we are here, then the variable is valid

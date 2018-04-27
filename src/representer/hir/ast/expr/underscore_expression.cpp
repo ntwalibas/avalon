@@ -8,7 +8,7 @@ namespace avalon {
     /**
      * the constructor expects the token associated with this expression
      */
-    underscore_expression::underscore_expression(token& tok) : m_tok(tok) {        
+    underscore_expression::underscore_expression(token& tok) : m_tok(tok) {
     }
 
     /**

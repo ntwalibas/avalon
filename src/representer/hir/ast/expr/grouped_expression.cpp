@@ -10,7 +10,7 @@ namespace avalon {
     /**
      * the constructor expects the operand of the grouped operator
      */
-    grouped_expression::grouped_expression(token& tok, std::shared_ptr<expr>& val) : m_tok(tok), m_val(val) {
+    grouped_expression::grouped_expression(token& tok, std::shared_ptr<expr>& val) : m_tok(tok), m_val(val){
     }
 
     /**

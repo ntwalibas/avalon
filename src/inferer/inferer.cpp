@@ -4,8 +4,6 @@
 #include <string>
 #include <map>
 
-#include <iostream>
-
 /* Expressions */
 #include "representer/hir/ast/expr/underscore_expression.hpp"
 #include "representer/hir/ast/expr/identifier_expression.hpp"
@@ -47,162 +45,351 @@
 
 
 namespace avalon {
-    static void build_type_instance(type_instance& dest_instance, type_instance cons_instance, type_instance expr_instance, token err_tok) {
-        // if the type instance from the constructor is abstract,
-        // then it is a type instance built from a type parameter (done in the inferer below)
-        // we search for it on the destination type instance to perform a replacement with the type instance from the expression
-        if(cons_instance.is_abstract() == true) {
-            std::vector<type_instance>& dest_params = dest_instance.get_params();
-            // we try to find the constructor instance amond the type parameters given to us on the destination instance
-            for(auto& dest_param : dest_params) {
-                // if we find the constructor type instance, we perform the replacement
-                if(dest_param.get_token() == cons_instance.get_token()) {
-                    // we replace the name
-                    const std::string& expr_name = expr_instance.get_name();
-                    dest_param.set_name(const_cast<std::string&>(expr_name));
+/**
+ * set_type_instance
+ * given an expression, set the given type instance on it
+ * possibly overriding the existing one if necessary
+ */
+static void set_type_instance(std::shared_ptr<expr>& an_expression, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
-                    // we replace the token
-                    const token& expr_tok = expr_instance.get_token();
-                    dest_param.set_token(const_cast<token&>(expr_tok));
+static void set_tuple_instance(std::shared_ptr<tuple_expression> const & tup_expr, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    // we also make that new type instance is complete
+    if(new_instance.is_complete() == false)
+        throw invalid_type(new_instance.get_token(), "The given type instance cannot be on expressions unless it is complete.");
 
-                    // we replace the tyoe
-                    std::shared_ptr<type>& expr_type = expr_instance.get_type();                    
-                    dest_param.set_type(expr_type);
+    // since the tuple inferred type instance is incomplete, we replace it with the new complete type instance
+    tup_expr -> set_type_instance(new_instance, false);
 
-                    // we replace the namespace
-                    const std::string& ns_name = expr_instance.get_namespace();
-                    dest_param.set_namespace(ns_name);
+    // we go over the elements in the tuple looking for expressions with incomplete type instances to replace them
+    std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tup_expr -> get_elements();
+    std::vector<type_instance>& new_instances = new_instance.get_params();
+    auto elem_it = elements.begin(), elem_end = elements.end();
+    auto ins_it = new_instances.begin(), ins_end = new_instances.end();
+    for(; ins_it != ins_end && elem_it != elem_end; ++ins_it, ++elem_end)
+        set_type_instance(elem_it -> second, * ins_it, l_scope, ns_name, sub_ns_name);
+}
 
-                    // if the expression type instance is parametrized, so will this one
-                    if(expr_instance.is_complete() == false)
-                        dest_param.is_parametrized(true);
+static void set_tuple_instance(std::shared_ptr<expr>& an_expression, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    std::shared_ptr<tuple_expression> const & tup_expr = std::static_pointer_cast<tuple_expression>(an_expression);
+    set_tuple_instance(tup_expr, new_instance, l_scope, ns_name, sub_ns_name);
+}
 
-                    // we set parameters
-                    std::vector<type_instance>& expr_params = expr_instance.get_params();
-                    for(auto& expr_param : expr_params)
-                        dest_param.add_param(expr_param);
-                }
-                // if we cannot find the constructor type instance, we try to see if the replacement was not done already                
-                else {
-                    // if it was already done, we make sure the new type instance (it exists on the expression) is equal to the existing one
-                    if(cons_instance.get_token() == dest_param.get_old_token()) {
-                        if(type_instance_weak_compare(dest_param, expr_instance) == false)
-                            throw invalid_expression(err_tok, "This expression is not of the expected type instance");
-                    }
-                }
-            }
+static void set_list_instance(std::shared_ptr<list_expression> const & list_expr, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    // we also make that new type instance is complete
+    if(new_instance.is_complete() == false)
+        throw invalid_type(new_instance.get_token(), "The given type instance cannot be on expressions unless it is complete.");
+
+    // since the list inferred type instance is incomplete, we replace it with the new complete type instance
+    list_expr -> set_type_instance(new_instance, false);
+
+    // we go over the elements in the list looking for expressions with incomplete type instances to replace them
+    std::vector<std::shared_ptr<expr> >& elements = list_expr -> get_elements();
+    std::vector<type_instance>& new_instances = new_instance.get_params();
+    type_instance& elem_instance = new_instances[0];
+    for(auto& elem : elements)
+        set_type_instance(elem, elem_instance, l_scope, ns_name, sub_ns_name);
+}
+
+static void set_list_instance(std::shared_ptr<expr>& an_expression, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    std::shared_ptr<list_expression> const & list_expr = std::static_pointer_cast<list_expression>(an_expression);
+    set_list_instance(list_expr, new_instance, l_scope, ns_name, sub_ns_name);
+}
+
+static void set_map_instance(std::shared_ptr<map_expression> const & map_expr, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    // we also make that new type instance is complete
+    if(new_instance.is_complete() == false)
+        throw invalid_type(new_instance.get_token(), "The given type instance cannot be on expressions unless it is complete.");
+
+    // since the map inferred type instance is incomplete, we replace it with the new complete type instance
+    map_expr -> set_type_instance(new_instance, false);
+
+    // we go over the elements in the map looking for expressions with incomplete type instances to replace them
+    std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > >& elements = map_expr -> get_elements();
+    std::vector<type_instance>& new_instances = new_instance.get_params();
+    type_instance& key_instance = new_instances[0];
+    type_instance& value_instance = new_instances[1];
+    for(auto& elem : elements) {
+        set_type_instance(elem.first, key_instance, l_scope, ns_name, sub_ns_name);
+        set_type_instance(elem.second, value_instance, l_scope, ns_name, sub_ns_name);
+    }
+}
+
+static void set_map_instance(std::shared_ptr<expr>& an_expression, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    std::shared_ptr<map_expression> const & map_expr = std::static_pointer_cast<map_expression>(an_expression);
+    set_map_instance(map_expr, new_instance, l_scope, ns_name, sub_ns_name);
+}
+
+static void replace_instance(type_instance& dest, type_instance& orig) {
+    if(dest.is_abstract()) {
+        std::vector<type_instance>& params = orig.get_params();
+        for(auto& param : params) {
+            if(dest.get_token() == param.get_old_token())
+                dest = param;
         }
-        // if it has a type, then we compare it with the type instance from the expression
-        else {
-            // if the type instance of the expression and that of the contructor parameter are different, no point continuing
-            if(type_instance_weak_compare(cons_instance, expr_instance) == false) {
-                throw invalid_expression(err_tok, "This expression has type instance <" + mangle_type_instance(expr_instance) + "> while the expected type instance is <" + mangle_type_instance(cons_instance) + ">.");
+    }
+    else if(dest.is_parametrized()) {
+        std::vector<type_instance>& params = dest.get_params();
+        for(auto& param : params)
+            replace_instance(param, orig);
+    }
+}
+
+static void set_call_instance(std::shared_ptr<call_expression> const & call_expr, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    // we quickly exist if the call expression is a function call instead of a default or record constructor expression
+    if(call_expr -> get_expression_type() == FUNCTION_CALL_EXPR)
+        return;
+
+    // we also make that new type instance is complete
+    if(new_instance.is_complete() == false)
+        throw invalid_type(new_instance.get_token(), "The given type instance cannot be on expressions unless it is complete.");
+
+    // since the call inferred type instance is incomplete, we replace it with the new complete type instance
+    call_expr -> set_type_instance(new_instance, false);
+
+    // assume we have a default constructor expression
+    if(call_expr -> get_expression_type() == DEFAULT_CONSTRUCTOR_EXPR) {
+        std::vector<std::pair<token, std::shared_ptr<expr> > >& cons_args = call_expr -> get_arguments();
+        default_constructor& cons = l_scope -> get_default_constructor(sub_ns_name, call_expr -> get_name(), cons_args.size());
+        std::vector<type_instance>& cons_params = cons.get_params();
+
+        auto param_it = cons_params.begin(), param_end = cons_params.end();
+        auto arg_it = cons_args.begin(), arg_end = cons_args.end();
+        for(; param_it != param_end && arg_it != arg_end; ++param_it, ++arg_it) {
+            type_instance final_instance = * param_it;
+            replace_instance(final_instance, new_instance);
+            try {
+                type_instance_checker::complex_check(final_instance, l_scope, ns_name);
+            } catch(invalid_type err) {
+                throw invalid_expression(arg_it -> second -> expr_token(), "The given type instance for this expression is not valid. Details: " + std::string(err.what()));
             }
-            // if the type instance from the constructor compares weakly from the type instance from the expression,
-            // we check to see if the type instance from the expression is a concrete type before proceeding
+            type_instance& inferred_instance = arg_it -> second -> expr_type_instance();
+            if(type_instance_weak_compare(inferred_instance, final_instance) == false) {
+                throw invalid_expression(arg_it -> second -> expr_token(), "The given type instance for this expression <" + mangle_type_instance(final_instance) + "> is not the same as the one inferred <" + mangle_type_instance(inferred_instance) + ">.");
+            }
+            set_type_instance(arg_it -> second, final_instance, l_scope, ns_name, sub_ns_name);
+        }
+    }
+
+    // assuming we have a record constructor expression
+    if(call_expr -> get_expression_type() == RECORD_CONSTRUCTOR_EXPR) {
+        std::vector<std::pair<token, std::shared_ptr<expr> > >& cons_args = call_expr -> get_arguments();
+        record_constructor& cons = l_scope -> get_record_constructor(sub_ns_name, call_expr -> get_name(), cons_args.size());
+        std::map<token, type_instance>& cons_params = cons.get_params();
+
+        for(auto& cons_arg : cons_args) {
+            type_instance final_instance = cons_params[cons_arg.first];
+            replace_instance(final_instance, new_instance);
+            try {
+                type_instance_checker::complex_check(final_instance, l_scope, ns_name);
+            } catch(invalid_type err) {
+                throw invalid_expression(cons_arg.second -> expr_token(), "The given type instance for this expression is not valid. Details: " + std::string(err.what()));
+            }
+            type_instance& inferred_instance = cons_arg.second -> expr_type_instance();
+            if(type_instance_weak_compare(inferred_instance, final_instance) == false) {
+                throw invalid_expression(cons_arg.second -> expr_token(), "The given type instance for this expression <" + mangle_type_instance(final_instance) + "> is not the same as the one inferred <" + mangle_type_instance(inferred_instance) + ">.");
+            }
+            set_type_instance(cons_arg.second, final_instance, l_scope, ns_name, sub_ns_name);
+        }
+    }
+}
+
+static void set_call_instance(std::shared_ptr<expr>& an_expression, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(an_expression);
+    set_call_instance(call_expr, new_instance, l_scope, ns_name, sub_ns_name);
+}
+
+static void set_identifier_instance(std::shared_ptr<identifier_expression> const & id_expr, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    // variable expressions always have a complete type instances so we don't work on them
+    if(id_expr -> get_expression_type() == VAR_EXPR)
+        return;
+
+    // we also make that new type instance is complete
+    if(new_instance.is_complete() == false)
+        throw invalid_type(new_instance.get_token(), "The given type instance cannot be on expressions unless it is complete.");
+
+    // since the identifier inferred type instance is incomplete, we replace it with the new complete type instance
+    id_expr -> set_type_instance(new_instance, false);
+}
+
+static void set_identifier_instance(std::shared_ptr<expr>& an_expression, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(an_expression);
+    set_identifier_instance(id_expr, new_instance, l_scope, ns_name, sub_ns_name);
+}
+
+static void set_grouped_instance(std::shared_ptr<grouped_expression> const & group_expr, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    // we also make that new type instance is complete
+    if(new_instance.is_complete() == false)
+        throw invalid_type(new_instance.get_token(), "The given type instance cannot be on expressions unless it is complete.");
+
+    // since the grouped inferred type instance is incomplete, we replace it with the new complete type instance
+    group_expr -> set_type_instance(new_instance);
+
+    // work on the contained value
+    std::shared_ptr<expr>& value = group_expr -> get_value();
+    set_type_instance(value, new_instance, l_scope, ns_name, sub_ns_name);
+}
+
+static void set_grouped_instance(std::shared_ptr<expr>& an_expression, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    std::shared_ptr<grouped_expression> const & id_expr = std::static_pointer_cast<grouped_expression>(an_expression);
+    set_grouped_instance(id_expr, new_instance, l_scope, ns_name, sub_ns_name);
+}
+
+void set_type_instance(std::shared_ptr<expr>& an_expression, type_instance& new_instance, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    if(
+       an_expression -> is_underscore_expression()  ||
+       an_expression -> is_literal_expression()     ||
+       an_expression -> is_cast_expression()        ||
+       an_expression -> is_unary_expression()
+    ) {
+        return;
+    }
+    else if(an_expression -> is_tuple_expression()) {
+        set_tuple_instance(an_expression, new_instance, l_scope, ns_name, sub_ns_name);
+    }
+    else if(an_expression -> is_list_expression()) {
+        set_list_instance(an_expression, new_instance, l_scope, ns_name, sub_ns_name);
+    }
+    else if(an_expression -> is_map_expression()) {
+        set_map_instance(an_expression, new_instance, l_scope, ns_name, sub_ns_name);
+    }
+    else if(an_expression -> is_call_expression()) {
+        set_call_instance(an_expression, new_instance, l_scope, ns_name, sub_ns_name);
+    }
+    else if(an_expression -> is_identifier_expression()) {
+        set_identifier_instance(an_expression, new_instance, l_scope, ns_name, sub_ns_name);
+    }
+    else if(an_expression -> is_grouped_expression()) {
+        set_grouped_instance(an_expression, new_instance, l_scope, ns_name, sub_ns_name);
+    }
+    else {
+        throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
+    }
+}
+
+static void build_type_instance(type_instance& dest_instance, type_instance cons_instance, type_instance expr_instance, token err_tok) {
+    // if the type instance from the constructor is abstract,
+    // then it is a type instance built from a type parameter (done in the inferer below)
+    // we search for it on the destination type instance to perform a replacement with the type instance from the expression
+    if(cons_instance.is_abstract() == true) {
+        std::vector<type_instance>& dest_params = dest_instance.get_params();
+        // we try to find the constructor instance amond the type parameters given to us on the destination instance
+        for(auto& dest_param : dest_params) {
+            // if we find the constructor type instance, we perform the replacement
+            if(dest_param.get_token() == cons_instance.get_token()) {
+                dest_param = expr_instance;
+            }
+            // if we cannot find the constructor type instance, we try to see if the replacement was not done already                
             else {
-                // if the type instance from the constructor is concrete but the one from the expression is not, we have an error
-                // WHY? I wrote this code in an earlier version but can't seem to recall why I required this
-                if(cons_instance.is_abstract() == false && expr_instance.is_abstract() == true) {
-                    throw invalid_expression(err_tok, "This expression has type instance <" + mangle_type_instance(expr_instance) + "> while the expected type instance is <" + mangle_type_instance(cons_instance) + ">.");
-                }
-                // if on the other hand both the type instance from the constructor and the one from the expression are concrete,
-                // then we look into their arguments for potential type parameters
-                else {
-                    std::vector<type_instance>& cons_params = cons_instance.get_params();
-                    std::vector<type_instance>& expr_params = expr_instance.get_params();
-
-                    auto cons_it = cons_params.begin(), cons_end = cons_params.end();
-                    auto expr_it = expr_params.begin(), expr_end = expr_params.end();
-                    for(; cons_it != cons_end && expr_it != expr_end; ++cons_it, ++expr_it)
-                        build_type_instance(dest_instance, * cons_it, * expr_it, err_tok);
+                // if it was already done, we make sure the new type instance (it exists on the expression) is equal to the existing one
+                if(cons_instance.get_token() == dest_param.get_old_token()) {
+                    if(type_instance_weak_compare(dest_param, expr_instance) == false)
+                        throw invalid_expression(err_tok, "This expression is not of the expected type instance");
                 }
             }
         }
     }
-
-    static type_instance build_function(function& new_fun, const token& error_tok, const std::string& name, std::vector<type_instance>& args_instances, type_instance& ret_instance, std::vector<type_instance>& constraint_instances, std::vector<token>& standins, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::shared_ptr<function> fun = nullptr;
-
-        // we try to find the function        
-        try {
-            fun = find_function(name, args_instances, ret_instance, l_scope, ns_name, standins);
-        } catch(symbol_not_found err) {
-            throw invalid_expression(error_tok, err.what());
-        } catch(symbol_can_collide err) {
-            throw invalid_expression(error_tok, err.what());
-        } catch(invalid_type err) {
-            throw invalid_expression(err.get_token(), "No function declaration that corresponds to this function call was found. Reason: " + std::string(err.what()));
+    // if it has a type, then we compare it with the type instance from the expression
+    else {
+        // if the type instance of the expression and that of the contructor parameter are different, no point continuing
+        if(type_instance_weak_compare(cons_instance, expr_instance) == false) {
+            throw invalid_expression(err_tok, "This expression has type instance <" + mangle_type_instance(expr_instance) + "> while the expected type instance is <" + mangle_type_instance(cons_instance) + ">.");
         }
-
-        // we generate a new function from the function we found
-        new_fun = * fun;
-        function_generator generator(new_fun, constraint_instances, l_scope, ns_name);
-        try {
-            generator.generate(args_instances, ret_instance);
-        } catch(invalid_type err) {
-            throw invalid_expression(err.get_token(), err.what());
-        } catch(invalid_function err) {
-            throw invalid_expression(err.get_token(), err.what());
-        }
-
-        // add the specialization to the root function
-        new_fun.set_name(mangle_function(new_fun));
-        fun -> add_specialization(new_fun);
-        fun -> is_used(true);
-
-        // the return type of the function is the type instance of the expression
-        type_instance& fun_instance = new_fun.get_return_type_instance();
-
-        // typecheck the infered type instance
-        try {
-            type_instance_checker::complex_check(fun_instance, l_scope, ns_name);
-        } catch(invalid_type err) {
-            throw invalid_expression(err.get_token(), err.what());
-        }
-
-        return fun_instance;
-    }
-
-    /**
-     * infer
-     * given an expression, this function infers the type instance of said expression and returns it
-     */
-    type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
-        if(an_expression -> is_underscore_expression()) {
-            return inferer::infer_underscore(an_expression);
-        }
-        else if(an_expression -> is_literal_expression()) {
-            return inferer::infer_literal(an_expression, l_scope, ns_name);
-        }
-        else if(an_expression -> is_tuple_expression()) {
-            return inferer::infer_tuple(an_expression, l_scope, ns_name);
-        }
-        else if(an_expression -> is_list_expression()) {
-            return inferer::infer_list(an_expression, l_scope, ns_name);
-        }
-        else if(an_expression -> is_map_expression()) {
-            return inferer::infer_map(an_expression, l_scope, ns_name);
-        }
-        else if(an_expression -> is_call_expression()) {
-            return inferer::infer_call(an_expression, l_scope, ns_name, sub_ns_name);
-        }
-        else if(an_expression -> is_identifier_expression()) {
-            return inferer::infer_identifier(an_expression, l_scope, ns_name, sub_ns_name);
-        }
-        else if(an_expression -> is_grouped_expression()) {
-            return inferer::infer_grouping(an_expression, l_scope, ns_name);
-        }
-        else if(an_expression -> is_cast_expression()) {
-            return inferer::infer_cast(an_expression, l_scope, ns_name);
-        }
-        else if(an_expression -> is_unary_expression()) {
-            return inferer::infer_unary(an_expression, l_scope, ns_name);
-        }
+        // if the type instance from the constructor compares weakly from the type instance from the expression,
+        // we check to see if the type instance from the expression is a concrete type before proceeding
         else {
-            throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
+            std::vector<type_instance>& cons_params = cons_instance.get_params();
+            std::vector<type_instance>& expr_params = expr_instance.get_params();
+
+            auto cons_it = cons_params.begin(), cons_end = cons_params.end();
+            auto expr_it = expr_params.begin(), expr_end = expr_params.end();
+            for(; cons_it != cons_end && expr_it != expr_end; ++cons_it, ++expr_it)
+                build_type_instance(dest_instance, * cons_it, * expr_it, err_tok);
         }
     }
+}    
+
+static type_instance build_function(function& new_fun, const token& error_tok, const std::string& name, std::vector<type_instance>& args_instances, type_instance& ret_instance, std::vector<type_instance>& constraint_instances, std::vector<token>& standins, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+    std::shared_ptr<function> fun = nullptr;
+
+    // we try to find the function        
+    try {
+        fun = find_function(name, args_instances, ret_instance, l_scope, ns_name, standins);
+    } catch(symbol_not_found err) {
+        throw invalid_expression(error_tok, err.what());
+    } catch(symbol_can_collide err) {
+        throw invalid_expression(error_tok, err.what());
+    } catch(invalid_type err) {
+        throw invalid_expression(err.get_token(), "No function declaration that corresponds to this function call was found. Reason: " + std::string(err.what()));
+    }
+
+    // we generate a new function from the function we found
+    new_fun = * fun;
+    function_generator generator(new_fun, constraint_instances, l_scope, ns_name);
+    try {
+        generator.generate(args_instances, ret_instance);
+    } catch(invalid_type err) {
+        throw invalid_expression(err.get_token(), err.what());
+    } catch(invalid_function err) {
+        throw invalid_expression(err.get_token(), err.what());
+    }
+
+    // add the specialization to the root function
+    new_fun.set_name(mangle_function(new_fun));
+    fun -> add_specialization(new_fun);
+    fun -> is_used(true);
+
+    // the return type of the function is the type instance of the expression
+    type_instance& fun_instance = new_fun.get_return_type_instance();
+
+    // typecheck the inferred type instance
+    try {
+        type_instance_checker::complex_check(fun_instance, l_scope, ns_name);
+    } catch(invalid_type err) {
+        throw invalid_expression(err.get_token(), err.what());
+    }
+
+    return fun_instance;
+}
+
+/**
+ * infer
+ * given an expression, this function infers the type instance of said expression and returns it
+ */
+type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    if(an_expression -> is_underscore_expression()) {
+        return inferer::infer_underscore(an_expression);
+    }
+    else if(an_expression -> is_literal_expression()) {
+        return inferer::infer_literal(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_tuple_expression()) {
+        return inferer::infer_tuple(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_list_expression()) {
+        return inferer::infer_list(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_map_expression()) {
+        return inferer::infer_map(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_call_expression()) {
+        return inferer::infer_call(an_expression, l_scope, ns_name, sub_ns_name);
+    }
+    else if(an_expression -> is_identifier_expression()) {
+        return inferer::infer_identifier(an_expression, l_scope, ns_name, sub_ns_name);
+    }
+    else if(an_expression -> is_grouped_expression()) {
+        return inferer::infer_grouping(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_cast_expression()) {
+        return inferer::infer_cast(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_unary_expression()) {
+        return inferer::infer_unary(an_expression, l_scope, ns_name);
+    }
+    else {
+        throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
+    }
+}
 
     /**
      * infer_underscore
@@ -245,51 +432,51 @@ namespace avalon {
             }
         }
         
-        type_instance infered_type_instance;
+        type_instance inferred_type_instance;
         if(lit_expr -> get_expression_type() == INTEGER_EXPR) {
             std::shared_ptr<type>& int_type = l_scope -> get_type("*", "int", 0);
             type_instance int_type_instance(int_type_tok, int_type, "*");
-            infered_type_instance = int_type_instance;
+            inferred_type_instance = int_type_instance;
         }
         else if(lit_expr -> get_expression_type() == DECIMAL_EXPR) {
             std::shared_ptr<type>& dec_type = l_scope -> get_type("*", "dec", 0);
             type_instance dec_type_instance(dec_type_tok, dec_type, "*");
-            infered_type_instance = dec_type_instance;
+            inferred_type_instance = dec_type_instance;
         }
         else if(lit_expr -> get_expression_type() == FLOATING_POINT_EXPR) {
             std::shared_ptr<type>& float_type = l_scope -> get_type("*", "float", 0);
             type_instance float_type_instance(float_type_tok, float_type, "*");
-            infered_type_instance = float_type_instance;
+            inferred_type_instance = float_type_instance;
         }
         else if(lit_expr -> get_expression_type() == STRING_EXPR) {
             std::shared_ptr<type>& string_type = l_scope -> get_type("*", "string", 0);
             type_instance string_type_instance(string_type_tok, string_type, "*");            
-            infered_type_instance = string_type_instance;
+            inferred_type_instance = string_type_instance;
         }
         else {
             throw std::runtime_error("[compiler error] unexpected literal expression in inference engine.");
         }
 
-        // typecheck the infered type instance
+        // typecheck the inferred type instance
         try {
-            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name);
+            type_instance_checker::complex_check(inferred_type_instance, l_scope, ns_name);
         } catch(invalid_type err) {
             throw invalid_expression(err.get_token(), err.what());
         }
 
-        // if we have type instance from the parser we compare it with the infered type
+        // if we have type instance from the parser we compare it with the inferred type
         // and if they equal, we keep the parser type instance
         if(has_parser_type_instance) {
-            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
-                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            if(type_instance_weak_compare(parser_type_instance, inferred_type_instance) == false) {
+                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(inferred_type_instance) + ">.");
             }
             else {
                 return parser_type_instance;
             }
         }
         else {
-            lit_expr -> set_type_instance(infered_type_instance, false);
-            return infered_type_instance;
+            lit_expr -> set_type_instance(inferred_type_instance, false);
+            return inferred_type_instance;
         }
     }
 
@@ -327,36 +514,40 @@ namespace avalon {
         // we create a type and type instance out of the expression dynamically
         token tok = tup_expr -> get_token();
         std::shared_ptr<type> tup_type = std::make_shared<type>(tok, VALID);
-        type_instance infered_type_instance(tok, tup_type, "*");
-        infered_type_instance.set_category(TUPLE);
+        type_instance inferred_type_instance(tok, tup_type, "*");
+        inferred_type_instance.set_category(TUPLE);
+        inferred_type_instance.is_parametrized(false);
 
         // we fill in the type instance parameters
         std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tup_expr -> get_elements();
         for(auto& element : elements) {
             type_instance el_instance = inferer::infer(element.second, l_scope, ns_name, ns_name);
-            infered_type_instance.add_param(el_instance);
+            inferred_type_instance.add_param(el_instance);
+            if(el_instance.is_parametrized())
+                inferred_type_instance.is_parametrized(true);
         }
 
-        // typecheck the infered type instance
+        // typecheck the inferred type instance
         try {
-            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name);
+            type_instance_checker::complex_check(inferred_type_instance, l_scope, ns_name);
         } catch(invalid_type err) {
             throw invalid_expression(err.get_token(), err.what());
         }
 
-        // if we have type instance from the parser we compare it with the infered type
+        // if we have type instance from the parser we compare it with the inferred type
         // and if they equal, we keep the parser type instance
         if(has_parser_type_instance) {
-            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
-                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            if(type_instance_weak_compare(parser_type_instance, inferred_type_instance) == false) {
+                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(inferred_type_instance) + ">.");
             }
             else {
+                set_tuple_instance(tup_expr, parser_type_instance, l_scope, ns_name, ns_name);
                 return parser_type_instance;
             }
         }
         else {
-            tup_expr -> set_type_instance(infered_type_instance, false);
-            return infered_type_instance;
+            tup_expr -> set_type_instance(inferred_type_instance, false);
+            return inferred_type_instance;
         }
     }
 
@@ -407,34 +598,42 @@ namespace avalon {
         // we leave it to the check to make sure other elements have the same type instance as the first one
         std::shared_ptr<expr>& first_element = elements[0];
         type_instance first_element_instance = inferer::infer(first_element, l_scope, ns_name, ns_name);
+        const std::vector<token>& standins = first_element_instance.get_type() -> get_params();
 
         // we build the list type instance
         token tok = list_expr -> get_token();
         std::shared_ptr<type> list_type = std::make_shared<type>(tok, VALID);
-        type_instance infered_type_instance(tok, list_type, "*");
-        infered_type_instance.set_category(LIST);
-        infered_type_instance.add_param(first_element_instance);
+        type_instance inferred_type_instance(tok, list_type, "*");
+        inferred_type_instance.set_category(LIST);
+        inferred_type_instance.add_param(first_element_instance);
+        for(auto& element : elements) {
+            type_instance elem_instance = inferer::infer(element, l_scope, ns_name, ns_name);
+            if(elem_instance.is_parametrized())
+                inferred_type_instance.is_parametrized(true);
+        }
 
-        // typecheck the infered type instance
+
+        // typecheck the inferred type instance        
         try {
-            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name);
+            type_instance_checker::complex_check(inferred_type_instance, l_scope, ns_name, standins);
         } catch(invalid_type err) {
             throw invalid_expression(err.get_token(), err.what());
         }
 
-        // if we have type instance from the parser we compare it with the infered type
+        // if we have type instance from the parser we compare it with the inferred type
         // and if they equal, we keep the parser type instance
         if(has_parser_type_instance) {
-            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
-                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            if(type_instance_weak_compare(parser_type_instance, inferred_type_instance) == false) {
+                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(inferred_type_instance) + ">.");
             }
             else {
+                set_list_instance(list_expr, parser_type_instance, l_scope, ns_name, ns_name);
                 return parser_type_instance;
             }
         }
         else {
-            list_expr -> set_type_instance(infered_type_instance, false);
-            return infered_type_instance;
+            list_expr -> set_type_instance(inferred_type_instance, false);
+            return inferred_type_instance;
         }
     }
 
@@ -490,31 +689,32 @@ namespace avalon {
         // we build the list type instance
         token tok = map_expr -> get_token();
         std::shared_ptr<type> map_type = std::make_shared<type>(tok, VALID);
-        type_instance infered_type_instance(tok, map_type, "*");
-        infered_type_instance.set_category(MAP);
-        infered_type_instance.add_param(first_element_key_instance);
-        infered_type_instance.add_param(first_element_value_instance);
+        type_instance inferred_type_instance(tok, map_type, "*");
+        inferred_type_instance.set_category(MAP);
+        inferred_type_instance.add_param(first_element_key_instance);
+        inferred_type_instance.add_param(first_element_value_instance);
 
-        // typecheck the infered type instance
+        // typecheck the inferred type instance
         try {
-            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name);
+            type_instance_checker::complex_check(inferred_type_instance, l_scope, ns_name);
         } catch(invalid_type err) {
             throw invalid_expression(err.get_token(), err.what());
         }
 
-        // if we have type instance from the parser we compare it with the infered type
+        // if we have type instance from the parser we compare it with the inferred type
         // and if they equal, we keep the parser type instance
         if(has_parser_type_instance) {
-            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
-                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            if(type_instance_weak_compare(parser_type_instance, inferred_type_instance) == false) {
+                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(inferred_type_instance) + ">.");
             }
             else {
+                set_map_instance(map_expr, parser_type_instance, l_scope, ns_name, ns_name);
                 return parser_type_instance;
             }
         }
         else {
-            map_expr -> set_type_instance(infered_type_instance, false);
-            return infered_type_instance;
+            map_expr -> set_type_instance(inferred_type_instance, false);
+            return inferred_type_instance;
         }
     }
 
@@ -574,53 +774,55 @@ namespace avalon {
         const token& type_token = cons_type -> get_token();
 
         // we create the type instance for which we are going to fill parameters
-        type_instance infered_type_instance(const_cast<token&>(type_token), cons_type, sub_ns_name);
+        type_instance inferred_type_instance(const_cast<token&>(type_token), cons_type, sub_ns_name);
         // at this point, all of this type instance parameters will be abstract types so the instance should be parametrized
         // but since we are going to be replacing those parameters (or some anyway) with other types, it is easier to go from not parametrized to parametrized
         // the logic is this: we start with not parametrized. the moment we encounter a parametrized type, we set this type instance to parametrized
         // doing this like this is O(1) while doing the reverse would be at best O(n)
-        infered_type_instance.is_parametrized(false);
+        inferred_type_instance.is_parametrized(false);
         for(auto& type_param : type_params) {
             type_instance instance_param(const_cast<token&>(type_param), "*");
             instance_param.is_parametrized(true);
-            infered_type_instance.add_param(instance_param);
+            inferred_type_instance.add_param(instance_param);
         }
 
         // we have a type instance with abstract types from the type builder
-        // now we need to replace them with actual types infered from the constructor expression
+        // now we need to replace them with actual types inferred from the constructor expression
         auto param_it = cons_params.begin(), param_end = cons_params.end();
         auto arg_it = cons_args.begin(), arg_end = cons_args.end();
         for(; param_it != param_end && arg_it != arg_end; ++param_it, ++arg_it) {
+            // validate the constructor parameter
             try {
                 type_instance_checker::complex_check(* param_it, l_scope, ns_name, type_params);
             } catch(invalid_type err) {
                 throw invalid_expression(param_it -> get_token(), err.what());
             }
+            // infer the argument type instance
             type_instance arg_type_instance = inferer::infer(arg_it -> second, l_scope, ns_name, sub_ns_name);
-            build_type_instance(infered_type_instance, * param_it, arg_type_instance, call_expr -> get_token());
+            build_type_instance(inferred_type_instance, * param_it, arg_type_instance, call_expr -> get_token());
         }
 
-        // typecheck the infered type instance
+        // typecheck the inferred type instance
         try {
-            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name, type_params);
+            type_instance_checker::complex_check(inferred_type_instance, l_scope, ns_name, type_params);
         } catch(invalid_type err) {
             throw invalid_expression(call_expr -> get_token(), err.what());
         }
 
-        // if we have type instance from the parser we compare it with the infered type
+        // if we have type instance from the parser we compare it with the inferred type
         // and if they equal, we keep the parser type instance
         if(has_parser_type_instance) {
-            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
-                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            if(type_instance_weak_compare(parser_type_instance, inferred_type_instance) == false) {
+                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(inferred_type_instance) + ">.");
             }
             else {
-                call_expr -> set_type_instance(parser_type_instance, false);
+                set_call_instance(call_expr, parser_type_instance, l_scope, ns_name, sub_ns_name);
                 return parser_type_instance;
             }
         }
         else {
-            call_expr -> set_type_instance(infered_type_instance, false);
-            return infered_type_instance;
+            call_expr -> set_type_instance(inferred_type_instance, false);
+            return inferred_type_instance;
         }
     }
 
@@ -661,54 +863,55 @@ namespace avalon {
         const token& type_token = cons_type -> get_token();
 
         // we create the type instance for which we are going to fill parameters
-        type_instance infered_type_instance(const_cast<token&>(type_token), cons_type, sub_ns_name);
+        type_instance inferred_type_instance(const_cast<token&>(type_token), cons_type, sub_ns_name);
         // at this point, all of this type instance parameters will be abstract types so the instance should be parametrized
         // but since we are going to be replacing those parameters (or some anyway) with other types, it is easier to go from not parametrized to parametrized
         // the logic is this: we start with not parametrized. the moment we encounter a parametrized type, we set this type instance to parametrized
         // doing this like this is O(1) while doing the reverse would be at best O(n)
-        infered_type_instance.is_parametrized(false);
+        inferred_type_instance.is_parametrized(false);
         for(auto& type_param : type_params) {
             type_instance instance_param(const_cast<token&>(type_param), "*");
             instance_param.is_parametrized(true);
-            infered_type_instance.add_param(instance_param);
+            inferred_type_instance.add_param(instance_param);
         }
 
         // we have a type instance with abstract types from the type builder
-        // now we need to replace them with actual types infered from the constructor expression
-        for(auto& cons_arg : cons_args) {            
+        // now we need to replace them with actual types inferred from the constructor expression
+        for(auto& cons_arg : cons_args) {
             type_instance& cons_param = cons_params[cons_arg.first];
             try {
                 type_instance_checker::complex_check(cons_param, l_scope, ns_name, type_params);
             } catch(invalid_type err) {
                 throw invalid_expression(cons_param.get_token(), err.what());
             }
+            // infer the argument type instance
             type_instance arg_type_instance = inferer::infer(cons_arg.second, l_scope, ns_name, sub_ns_name);
             if(arg_type_instance.is_parametrized())
-                infered_type_instance.is_parametrized(true);
-            build_type_instance(infered_type_instance, cons_param, arg_type_instance, call_expr -> get_token());
+                inferred_type_instance.is_parametrized(true);            
+            build_type_instance(inferred_type_instance, cons_param, arg_type_instance, call_expr -> get_token());
         }
 
-        // typecheck the infered type instance
+        // typecheck the inferred type instance
         try {
-            type_instance_checker::complex_check(infered_type_instance, l_scope, ns_name, type_params);
+            type_instance_checker::complex_check(inferred_type_instance, l_scope, ns_name, type_params);
         } catch(invalid_type err) {
             throw invalid_expression(err.get_token(), err.what());
         }
 
-        // if we have type instance from the parser we compare it with the infered type
+        // if we have type instance from the parser we compare it with the inferred type
         // and if they equal, we keep the parser type instance
         if(has_parser_type_instance) {
-            if(type_instance_weak_compare(parser_type_instance, infered_type_instance) == false) {
-                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(infered_type_instance) + ">.");
+            if(type_instance_weak_compare(parser_type_instance, inferred_type_instance) == false) {
+                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied along the expression: <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one deduced by the inference engine: <" + mangle_type_instance(inferred_type_instance) + ">.");
             }
             else {
-                call_expr -> set_type_instance(parser_type_instance, false);
+                set_call_instance(call_expr, parser_type_instance, l_scope, ns_name, sub_ns_name);
                 return parser_type_instance;
             }
         }
         else {
-            call_expr -> set_type_instance(infered_type_instance, false);
-            return infered_type_instance;
+            call_expr -> set_type_instance(inferred_type_instance, false);
+            return inferred_type_instance;
         }
     }
 
@@ -785,17 +988,17 @@ namespace avalon {
             std::shared_ptr<variable>& var_decl = l_scope -> get_variable(sub_ns_name, id_expr -> get_name());
             type_instance& var_instance = var_decl -> get_type_instance();
 
-            // typecheck the infered type instance
+            // typecheck the inferred type instance
             try {
                 type_instance_checker::complex_check(var_instance, l_scope, ns_name);
             } catch(invalid_type err) {
                 throw invalid_expression(err.get_token(), err.what());
             }
 
-            // if we have a parser type instance, we make sure it is the same as the one we infered
+            // if we have a parser type instance, we make sure it is the same as the one we inferred
             if(has_parser_type_instance) {
                 if(type_instance_weak_compare(parser_type_instance, var_instance) == false)
-                    throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one infered <" + mangle_type_instance(var_instance) + ">.");
+                    throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one inferred <" + mangle_type_instance(var_instance) + ">.");
             }
 
             // set the type instance on the expression
@@ -852,22 +1055,21 @@ namespace avalon {
             cons_instance.add_param(instance_param);
         }
 
-        // typecheck the infered type instance
+        // typecheck the inferred type instance
         try {
             type_instance_checker::complex_check(cons_instance, l_scope, ns_name, type_params);
         } catch(invalid_type err) {
             throw invalid_expression(id_expr -> get_token(), err.what());
         }
 
-        // make sure that if the user set their own type instance, it is equal to the one we infered
+        // make sure that if the user set their own type instance, it is equal to the one we inferred
         if(has_parser_type_instance) {
             if(type_instance_weak_compare(parser_type_instance, cons_instance) == false) {                
-                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one infered <" + mangle_type_instance(cons_instance) + ">.");
+                throw invalid_expression(parser_type_instance.get_token(), "The type instance supplied <" + mangle_type_instance(parser_type_instance) + "> is not the same as the one inferred <" + mangle_type_instance(cons_instance) + ">.");
             }
             else {
-                if(parser_type_instance.is_complete()) {                    
-                    cons_instance = parser_type_instance;
-                }
+                set_identifier_instance(id_expr, parser_type_instance, l_scope, ns_name, sub_ns_name);
+                return parser_type_instance;
             }
         }
 

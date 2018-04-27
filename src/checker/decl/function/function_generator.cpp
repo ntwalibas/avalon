@@ -60,13 +60,24 @@ namespace avalon {
         const token& orig_tok = orig.get_token();
         dest.set_token(orig_tok);
 
-        // we update the type
-        std::shared_ptr<type>& orig_type = orig.get_type();                    
-        dest.set_type(orig_type);
+        // we update the category
+        const type_instance_category& orig_category = orig.get_category();
+        dest.set_category(orig_category);
 
         // we update the namespace
         const std::string& ns_name = orig.get_namespace();
         dest.set_namespace(ns_name);
+
+        // we update the type
+        std::shared_ptr<type>& orig_type = orig.get_type();
+        dest.set_type(orig_type);
+
+        // we update the elements count (in the case of lists and map)
+        std::size_t orig_count = orig.get_count();
+        dest.set_count(orig_count);
+
+        // we update the parametrization status
+        dest.is_parametrized(orig.is_parametrized());
 
         // we set parameters            
         for(auto& orig_param : orig_params)

@@ -252,11 +252,11 @@ namespace avalon {
         // we check if it is a default constructor or a record constructor
         else {
             if(call_expr -> has_record_syntax()) {
-                call_expr -> set_expression_type(DEFAULT_CONSTRUCTOR_EXPR);
+                call_expr -> set_expression_type(RECORD_CONSTRUCTOR_EXPR);
                 return check_record_constructor(call_expr, l_scope, ns_name, sub_ns_name);
             }
             else {
-                call_expr -> set_expression_type(RECORD_CONSTRUCTOR_EXPR);
+                call_expr -> set_expression_type(DEFAULT_CONSTRUCTOR_EXPR);
                 return check_default_constructor(call_expr, l_scope, ns_name, sub_ns_name);
             }
         }

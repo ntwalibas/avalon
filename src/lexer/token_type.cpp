@@ -25,7 +25,6 @@ namespace avalon {
         "DIV",
         "MOD",
         "COMMA",
-        "COLON",
         "NEWLINE",
         "INDENT",
         "DEDENT",
@@ -54,6 +53,8 @@ namespace avalon {
         "LOGICAL_AND",
         "LEFT_SHIFT",
         "RIGHT_SHIFT",
+        "COLON",
+        "COLON_COLON",
 
         /* Literals */
         "IDENTIFIER",

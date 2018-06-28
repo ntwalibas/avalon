@@ -13,7 +13,7 @@ namespace avalon {
     /**
      * the constructor expects the token with type source information
      */
-    call_expression::call_expression(token& tok) : m_tok(tok), m_name(tok.get_lexeme()), m_expr_type(FUNCTION_CALL_EXPR), m_type_instance_from_parser(false), m_return_type(star_instance) {
+    call_expression::call_expression(token& tok) : m_tok(tok), m_namespace("*"), m_name(tok.get_lexeme()), m_expr_type(FUNCTION_CALL_EXPR), m_type_instance_from_parser(false), m_return_type(star_instance) {
     }
 
     /**
@@ -22,6 +22,22 @@ namespace avalon {
      */
     const token& call_expression::get_token() const {
         return m_tok;
+    }
+
+    /**
+     * set_namespace
+     * set the namespace where this call expression was found
+     */
+    void call_expression::set_namespace(const std::string& namespace_name) {
+        m_namespace = namespace_name;
+    }
+
+    /**
+     * get_namespace
+     * returns the namespace where this call expression was found
+     */
+    const std::string& call_expression::get_namespace() const {
+        return m_namespace;
     }
 
     /**

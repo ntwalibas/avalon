@@ -23,6 +23,7 @@
 #include "utils/parse_util.hpp"
 #include "utils/file_util.hpp"
 
+
 namespace avalon {
     program parse_util::parse(const std::string& source_path, std::vector<std::string>& search_paths) {
         error error_handler(source_path);
@@ -46,7 +47,7 @@ namespace avalon {
         }
 
         // tokenize the file
-        lexer lxr(source_abs_path, source, error_handler);
+        lexer lxr(source_path, source, error_handler);
         try {
             std::vector<std::shared_ptr<token> >& tokens = lxr.lex();
             

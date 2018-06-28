@@ -1,10 +1,12 @@
 #ifndef AVALON_CHECKER_EXPR_EXPRESSION_CHECKER_HPP_
 #define AVALON_CHECKER_EXPR_EXPRESSION_CHECKER_HPP_
 
+#include <utility>
 #include <memory>
 #include <string>
 
 #include "representer/hir/ast/expr/identifier_expression.hpp"
+#include "representer/hir/ast/expr/binary_expression.hpp"
 #include "representer/hir/ast/stmt/expression_stmt.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
 #include "representer/hir/symtable/scope.hpp"
@@ -13,6 +15,16 @@
 
 
 namespace avalon {
+    enum last_binary_expression_type {
+        BIN_NONE,
+        BIN_NAMESPACE,
+        BIN_VARIABLE,
+        BIN_ATTRIBUTE,
+        BIN_SUBSCRIPT,
+        BIN_FUNCTION,
+        BIN_CONSTRUCTOR,
+    };
+
     class expression_checker {
     public:
         /**
@@ -32,6 +44,7 @@ namespace avalon {
          * determines the kind of expression we have then calls the appropriate checker
          */
         type_instance check(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
 
     private:
         /**
@@ -72,45 +85,45 @@ namespace avalon {
          * this function determines the kind of expression the call expression is (default constructor, record constructor or function call)
          * then dispatches the checking to the actual checker.
          */
-        type_instance check_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+        type_instance check_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_default_constructor
          * we validate the expressions that occur within the constructor.
          */
-        type_instance check_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+        type_instance check_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_record_constructor
          * we validate the expressions that occur within the constructor.
          */
-        type_instance check_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+        type_instance check_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_function_call
          * we validate the expressions that were passed as argument to the function
          * we also make sure that all arguments were named or none was
          */
-        type_instance check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+        type_instance check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_identifier
          * this function determines the kind of identifier expression this is (default constructor or variable)
          * then dispatches the checking to the appropriate checker.
          */
-        type_instance check_identifier(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+        type_instance check_identifier(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_variable
          * we make sure that the variable declaration associated with this variable expression is valid
          */
-        type_instance check_variable(std::shared_ptr<identifier_expression> const & an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+        type_instance check_variable(std::shared_ptr<identifier_expression> const & an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_constructor
          * we make sure that the default constructor associated with this identifier expression is valid
          */
-        type_instance check_constructor(std::shared_ptr<identifier_expression> const & an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name);
+        type_instance check_constructor(std::shared_ptr<identifier_expression> const & an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_grouping
@@ -133,9 +146,41 @@ namespace avalon {
 
         /**
          * check_binary
-         * we make sure that there is a function that corresponds to the binary expression
+         * we make sure that there is a function that corresponds to the binary expression where applicable
          */
         type_instance check_binary(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+
+        /**
+         * check_functional_binary
+         * we make sure that the binary expression has a function that corresponds to it
+         */
+        type_instance check_functional_binary(binary_expression_type expr_type, std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+
+        /**
+         * check_dot_binary
+         * we make sure that the dot expression lval refers to either a namespace or a variable declaration
+         */
+        type_instance check_dot_binary(binary_expression_type expr_type, std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+
+        /**
+         * check_subscript_binary
+         * we make sure that the lval is a variable declaration and that its content is accessible for reading
+         */
+        type_instance check_subscript_binary(binary_expression_type expr_type, std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+                
+        type_instance check_namespace_binary(const std::string& sub_ns_name, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_variable_binary(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_variable_attribute(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_tuple_attribute(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_custom_attribute(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_variable_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_tuple_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_list_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_map_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        type_instance check_custom_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+        
+
+        
 
         /**
          * check_assignment

@@ -175,6 +175,17 @@ namespace avalon {
     }
 
     /**
+     * is_global
+     * sets and returns a boolean indicating whether this variable is a global variable
+     */
+    bool variable::is_global() {
+        return m_is_public;
+    }
+    void variable::is_global(bool is_global) {
+        m_is_global = is_global;
+    }
+
+    /**
      * is_used
      * sets and returns a boolean indicating whether this declaration was used anywhere
      * this is useful during code generation to emit messages about unused declarations and to avoid generating dead code

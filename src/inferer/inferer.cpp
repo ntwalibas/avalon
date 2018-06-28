@@ -1,7 +1,9 @@
 #include <stdexcept>
 #include <utility>
+#include <cstddef>
 #include <memory>
 #include <string>
+#include <cstdio>
 #include <map>
 
 /* Expressions */
@@ -9,6 +11,8 @@
 #include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/expr/grouped_expression.hpp"
 #include "representer/hir/ast/expr/literal_expression.hpp"
+#include "representer/hir/ast/expr/binary_expression.hpp"
+#include "representer/hir/ast/expr/unary_expression.hpp"
 #include "representer/hir/ast/expr/tuple_expression.hpp"
 #include "representer/hir/ast/expr/list_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
@@ -355,7 +359,7 @@ static type_instance build_function(function& new_fun, const token& error_tok, c
  * infer
  * given an expression, this function infers the type instance of said expression and returns it
  */
-type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
     if(an_expression -> is_underscore_expression()) {
         return inferer::infer_underscore(an_expression);
     }
@@ -372,10 +376,10 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         return inferer::infer_map(an_expression, l_scope, ns_name);
     }
     else if(an_expression -> is_call_expression()) {
-        return inferer::infer_call(an_expression, l_scope, ns_name, sub_ns_name);
+        return inferer::infer_call(an_expression, l_scope, ns_name);
     }
     else if(an_expression -> is_identifier_expression()) {
-        return inferer::infer_identifier(an_expression, l_scope, ns_name, sub_ns_name);
+        return inferer::infer_identifier(an_expression, l_scope, ns_name);
     }
     else if(an_expression -> is_grouped_expression()) {
         return inferer::infer_grouping(an_expression, l_scope, ns_name);
@@ -521,7 +525,7 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         // we fill in the type instance parameters
         std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tup_expr -> get_elements();
         for(auto& element : elements) {
-            type_instance el_instance = inferer::infer(element.second, l_scope, ns_name, ns_name);
+            type_instance el_instance = inferer::infer(element.second, l_scope, ns_name);
             inferred_type_instance.add_param(el_instance);
             if(el_instance.is_parametrized())
                 inferred_type_instance.is_parametrized(true);
@@ -597,7 +601,7 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         // if we do have at least one element in the list, then its type instance is that of the first element
         // we leave it to the check to make sure other elements have the same type instance as the first one
         std::shared_ptr<expr>& first_element = elements[0];
-        type_instance first_element_instance = inferer::infer(first_element, l_scope, ns_name, ns_name);
+        type_instance first_element_instance = inferer::infer(first_element, l_scope, ns_name);
         const std::vector<token>& standins = first_element_instance.get_type() -> get_params();
 
         // we build the list type instance
@@ -607,11 +611,10 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         inferred_type_instance.set_category(LIST);
         inferred_type_instance.add_param(first_element_instance);
         for(auto& element : elements) {
-            type_instance elem_instance = inferer::infer(element, l_scope, ns_name, ns_name);
+            type_instance elem_instance = inferer::infer(element, l_scope, ns_name);
             if(elem_instance.is_parametrized())
                 inferred_type_instance.is_parametrized(true);
         }
-
 
         // typecheck the inferred type instance        
         try {
@@ -683,8 +686,8 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         // if we do have at least one element in the list, then its type instance is that of the first element
         // we leave it to the check to make sure other elements have the same type instance as the first one
         std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> >& first_element = elements[0];
-        type_instance first_element_key_instance = inferer::infer(first_element.first, l_scope, ns_name, ns_name);
-        type_instance first_element_value_instance = inferer::infer(first_element.second, l_scope, ns_name, ns_name);
+        type_instance first_element_key_instance = inferer::infer(first_element.first, l_scope, ns_name);
+        type_instance first_element_value_instance = inferer::infer(first_element.second, l_scope, ns_name);
 
         // we build the list type instance
         token tok = map_expr -> get_token();
@@ -722,18 +725,18 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
      * infer_call
      * infers the type instance of a call expression
      */
-    type_instance inferer::infer_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance inferer::infer_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
         std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(an_expression);
         
         if(call_expr -> get_expression_type() == DEFAULT_CONSTRUCTOR_EXPR) {
-            return inferer::infer_default_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+            return inferer::infer_default_constructor(call_expr, l_scope, ns_name);
         }
         else if(call_expr -> get_expression_type() == RECORD_CONSTRUCTOR_EXPR) {
-            return inferer::infer_record_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+            return inferer::infer_record_constructor(call_expr, l_scope, ns_name);
         }
         else {
             function new_fun(star_tok);
-            return inferer::infer_function_call(new_fun, call_expr, l_scope, ns_name, sub_ns_name);
+            return inferer::infer_function_call(new_fun, call_expr, l_scope, ns_name);
         }
     }
 
@@ -741,7 +744,9 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
      * infer_default_constructor
      * infers the type instance of a default constructor expression
      */
-    type_instance inferer::infer_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance inferer::infer_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        const std::string& sub_ns_name = call_expr -> get_namespace();
+
         // if the expression already has a type instance, we return it
         if(call_expr -> type_instance_from_parser() == false && call_expr -> has_type_instance() == true) {
             return call_expr -> get_type_instance();
@@ -798,7 +803,7 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
                 throw invalid_expression(param_it -> get_token(), err.what());
             }
             // infer the argument type instance
-            type_instance arg_type_instance = inferer::infer(arg_it -> second, l_scope, ns_name, sub_ns_name);
+            type_instance arg_type_instance = inferer::infer(arg_it -> second, l_scope, ns_name);
             build_type_instance(inferred_type_instance, * param_it, arg_type_instance, call_expr -> get_token());
         }
 
@@ -830,7 +835,9 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
      * infer_record_constructor
      * infers the type instance of a record constructor expression
      */
-    type_instance inferer::infer_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance inferer::infer_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        const std::string& sub_ns_name = call_expr -> get_namespace();
+
         // if the expression already has a type instance, we return it
         if(call_expr -> type_instance_from_parser() == false && call_expr -> has_type_instance() == true) {
             return call_expr -> get_type_instance();
@@ -885,7 +892,7 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
                 throw invalid_expression(cons_param.get_token(), err.what());
             }
             // infer the argument type instance
-            type_instance arg_type_instance = inferer::infer(cons_arg.second, l_scope, ns_name, sub_ns_name);
+            type_instance arg_type_instance = inferer::infer(cons_arg.second, l_scope, ns_name);
             if(arg_type_instance.is_parametrized())
                 inferred_type_instance.is_parametrized(true);            
             build_type_instance(inferred_type_instance, cons_param, arg_type_instance, call_expr -> get_token());
@@ -919,7 +926,9 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
      * infer_function_call
      * infers the type instance of a function call expression
      */
-    type_instance inferer::infer_function_call(function& new_fun, std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance inferer::infer_function_call(function& new_fun, std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        const std::string& sub_ns_name = call_expr -> get_namespace();
+
         // we get all the data we can get from the call expression
         std::vector<std::pair<token, std::shared_ptr<expr> > >& call_args = call_expr -> get_arguments();
         type_instance& ret_instance = call_expr -> get_return_type_instance();
@@ -928,7 +937,7 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         // we build the data we need from the call expression data
         std::vector<type_instance> args_instances;
         for(auto& arg : call_args)
-            args_instances.push_back(inferer::infer(arg.second, l_scope, ns_name, sub_ns_name));
+            args_instances.push_back(inferer::infer(arg.second, l_scope, ns_name));
         std::vector<token> standins;
         
         // get the type instance
@@ -944,14 +953,14 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
      * infer_identifier
      * infers the type instance of an identifier expression
      */
-    type_instance inferer::infer_identifier(std::shared_ptr<expr> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance inferer::infer_identifier(std::shared_ptr<expr> & an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
         std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(an_expression);
         
         if(id_expr -> get_expression_type() == VAR_EXPR) {
-            return inferer::infer_variable(id_expr, l_scope, ns_name, sub_ns_name);
+            return inferer::infer_variable(id_expr, l_scope, ns_name);
         }
         else {
-            return inferer::infer_constructor(id_expr, l_scope, ns_name, sub_ns_name);
+            return inferer::infer_constructor(id_expr, l_scope, ns_name);
         }
     }
 
@@ -959,7 +968,9 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
      * infer_variable
      * infers the type instance of a variable expression
      */
-    type_instance inferer::infer_variable(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance inferer::infer_variable(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        const std::string& sub_ns_name = id_expr -> get_namespace();
+
         // if the expression already has a type instance, we return it
         if(id_expr -> type_instance_from_parser() == false && id_expr -> has_type_instance() == true) {
             return id_expr -> get_type_instance();
@@ -1014,7 +1025,9 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
      * infer_constructor
      * infers the type instance of an identifier constructor expression
      */
-    type_instance inferer::infer_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance inferer::infer_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        const std::string& sub_ns_name = id_expr -> get_namespace();
+
         // if the expression already has a type instance, we return it
         if(id_expr -> type_instance_from_parser() == false && id_expr -> has_type_instance() == true) {
             return id_expr -> get_type_instance();
@@ -1091,7 +1104,7 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         }
 
         std::shared_ptr<expr>& value = group_expr -> get_value();
-        type_instance group_instance = inferer::infer(value, l_scope, ns_name, ns_name);
+        type_instance group_instance = inferer::infer(value, l_scope, ns_name);
         group_expr -> set_type_instance(group_instance);
         return group_instance;
     }
@@ -1112,7 +1125,7 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
 
         std::shared_ptr<expr>& value = cast_expr -> get_val();
         std::vector<type_instance> args_instances = {
-            inferer::infer(value, l_scope, ns_name, ns_name)
+            inferer::infer(value, l_scope, ns_name)
         };
         
         std::string fun_name = "__cast__";
@@ -1130,7 +1143,9 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
     type_instance inferer::infer_unary(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
         std::shared_ptr<unary_expression> const & unary_expr = std::static_pointer_cast<unary_expression>(an_expression);
         function unary_fun(star_tok);
-        return inferer::infer_unary(unary_fun, unary_expr, l_scope, ns_name);
+        type_instance instance = inferer::infer_unary(unary_fun, unary_expr, l_scope, ns_name);
+        unary_expr -> set_type_instance(instance);
+        return instance;
     }
 
     type_instance inferer::infer_unary(function& unary_fun, std::shared_ptr<unary_expression> const & unary_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
@@ -1155,7 +1170,7 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         }
 
         // infer the type of the operand
-        type_instance op_instance = inferer::infer(value, l_scope, ns_name, ns_name);
+        type_instance op_instance = inferer::infer(value, l_scope, ns_name);
 
         // construct the rest of parameters required to find the function
         const std::string& sub_ns_name = op_instance.get_namespace();
@@ -1167,5 +1182,378 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
 
         // find the unary function that corresponds to the given parameters
         return build_function(unary_fun, unary_expr -> get_token(), fun_name, args_instances, op_instance, constraint_instances, standins, l_scope, sub_ns_name);
+    }
+
+    /**
+     * infer_binary
+     * infers the type instance of a binary expression
+     */
+    type_instance inferer::infer_binary(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<binary_expression> const & binary_expr = std::static_pointer_cast<binary_expression>(an_expression);
+        function binary_fun(star_tok);
+        type_instance instance = inferer::infer_binary(binary_fun, binary_expr, l_scope, ns_name);
+        binary_expr -> set_type_instance(instance);
+        return instance;
+    }
+
+    /**
+     * infer_binary
+     * infers the type instance of a binary expression
+     */
+    type_instance inferer::infer_binary(function& binary_fun, std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        binary_expression_type expr_type = binary_expr -> get_expression_type();
+
+        // work on operations that decay into functions
+        if(
+           expr_type == PLUS_EXPR           ||
+           expr_type == MINUS_EXPR          ||
+           expr_type == MUL_EXPR            ||
+           expr_type == DIV_EXPR            ||
+           expr_type == MOD_EXPR            ||
+           //expr_type == POW_EXPR           ||
+           expr_type == LEFT_SHIFT_EXPR     ||
+           expr_type == RIGHT_SHIFT_EXPR    ||
+           expr_type == LOGICAL_AND_EXPR    ||
+           expr_type == LOGICAL_OR_EXPR     ||
+           expr_type == BITWISE_AND_EXPR    ||
+           expr_type == BITWISE_OR_EXPR     ||
+           expr_type == BITWISE_XOR_EXPR    ||
+           expr_type == EQUAL_EQUAL_EXPR    ||
+           expr_type == NOT_EQUAL_EXPR      ||
+           expr_type == LESS_EXPR           ||
+           expr_type == LESS_EQUAL_EXPR     ||
+           expr_type == GREATER_EXPR        ||
+           expr_type == GREATER_EQUAL_EXPR
+
+        ) {
+            return infer_functional_binary(expr_type, binary_fun, binary_expr, l_scope, ns_name);
+        }
+        else if(expr_type == DOT_EXPR) {
+            return inferer::infer_dot_binary(binary_expr, l_scope, ns_name);
+        }
+        else if(expr_type == SUBSCRIPT_EXPR) {
+            return inferer::infer_subscript_binary(binary_expr, l_scope, ns_name);
+        }
+        else {
+            throw std::runtime_error("[compiler error] unexpected binary operator.");
+        }
+    }
+
+    /**
+     * infer_functional_binary
+     * infers the type instance of a binary expression that immediately decays into a function call
+     */
+    type_instance inferer::infer_functional_binary(binary_expression_type& expr_type, function& binary_fun, std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::string fun_name = "";
+        std::shared_ptr<expr>& lval = binary_expr -> get_lval();
+        std::shared_ptr<expr>& rval = binary_expr -> get_rval();
+
+        if(expr_type == PLUS_EXPR) {
+            fun_name = "__add__";
+        }
+        else if(expr_type == MINUS_EXPR) {
+            fun_name = "__sub__";
+        }
+        else if(expr_type == MUL_EXPR) {
+            fun_name = "__mul__";
+        }
+        else if(expr_type == DIV_EXPR) {
+            fun_name = "__div__";
+        }
+        else if(expr_type == MOD_EXPR) {
+            fun_name = "__mod__";
+        }
+        /*
+        else if(expr_type == POW_EXPR) {
+            fun_name = "__pow__";
+        }
+        */
+        else if(expr_type == LEFT_SHIFT_EXPR) {
+            fun_name = "__lshift__";
+        }
+        else if(expr_type == RIGHT_SHIFT_EXPR) {
+            fun_name = "__rshift__";
+        }
+        else if(expr_type == LOGICAL_AND_EXPR) {
+            fun_name = "__and__";
+        }
+        else if(expr_type == LOGICAL_OR_EXPR) {
+            fun_name = "__or__";
+        }
+        else if(expr_type == BITWISE_AND_EXPR) {
+            fun_name = "__band__";
+        }
+        else if(expr_type == BITWISE_OR_EXPR) {
+            fun_name = "__bor__";
+        }
+        else if(expr_type == BITWISE_XOR_EXPR) {
+            fun_name = "__xor__";
+        }
+        else if(expr_type == EQUAL_EQUAL_EXPR) {
+            fun_name = "__eq__";
+        }
+        else if(expr_type == NOT_EQUAL_EXPR) {
+            fun_name = "__ne__";
+        }
+        else if(expr_type == LESS_EXPR) {
+            fun_name = "__lt__";
+        }
+        else if(expr_type == LESS_EQUAL_EXPR) {
+            fun_name = "__le__";
+        }
+        else if(expr_type == GREATER_EXPR) {
+            fun_name = "__gt__";
+        }
+        else if(expr_type == GREATER_EQUAL_EXPR) {
+            fun_name = "__ge__";
+        }
+        else {
+            throw std::runtime_error("[compiler error] unexpected functional binary operator.");
+        }
+
+        // infer the type of the operands
+        type_instance lval_instance = inferer::infer(lval, l_scope, ns_name);
+        type_instance rval_instance = inferer::infer(rval, l_scope, ns_name);
+
+        // construct the rest of parameters required to find the function
+        const std::string& sub_ns_name = lval_instance.get_namespace();
+        std::vector<type_instance> args_instances = {
+            lval_instance,
+            rval_instance
+        };        
+        std::vector<token> standins;
+        std::vector<type_instance> constraint_instances;
+
+        // find the binary function that corresponds to the given parameters
+        return build_function(binary_fun, binary_expr -> get_token(), fun_name, args_instances, star_instance, constraint_instances, standins, l_scope, sub_ns_name);
+    }
+
+    /**
+     * infer_getattr_binary
+     * infers the type instance of a binary expression arising from the dot operator
+     */
+    type_instance inferer::infer_dot_binary(std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<expr>& lval = binary_expr -> get_lval();
+        std::shared_ptr<expr>& rval = binary_expr -> get_rval();
+        const std::string& name = lval -> expr_token().get_lexeme();
+
+        // if the lval is a namespace name
+        if(l_scope -> has_namespace(name)) {
+            return infer_namespace_binary(name, rval, l_scope, ns_name);
+        }
+        // if the lval is a variable
+        else if(l_scope -> variable_exists(ns_name, name)) {
+            return infer_variable_binary(lval, rval, l_scope, ns_name);
+        }
+        // anything else if an error
+        else {
+            throw invalid_expression(lval -> expr_token(), "Expected a namespace name or a variable name as lval to a dot expression.");
+        }
+    }
+
+    /**
+     * infer_subscript_binary
+     * infers the type instance of a binary expression arising from the subscript operator
+     */
+    type_instance inferer::infer_subscript_binary(std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<expr>& lval = binary_expr -> get_lval();
+        std::shared_ptr<expr>& rval = binary_expr -> get_rval();
+        const std::string& name = lval -> expr_token().get_lexeme();        
+
+        // if the lval is an identifier expression, then it is a variable expression
+        if(l_scope -> variable_exists(ns_name, name)) {
+            return infer_variable_subscript(lval, rval, l_scope, ns_name);
+        }
+        // anything else if an error
+        else {
+            throw invalid_expression(lval -> expr_token(), "Expected a variable name as lval to a subscript expression.");
+        }
+    }
+
+    type_instance inferer::infer_namespace_binary(const std::string& sub_ns_name, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // if the rval is an identifier expression, then it must be either a variable expression or a default constructor expression
+        if(rval -> is_identifier_expression()) {
+            std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(rval);
+            if(l_scope -> variable_exists(sub_ns_name, id_expr -> get_name())) {
+               id_expr -> set_namespace(sub_ns_name);
+               return infer_variable(id_expr, l_scope, ns_name);
+            }
+            else if(l_scope -> default_constructor_exists(sub_ns_name, id_expr -> get_name(), 0)) {
+                id_expr -> set_namespace(sub_ns_name);
+                return infer_constructor(id_expr, l_scope, ns_name);
+            }
+            else {
+                throw invalid_expression(id_expr -> get_token(), "Expected a variable expression or a default constructor expression after the namespace name.");
+            }        
+        }
+        // if it is a call expression, we expect it to be either a function call or a default constructor or a record constructor
+        else if(rval -> is_call_expression()) {
+            std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(rval);           
+
+            if(l_scope -> function_exists(sub_ns_name, call_expr -> get_name())) {
+                call_expr -> set_namespace(sub_ns_name);
+                function binary_fun(star_tok);
+                return infer_function_call(binary_fun, call_expr, l_scope, ns_name);
+            }
+            else if(l_scope -> default_constructor_exists(sub_ns_name, call_expr -> get_name(), call_expr -> get_arguments().size())) {
+                call_expr -> set_namespace(sub_ns_name);
+                return infer_default_constructor(call_expr, l_scope, ns_name);
+            }
+            else if(l_scope -> record_constructor_exists(sub_ns_name, call_expr -> get_name(), call_expr -> get_arguments().size())) {
+                call_expr -> set_namespace(sub_ns_name);
+                return infer_record_constructor(call_expr, l_scope, ns_name);
+            }
+            else {
+                throw invalid_expression(call_expr -> get_token(), "Expected a function call or a record constructor.");
+            }
+        }
+        // if the rval is a binary expression then it is either a dot expression or a subscript expression and the lval of that binary expression is a variable expression
+        else if(rval -> is_binary_expression()) {
+            std::shared_ptr<binary_expression> const & binary_expr = std::static_pointer_cast<binary_expression>(rval);
+            binary_expression_type expr_type = binary_expr -> get_expression_type();
+            std::shared_ptr<expr>& sub_lval = binary_expr -> get_lval();
+            std::shared_ptr<expr>& sub_rval = binary_expr -> get_rval();
+
+            if(sub_lval -> is_identifier_expression()) {
+                std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(sub_lval);
+                if(l_scope -> variable_exists(sub_ns_name, id_expr -> get_name())) {
+                    id_expr -> set_namespace(sub_ns_name);
+                    if(expr_type == DOT_EXPR) {
+                        return infer_variable_attribute(sub_lval, sub_rval, l_scope, ns_name);
+                    }
+                    else if(expr_type == SUBSCRIPT_EXPR) {
+                        return infer_variable_subscript(sub_lval, sub_rval, l_scope, ns_name);
+                    }
+                    else {
+                        throw invalid_expression(binary_expr -> get_token(), "Excepted either a dot expression or a subscript expression.");
+                    }
+                }
+                else {
+                    throw invalid_expression(id_expr -> get_token(), "Excepted the name of a variable.");
+                }
+            }
+            else {
+                throw invalid_expression(binary_expr -> get_token(), "The lval of this binary expression must be a variable name.");
+            }
+        }
+        else {
+            throw invalid_expression(rval -> expr_token(), "The rval of a dot expression after an lval namespace must be either a variable expression, a function call or a default constructor.");
+        }
+    }
+
+    type_instance inferer::infer_variable_binary(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // if the rval is an identifier expression, then it must be an attribute from either a record constructor expression or a named tuple expression
+        if(rval -> is_identifier_expression()) {
+            return infer_variable_attribute(lval, rval, l_scope, ns_name);
+        }
+        else {
+            throw invalid_expression(rval -> expr_token(), "Expected a record constructor attribute or a named tuple attribute as rval to a dot expression.");
+        }
+    }
+
+    type_instance inferer::infer_variable_attribute(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(lval);
+        std::shared_ptr<variable>& var_decl = l_scope -> get_variable(id_expr -> get_namespace(), id_expr -> get_name());
+        std::shared_ptr<expr>& var_value = var_decl -> get_value();
+
+        // if the lval contains a named tuple
+        if(var_value -> is_tuple_expression()) {
+            return infer_tuple_attribute(var_value, rval, l_scope, ns_name);
+        }
+        else {
+            return infer_custom_attribute(lval, rval, l_scope, ns_name);
+        }
+    }
+
+    type_instance inferer::infer_tuple_attribute(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<tuple_expression> const & tuple_expr = std::static_pointer_cast<tuple_expression>(lval_val);
+        std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tuple_expr -> get_elements();
+        token rval_tok = rval -> expr_token();        
+
+        for(auto& element : elements) {
+            if(element.first == rval_tok.get_lexeme())
+                return infer(element.second, l_scope, ns_name);
+        }
+
+        throw invalid_expression(rval_tok, "This attribute does not exist in the named tuple contained in the variable being accessed.");
+    }
+
+    type_instance inferer::infer_custom_attribute(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // we build the function call expression for __getattr__ from which the type instance will be infered
+        token rval_tok = rval -> expr_token();
+        std::string call_name = "__getattr_" + rval_tok.get_lexeme() + "__";
+        token call_tok(rval_tok.get_type(), call_name, rval_tok.get_line(), rval_tok.get_column(), rval_tok.get_source_path());
+        std::shared_ptr<call_expression> getattr_expr = std::make_shared<call_expression>(call_tok);
+        // first argument is a variable expression
+        getattr_expr -> add_argument(star_tok, lval);
+        // second argument is a string literal
+        std::shared_ptr<literal_expression> string_expr = std::make_shared<literal_expression>(rval_tok, STRING_EXPR, rval_tok.get_lexeme());
+        std::shared_ptr<expr> arg_two = string_expr;
+        getattr_expr -> add_argument(star_tok, arg_two);
+
+        function binary_fun(star_tok);
+        return infer_function_call(binary_fun, getattr_expr, l_scope, ns_name);
+    }
+
+    type_instance inferer::infer_variable_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(lval);
+        std::shared_ptr<variable>& var_decl = l_scope -> get_variable(id_expr -> get_namespace(), id_expr -> get_name());
+        std::shared_ptr<expr>& var_value = var_decl -> get_value();
+
+        // if the lval contains an unnamed tuple
+        if(var_value -> is_tuple_expression()) {
+            return infer_tuple_subscript(var_value, rval, l_scope, ns_name);
+        }
+        // if the lval contains a list
+        else if(var_value -> is_list_expression()) {
+            return infer_list_subscript(var_value, rval, l_scope, ns_name);
+        }
+        // if the lval contains a map
+        else if(var_value -> is_map_expression()) {
+            return infer_map_subscript(var_value, rval, l_scope, ns_name);
+        }
+        // anything else, we assume the user created the __getitem__ function
+        else {
+            return infer_custom_attribute(lval, rval, l_scope, ns_name);
+        }
+    }
+
+    type_instance inferer::infer_tuple_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<tuple_expression> const & tuple_expr = std::static_pointer_cast<tuple_expression>(lval_val);
+        std::shared_ptr<literal_expression> const & key_expr = std::static_pointer_cast<literal_expression>(rval);
+        std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tuple_expr -> get_elements();
+        const token& rval_tok = rval -> expr_token();
+        std::size_t key = 0;        
+        std::sscanf(rval_tok.get_lexeme().c_str(), "%zu", &key);
+        return infer(elements[key].second, l_scope, ns_name);
+    }
+
+    type_instance inferer::infer_list_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<list_expression> const & list_expr = std::static_pointer_cast<list_expression>(lval_val);
+        type_instance& list_instance = list_expr -> get_type_instance();
+        std::vector<type_instance>& list_instance_params = list_instance.get_params();
+        return list_instance_params[0];
+    }
+
+    type_instance inferer::infer_map_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<map_expression> const & map_expr = std::static_pointer_cast<map_expression>(lval_val);
+        type_instance& map_instance = map_expr -> get_type_instance();
+        std::vector<type_instance>& map_instance_params = map_instance.get_params();
+        return map_instance_params[1];
+    }
+
+    type_instance inferer::infer_custom_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // we build the function call expression for __getitem__ from which the type instance will be infered
+        token rval_tok = rval -> expr_token();
+        std::string call_name = "__getitem_" + rval_tok.get_lexeme() + "__";
+        token call_tok(rval_tok.get_type(), call_name, rval_tok.get_line(), rval_tok.get_column(), rval_tok.get_source_path());
+        std::shared_ptr<call_expression> getitem_expr = std::make_shared<call_expression>(call_tok);
+        // first argument is a variable expression
+        getitem_expr -> add_argument(star_tok, lval);
+        // second argument is any expression the user desires
+        getitem_expr -> add_argument(star_tok, rval);
+        
+        function binary_fun(star_tok);
+        return infer_function_call(binary_fun, getitem_expr, l_scope, ns_name);
     }
 }

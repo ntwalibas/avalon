@@ -200,7 +200,7 @@ namespace avalon {
          * if the declaration function matches the "var" or "val" keywords, then this function
          * continues the parsing process in anticipation of a full variable declaration.
          */
-        std::vector<std::shared_ptr<decl> > variable_declaration(bool is_public);
+        std::vector<std::shared_ptr<decl> > variable_declaration(bool is_public, std::shared_ptr<scope>& parent_scope);
 
         /**
          * statement_declaration

@@ -23,7 +23,6 @@ namespace avalon {
         DIV,                // /
         MOD,                // %
         COMMA,              // ,
-        COLON,              // :
         NEWLINE,            // \n
         INDENT,             // space or tab
         DEDENT,             // backspace(s)
@@ -52,6 +51,8 @@ namespace avalon {
         LOGICAL_AND,        // && (and)
         LEFT_SHIFT,         // << (lsh)
         RIGHT_SHIFT,        // >> (rsh)
+        COLON,              // :
+        COLON_COLON,        // ::
 
         /* literals */
         IDENTIFIER,         // variable, function or type name

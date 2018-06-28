@@ -34,6 +34,18 @@ namespace avalon {
         const token& get_token() const;
 
         /**
+         * set_namespace
+         * set the namespace where this identifier expression was found
+         */
+        void set_namespace(const std::string& namespace_name);
+
+        /**
+         * get_namespace
+         * returns the namespace where this identifier expression was found
+         */
+        const std::string& get_namespace() const;
+
+        /**
          * set_type_instance
          * sets the type instance of this expression
          */
@@ -112,6 +124,11 @@ namespace avalon {
          * the token with source code information
          */
         token m_tok;
+
+        /*
+         * the namespace where to find this identifier
+         */
+        std::string m_namespace;
 
         /*
          * whether the type instance is from the parser

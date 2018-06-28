@@ -32,6 +32,18 @@ namespace avalon {
         const token& get_token() const;
 
         /**
+         * set_namespace
+         * set the namespace where this call expression was found
+         */
+        void set_namespace(const std::string& namespace_name);
+
+        /**
+         * get_namespace
+         * returns the namespace where this call expression was found
+         */
+        const std::string& get_namespace() const;
+
+        /**
          * get_name
          * returns the name of the function/constructor to call
          */
@@ -159,6 +171,11 @@ namespace avalon {
          * the token to be used to show errors
          */
         token m_tok;
+
+        /*
+         * the namespace where to find this identifier
+         */
+        std::string m_namespace;
 
         /*
          * the name of the function to call

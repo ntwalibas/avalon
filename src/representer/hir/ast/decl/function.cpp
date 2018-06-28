@@ -276,14 +276,15 @@ namespace avalon {
             mangled_name += mangle_type_instance(it -> second.get_type_instance());
 
             if(it != end && it + 1 != end)
-                mangled_name += ",";
+                mangled_name += ", ";
         }
 
-        // we then work on the return type
-        mangled_name += "->";
-        mangled_name += mangle_type_instance(ret_instance);
-
         mangled_name += ")";
+
+        // we then work on the return type
+        mangled_name += " -> ";
+        mangled_name += mangle_type_instance(ret_instance);
+        
         return mangled_name;
     }
 }

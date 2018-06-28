@@ -74,7 +74,7 @@ check_error::check_error(error& error_handler, token tok, bool fatal, const std:
      * calls the error handler error reporting function to display the error
      */
     void check_error::show() {
-        m_error_handler.log(m_tok . get_line(), m_tok . get_column(), what());
+        m_error_handler.log(m_tok . get_source_path(), m_tok . get_line(), m_tok . get_column(), what());
     }
     
 
@@ -137,7 +137,7 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
             throw checking_error(true, "The <__main__> function could not be found.");
         } catch(invalid_type err) {
             throw checking_error(false, err.get_token(), "The <__main__> function could not be found. Reason: " + std::string(err.what()));
-        }        
+        }
 
         // if we found the function, we proceed to check it taking into account the new type instances of the parameters
         // we get a copy of our function

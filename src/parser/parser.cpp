@@ -93,7 +93,7 @@ parse_error::parse_error(error& error_handler, token tok, bool fatal, const std:
      * calls the error handler error reporting function to display the error
      */
     void parse_error::show() {
-        m_error_handler.log(m_tok . get_line(), m_tok . get_column(), what());
+        m_error_handler.log(m_tok . get_source_path(), m_tok . get_line(), m_tok . get_column(), what());
     }
 
 
@@ -246,7 +246,7 @@ parser::parser(
 
         // construct the namespace
         std::shared_ptr<token> namespace_tok = namespace_given ? advance() : nullptr;
-        token tok = namespace_tok == nullptr ? star_tok : * namespace_tok;
+        token tok = (namespace_tok == nullptr) ? star_tok : * namespace_tok;
         std::shared_ptr<ns> namespace_decl = std::make_shared<ns>(tok);
         m_namespace = tok.get_lexeme();
         std::vector<std::shared_ptr<decl> > top_decls;
@@ -308,7 +308,7 @@ parser::parser(
             return fun_decls;
         }
         else if(match(VAR) || match(VAL)) {
-            std::vector<std::shared_ptr<decl> > var_decls = variable_declaration(is_public);
+            std::vector<std::shared_ptr<decl> > var_decls = variable_declaration(is_public, parent_scope);
             return var_decls;
         }
         else {
@@ -556,7 +556,7 @@ parser::parser(
      * if the declaration function matches the "var" or "val" keywords, then this function
      * continues the parsing process in anticipation of a full variable declaration.
      */
-    std::vector<std::shared_ptr<decl> > parser::variable_declaration(bool is_public) {
+    std::vector<std::shared_ptr<decl> > parser::variable_declaration(bool is_public, std::shared_ptr<scope>& parent_scope) {
         std::vector<std::shared_ptr<decl> > var_decls;   
         fqn& l_fqn = m_program.get_fqn();     
         bool is_first_def = true;
@@ -598,8 +598,9 @@ parser::parser(
             std::shared_ptr<token>& var_tok = consume(IDENTIFIER, "Expected a variable name. On the line before this one, is the last character a new line? A comma maybe?");
             std::shared_ptr<variable> var_decl = std::make_shared<variable>(* var_tok, is_mutable);
             var_decl -> is_public(is_public);
+            var_decl -> is_global(!(parent_scope -> has_parent()));
             var_decl -> set_fqn(l_fqn);
-            var_decl -> set_namespace(m_namespace);
+            var_decl -> set_namespace(m_namespace);            
 
             // get the type if any
             if(match(COLON)) {
@@ -1296,7 +1297,7 @@ parser::parser(
 
         while(match(DOT)) {
             std::shared_ptr<token>& op = lookback();
-            std::shared_ptr<expr> rval = subscript();
+            std::shared_ptr<expr> rval = dot();
             std::shared_ptr<binary_expression> expr = std::make_shared<binary_expression>(* op, DOT_EXPR, lval, rval);
             lval = expr;
         }

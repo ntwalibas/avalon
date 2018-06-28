@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 /* AST */
 #include "representer/hir/ast/decl/variable.hpp"
 #include "representer/hir/ast/decl/function.hpp"
@@ -28,6 +30,33 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
      */
     void scope::add_namespace(const std::string& namespace_name) {
         m_namespaces.emplace(namespace_name, namespace_name);
+    }
+
+    /**
+     * has_namespace
+     * returns true if this scope contains the given namespace
+     */
+    bool scope::has_namespace(const std::string& namespace_name) {
+        if(m_namespaces.count(namespace_name) == 0) {
+            if(m_parent != nullptr)
+                return m_parent -> has_namespace(namespace_name);
+            else
+                return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    /**
+     * get_namespaces
+     * returns a vector of all namespaces available in this scope
+     */
+    std::vector<std::string> scope::get_namespaces() {
+        std::vector<std::string> namespaces;
+        for(auto& l_namespace : m_namespaces)
+            namespaces.push_back(l_namespace.first);
+        return namespaces;
     }
 
     /**

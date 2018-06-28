@@ -17,7 +17,6 @@ namespace avalon {
         DIV_EXPR,
         MOD_EXPR,
         PLUS_EXPR,
-        CAST_EXPR,
         LESS_EXPR,
         MINUS_EXPR,
         NOT_IN_EXPR,

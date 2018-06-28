@@ -26,7 +26,7 @@ objects     := $(patsubst $(src_dir)/%,$(build_dir)/%,$(sources:.$(src_ext)=.o))
 all: setup $(target)
 
 $(target): $(objects)
-	@echo " Linking..."
+	@echo " Compiling and linking just for you..."
 	@$(cc) $^ -o $(target) $(ldpaths) $(ldflags) $(rdpaths)
 
 $(build_dir)/%.o: $(src_dir)/%.$(src_ext)
@@ -35,12 +35,12 @@ $(build_dir)/%.o: $(src_dir)/%.$(src_ext)
 
 .PHONY: setup
 setup:
-	@echo " Setting up..."
+	@echo " Setting things up anew..."
 	@mkdir -p $(build_dir)
 	@mkdir -p $(bin_dir)
 
 .PHONY: clean
 clean:
-	@echo " Cleaning..."
+	@echo " Cleaning up the mess you made..."
 	@find . -exec touch {} \;
 	@rm -rf $(build_dir) $(bin_dir)

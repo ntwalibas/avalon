@@ -10,7 +10,7 @@ namespace avalon {
     /**
      * the constructor expects the token with source code information
      */
-    identifier_expression::identifier_expression(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_type_instance_from_parser(false), m_expr_type(VAR_EXPR) {
+    identifier_expression::identifier_expression(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_namespace("*"), m_type_instance_from_parser(false), m_expr_type(VAR_EXPR) {
     }
 
     /**
@@ -27,6 +27,22 @@ namespace avalon {
      */
     const token& identifier_expression::get_token() const {
         return m_tok;
+    }
+
+    /**
+     * set_namespace
+     * set the namespace where this identifier expression was found
+     */
+    void identifier_expression::set_namespace(const std::string& namespace_name) {
+        m_namespace = namespace_name;
+    }
+
+    /**
+     * get_namespace
+     * returns the namespace where this identifier expression was found
+     */
+    const std::string& identifier_expression::get_namespace() const {
+        return m_namespace;
     }
 
     /**

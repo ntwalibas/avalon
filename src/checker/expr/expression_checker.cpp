@@ -1,13 +1,17 @@
 #include <stdexcept>
 #include <utility>
+#include <cstddef>
 #include <memory>
 #include <vector>
 #include <string>
+#include <cstdio>
 #include <map>
 
 /* Expressions */
 #include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/expr/grouped_expression.hpp"
+#include "representer/hir/ast/expr/literal_expression.hpp"
+#include "representer/hir/ast/expr/binary_expression.hpp"
 #include "representer/hir/ast/expr/unary_expression.hpp"
 #include "representer/hir/ast/expr/tuple_expression.hpp"
 #include "representer/hir/ast/expr/list_expression.hpp"
@@ -24,10 +28,14 @@
 #include "representer/hir/ast/decl/variable.hpp"
 #include "representer/hir/ast/decl/type.hpp"
 
+/* Builtins */
+#include "representer/hir/builtins/avalon_string.hpp"
+
 /* Scope */
 #include "representer/hir/symtable/scope.hpp"
 
 /* Checker */
+#include "checker/decl/function/function_checker.hpp"
 #include "checker/decl/variable/variable_checker.hpp"
 #include "checker/expr/expression_checker.hpp"
 #include "checker/decl/type/type_checker.hpp"
@@ -36,6 +44,8 @@
 #include "inferer/inferer.hpp"
 
 /* Exceptions */
+#include "representer/exceptions/symbol_can_collide.hpp"
+#include "representer/exceptions/symbol_not_found.hpp"
 #include "checker/exceptions/invalid_expression.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_type.hpp"
@@ -63,6 +73,10 @@ namespace avalon {
      * determines the kind of expression we have then calls the appropriate checker
      */
     type_instance expression_checker::check(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        return check(an_expression, l_scope, ns_name, ns_name);
+    }
+
+    type_instance expression_checker::check(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
         if(an_expression -> is_underscore_expression()) {
             return check_underscore(an_expression, l_scope, ns_name);
         }
@@ -79,10 +93,10 @@ namespace avalon {
             return check_map(an_expression, l_scope, ns_name);
         }
         else if(an_expression -> is_call_expression()) {
-            return check_call(an_expression, l_scope, ns_name, ns_name);
+            return check_call(an_expression, l_scope, ns_name);
         }
         else if(an_expression -> is_identifier_expression()) {
-            return check_identifier(an_expression, l_scope, ns_name, ns_name);
+            return check_identifier(an_expression, l_scope, ns_name);
         }
         else if(an_expression -> is_grouped_expression()) {
             return check_grouping(an_expression, l_scope, ns_name);
@@ -92,6 +106,9 @@ namespace avalon {
         }
         else if(an_expression -> is_unary_expression()) {
             return check_unary(an_expression, l_scope, ns_name);
+        }
+        else if(an_expression -> is_binary_expression()) {
+            return check_binary(an_expression, l_scope, ns_name);
         }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in expression checker.");
@@ -104,7 +121,7 @@ namespace avalon {
      * returns an abstract type instance since underscore expression can never have a concrete type
      */
     type_instance expression_checker::check_underscore(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
+        return inferer::infer(an_expression, l_scope, ns_name);
     }
 
     /**
@@ -113,7 +130,7 @@ namespace avalon {
      * this function simply returns the type instance for each type of literal
      */
     type_instance expression_checker::check_literal(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
+        return inferer::infer(an_expression, l_scope, ns_name);
     }
 
     /**
@@ -129,7 +146,7 @@ namespace avalon {
             check(element.second, l_scope, ns_name);
 
         // we derive the tuple type instance
-        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
+        return inferer::infer(an_expression, l_scope, ns_name);
     }
 
     /**
@@ -159,7 +176,7 @@ namespace avalon {
             }
         }
 
-        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
+        return inferer::infer(an_expression, l_scope, ns_name);
     }
 
     /**
@@ -197,7 +214,7 @@ namespace avalon {
 
         // if we are here, then the map is valid as its subexpressions are valid
         // we infer the type instance of the map and perform a last check
-        type_instance map_type_instance = inferer::infer(an_expression, l_scope, ns_name, ns_name);
+        type_instance map_type_instance = inferer::infer(an_expression, l_scope, ns_name);
 
         // if the inference engine was able to deduce the type instance of the expression
         // we make sure that key values are hashable but only if the type instance is not abstract
@@ -241,23 +258,24 @@ namespace avalon {
      * this function determines the kind of expression the call expression is (default constructor, record constructor or function call)
      * then dispatches the checking to the actual checker.
      */
-    type_instance expression_checker::check_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance expression_checker::check_call(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(an_expression);
+        const std::string& sub_ns_name = call_expr -> get_namespace();
 
         // we decide if we have a function call or a constructor call
         if(l_scope -> function_exists(sub_ns_name, call_expr -> get_name())) {
             call_expr -> set_expression_type(FUNCTION_CALL_EXPR);
-            return check_function_call(call_expr, l_scope, ns_name, sub_ns_name);
+            return check_function_call(call_expr, l_scope, ns_name);
         }
         // we check if it is a default constructor or a record constructor
         else {
             if(call_expr -> has_record_syntax()) {
                 call_expr -> set_expression_type(RECORD_CONSTRUCTOR_EXPR);
-                return check_record_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+                return check_record_constructor(call_expr, l_scope, ns_name);
             }
             else {
                 call_expr -> set_expression_type(DEFAULT_CONSTRUCTOR_EXPR);
-                return check_default_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+                return check_default_constructor(call_expr, l_scope, ns_name);
             }
         }
     }
@@ -266,8 +284,9 @@ namespace avalon {
      * check_default_constructor
      * we validate the expressions that occur within the constructor.
      */
-    type_instance expression_checker::check_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {        
+    type_instance expression_checker::check_default_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::vector<std::pair<token, std::shared_ptr<expr> > >& args = call_expr -> get_arguments();
+        const std::string& sub_ns_name = call_expr -> get_namespace();
         const std::string& call_name = call_expr -> get_name();
         
         // we try to find if we have a default constructor corresponding to the call expression
@@ -290,15 +309,16 @@ namespace avalon {
         }
 
         // so we have a default constructor with the given name and arity; we deduce its type instance
-        return inferer::infer_default_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+        return inferer::infer_default_constructor(call_expr, l_scope, ns_name);
     }
 
     /**
      * check_record_constructor
      * we validate the expressions that occur within the constructor.
      */
-    type_instance expression_checker::check_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance expression_checker::check_record_constructor(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::vector<std::pair<token, std::shared_ptr<expr> > >& args = call_expr -> get_arguments();
+        const std::string& sub_ns_name = call_expr -> get_namespace();
         const std::string& call_name = call_expr -> get_name();
         
         // we try to find if we have a default constructor corresponding to the call expression
@@ -331,7 +351,7 @@ namespace avalon {
         }
 
         // return the infered type of the record constructor
-        return inferer::infer_record_constructor(call_expr, l_scope, ns_name, sub_ns_name);
+        return inferer::infer_record_constructor(call_expr, l_scope, ns_name);
     }
 
     /**
@@ -339,7 +359,7 @@ namespace avalon {
      * we validate the expressions that were passed as argument to the function
      * we also make sure that all arguments were named or none was
      */
-    type_instance expression_checker::check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance expression_checker::check_function_call(std::shared_ptr<call_expression> const & call_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         // first, we make sure that no parser type instance was attached
         if(call_expr -> type_instance_from_parser()) {
             throw invalid_expression(call_expr -> get_token(), "Function calls cannot have type instances specified. Maybe you wish to specify the return type.");
@@ -356,7 +376,7 @@ namespace avalon {
 
         // 2. we get the function from the inferer as it carries the expression type as well
         function new_fun(star_tok);
-        type_instance instance = inferer::infer_function_call(new_fun, call_expr, l_scope, ns_name, sub_ns_name);
+        type_instance instance = inferer::infer_function_call(new_fun, call_expr, l_scope, ns_name);
 
         // 3. we make sure arguments name and parameters names coincide if the first argument has non-star token as argument name
         if(args.size() > 0) {
@@ -387,17 +407,18 @@ namespace avalon {
      * this function determines the kind of identifier expression this is (default constructor or variable)
      * then dispatches the checking to the appropriate checker.
      */
-    type_instance expression_checker::check_identifier(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
+    type_instance expression_checker::check_identifier(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(an_expression);
+        const std::string& sub_ns_name = id_expr -> get_namespace();
 
         // we determine whether we have a variable expression or a default constructor expression
         if(l_scope -> variable_exists(sub_ns_name, id_expr -> get_name())) {
             id_expr -> set_expression_type(VAR_EXPR);
-            return check_variable(id_expr, l_scope, ns_name, sub_ns_name);
+            return check_variable(id_expr, l_scope, ns_name);
         }
         else if(l_scope -> default_constructor_exists(sub_ns_name, id_expr -> get_name(), 0)) {
             id_expr -> set_expression_type(CONSTRUCTOR_EXPR);
-            return check_constructor(id_expr, l_scope, ns_name, sub_ns_name);
+            return check_constructor(id_expr, l_scope, ns_name);
         }
         else {
             throw invalid_expression(id_expr -> get_token(), "This identifier isn't bound to any declaration. It is neither a variable or a constructor.");
@@ -408,8 +429,8 @@ namespace avalon {
      * check_variable
      * we make sure that the variable declaration associated with this variable expression is valid
      */
-    type_instance expression_checker::check_variable(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
-        // get the variable declaration this expression is bound to and check it
+    type_instance expression_checker::check_variable(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {        
+        const std::string& sub_ns_name = id_expr -> get_namespace();
         std::shared_ptr<variable>& var_decl = l_scope -> get_variable(sub_ns_name, id_expr -> get_name());
 
         // check the variable declaration
@@ -421,7 +442,7 @@ namespace avalon {
         }
 
         // we infer the type instance of the variable expression
-        type_instance var_instance = inferer::infer_variable(id_expr, l_scope, ns_name, sub_ns_name);
+        type_instance var_instance = inferer::infer_variable(id_expr, l_scope, ns_name);
 
         // set the variable as used
         var_decl -> is_used(true);
@@ -433,8 +454,8 @@ namespace avalon {
      * check_constructor
      * we make sure that the default constructor associated with this identifier expression is valid
      */
-    type_instance expression_checker::check_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name, const std::string& sub_ns_name) {
-        return inferer::infer_constructor(id_expr, l_scope, ns_name, sub_ns_name);
+    type_instance expression_checker::check_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        return inferer::infer_constructor(id_expr, l_scope, ns_name);
     }
 
     /**
@@ -448,7 +469,7 @@ namespace avalon {
         check(value, l_scope, ns_name);
 
         // we return the infered type instance
-        return inferer::infer(an_expression, l_scope, ns_name, ns_name);
+        return inferer::infer(an_expression, l_scope, ns_name);
     }
 
     /**
@@ -497,5 +518,356 @@ namespace avalon {
         type_instance instance = inferer::infer_unary(unary_fun, unary_expr, l_scope, ns_name);
 
         return instance;
+    }
+
+    /**
+     * check_binary
+     * we make sure that there is a function that corresponds to the binary expression
+     */
+    type_instance expression_checker::check_binary(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<binary_expression> const & binary_expr = std::static_pointer_cast<binary_expression>(an_expression);
+        binary_expression_type expr_type = binary_expr -> get_expression_type();
+
+        // work on operations that decay into functions
+        if(
+           expr_type == PLUS_EXPR           ||
+           expr_type == MINUS_EXPR          ||
+           expr_type == MUL_EXPR            ||
+           expr_type == DIV_EXPR            ||
+           expr_type == MOD_EXPR            ||
+           //expr_type == POW_EXPR           ||
+           expr_type == LEFT_SHIFT_EXPR     ||
+           expr_type == RIGHT_SHIFT_EXPR    ||
+           expr_type == LOGICAL_AND_EXPR    ||
+           expr_type == LOGICAL_OR_EXPR     ||
+           expr_type == BITWISE_AND_EXPR    ||
+           expr_type == BITWISE_OR_EXPR     ||
+           expr_type == BITWISE_XOR_EXPR    ||
+           expr_type == EQUAL_EQUAL_EXPR    ||
+           expr_type == NOT_EQUAL_EXPR      ||
+           expr_type == LESS_EXPR           ||
+           expr_type == LESS_EQUAL_EXPR     ||
+           expr_type == GREATER_EXPR        ||
+           expr_type == GREATER_EQUAL_EXPR
+
+        ) {
+            return check_functional_binary(expr_type, binary_expr, l_scope, ns_name);
+        }
+        else if(expr_type == DOT_EXPR) {
+            return check_dot_binary(expr_type, binary_expr, l_scope, ns_name);
+        }
+        else if(expr_type == SUBSCRIPT_EXPR) {
+            return check_subscript_binary(expr_type, binary_expr, l_scope, ns_name);
+        }
+        else {
+            throw std::runtime_error("[compiler error] unexpected binary operator.");
+        }
+    }
+
+    /**
+     * check_functional_binary
+     * we make sure that the binary expression has a function that corresponds to it
+     */
+    type_instance expression_checker::check_functional_binary(binary_expression_type expr_type, std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<expr>& lval = binary_expr -> get_lval();
+        std::shared_ptr<expr>& rval = binary_expr -> get_rval();
+
+        // check the values
+        check(lval, l_scope, ns_name);
+        check(rval, l_scope, ns_name);
+
+        // infer the type instance
+        function binary_fun(star_tok);
+        type_instance instance = inferer::infer_functional_binary(expr_type, binary_fun, binary_expr, l_scope, ns_name);
+
+        return instance;
+    }
+
+    /**
+     * check_dot_binary
+     * we make sure that the dot expression lval refers to either a namespace or a variable expression
+     */
+    type_instance expression_checker::check_dot_binary(binary_expression_type expr_type, std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<expr>& lval = binary_expr -> get_lval();
+        std::shared_ptr<expr>& rval = binary_expr -> get_rval();
+        const std::string& name = lval -> expr_token().get_lexeme();
+
+        // if the lval is a namespace name
+        if(l_scope -> has_namespace(name)) {
+            return check_namespace_binary(name, rval, l_scope, ns_name);
+        }
+        // if the lval is a variable
+        else if(l_scope -> variable_exists(ns_name, name)) {
+            return check_variable_binary(lval, rval, l_scope, ns_name);
+        }
+        // anything else if an error
+        else {
+            throw invalid_expression(lval -> expr_token(), "Expected a namespace name or a variable name as lval to a dot expression.");
+        }
+    }
+
+    /**
+     * check_subscript_binary
+     * we make sure that the lval is a variable declaration and that its content is accessible for reading
+     */
+    type_instance expression_checker::check_subscript_binary(binary_expression_type expr_type, std::shared_ptr<binary_expression> const & binary_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<expr>& lval = binary_expr -> get_lval();
+        std::shared_ptr<expr>& rval = binary_expr -> get_rval();
+        const std::string& name = lval -> expr_token().get_lexeme();        
+
+        // if the lval is an identifier expression, then it is a variable expression
+        if(l_scope -> variable_exists(ns_name, name)) {
+            return check_variable_subscript(lval, rval, l_scope, ns_name);
+        }
+        // anything else if an error
+        else {
+            throw invalid_expression(lval -> expr_token(), "Expected a variable name as lval to a subscript expression.");
+        }
+    }
+
+    type_instance expression_checker::check_namespace_binary(const std::string& sub_ns_name, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // if the rval is an identifier expression, then it must be either a variable expression or a default constructor expression
+        if(rval -> is_identifier_expression()) {
+            std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(rval);
+            if(l_scope -> variable_exists(sub_ns_name, id_expr -> get_name())) {
+               id_expr -> set_namespace(sub_ns_name);
+               return check_variable(id_expr, l_scope, ns_name);
+            }
+            else if(l_scope -> default_constructor_exists(sub_ns_name, id_expr -> get_name(), 0)) {
+                id_expr -> set_namespace(sub_ns_name);
+                return check_constructor(id_expr, l_scope, ns_name);
+            }
+            else {
+                throw invalid_expression(id_expr -> get_token(), "Expected a variable expression or a default constructor expression after the namespace name.");
+            }        
+        }
+        // if it is a call expression, we expect it to be either a function call or a default constructor or a record constructor
+        else if(rval -> is_call_expression()) {
+            std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(rval);
+            if(l_scope -> function_exists(sub_ns_name, call_expr -> get_name())) {
+                call_expr -> set_namespace(sub_ns_name);
+               return check_function_call(call_expr, l_scope, ns_name);
+            }
+            else if(l_scope -> default_constructor_exists(sub_ns_name, call_expr -> get_name(), call_expr -> get_arguments().size())) {
+                call_expr -> set_namespace(sub_ns_name);
+                return check_default_constructor(call_expr, l_scope, ns_name);
+            }
+            else if(l_scope -> record_constructor_exists(sub_ns_name, call_expr -> get_name(), call_expr -> get_arguments().size())) {
+                call_expr -> set_namespace(sub_ns_name);
+                return check_record_constructor(call_expr, l_scope, ns_name);
+            }
+            else {
+                throw invalid_expression(call_expr -> get_token(), "Expected a function call or a record constructor.");
+            }
+        }
+        // if the rval is a binary expression then it is either a dot expression or a subscript expression and the lval of that binary expression is a variable expression
+        else if(rval -> is_binary_expression()) {
+            std::shared_ptr<binary_expression> const & binary_expr = std::static_pointer_cast<binary_expression>(rval);
+            binary_expression_type expr_type = binary_expr -> get_expression_type();
+            std::shared_ptr<expr>& sub_lval = binary_expr -> get_lval();
+            std::shared_ptr<expr>& sub_rval = binary_expr -> get_rval();
+
+            if(sub_lval -> is_identifier_expression()) {
+                std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(sub_lval);
+                if(l_scope -> variable_exists(sub_ns_name, id_expr -> get_name())) {
+                    id_expr -> set_namespace(sub_ns_name);
+                    if(expr_type == DOT_EXPR) {
+                        return check_variable_attribute(sub_lval, sub_rval, l_scope, ns_name);
+                    }
+                    else if(expr_type == SUBSCRIPT_EXPR) {
+                        return check_variable_subscript(sub_lval, sub_rval, l_scope, ns_name);
+                    }
+                    else {
+                        throw invalid_expression(binary_expr -> get_token(), "Excepted either a dot expression or a subscript expression.");
+                    }
+                }
+                else {
+                    throw invalid_expression(id_expr -> get_token(), "Excepted the name of a variable.");
+                }
+            }
+            else {
+                throw invalid_expression(binary_expr -> get_token(), "The lval of this binary expression must be a variable name.");
+            }
+        }
+        else {
+            throw invalid_expression(rval -> expr_token(), "The rval of a dot expression after an lval namespace must be either a variable expression, a function call or a default constructor.");
+        }
+    }
+
+    type_instance expression_checker::check_variable_binary(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // if the rval is an identifier expression, then it must be an attribute from either a record constructor expression or a named tuple expression
+        if(rval -> is_identifier_expression()) {
+            return check_variable_attribute(lval, rval, l_scope, ns_name);
+        }
+        else {
+            throw invalid_expression(rval -> expr_token(), "Expected a record constructor attribute or a named tuple attribute as rval to a dot expression.");
+        }
+    }
+
+    type_instance expression_checker::check_variable_attribute(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(lval);
+        std::shared_ptr<variable>& var_decl = l_scope -> get_variable(id_expr -> get_namespace(), id_expr -> get_name());        
+
+        // we only check to see if we have a tuple expression if we have a global variable
+        if(var_decl -> is_global()) {
+            std::shared_ptr<expr>& var_value = var_decl -> get_value();
+            if(var_value -> is_tuple_expression()) {
+                return check_tuple_attribute(var_value, rval, l_scope, ns_name);
+            }
+            else {
+                return check_custom_attribute(lval, rval, l_scope, ns_name);
+            }
+        }
+        // for local variables, we assume no tuples will ever be in them
+        else {
+            std::shared_ptr<expr>& var_value = var_decl -> get_value();
+            if(var_value != nullptr && var_value -> is_tuple_expression()) {
+                throw invalid_expression(var_decl -> get_token(), "Named tuples are not allowed (yet) as local variables and hence their data members cannot be accessed.");
+            }
+            else {
+                return check_custom_attribute(lval, rval, l_scope, ns_name);
+            }            
+        }
+    }
+
+    type_instance expression_checker::check_tuple_attribute(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<tuple_expression> const & tuple_expr = std::static_pointer_cast<tuple_expression>(lval_val);
+        std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tuple_expr -> get_elements();
+        const token& rval_tok = rval -> expr_token();
+
+        for(auto& element : elements) {
+            if(element.first == rval_tok.get_lexeme())
+                return check(element.second, l_scope, ns_name);
+        }
+
+        throw invalid_expression(rval_tok, "This attribute does not exist in the named tuple contained in the variable being accessed.");
+    }
+
+    type_instance expression_checker::check_custom_attribute(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // we check the lval
+        check(lval, l_scope, ns_name);
+
+        // we build a function call expression for __getattr__ that will be validated
+        token rval_tok = rval -> expr_token();
+        std::string call_name = "__getattr_" + rval_tok.get_lexeme() + "__";
+        token call_tok(rval_tok.get_type(), call_name, rval_tok.get_line(), rval_tok.get_column(), rval_tok.get_source_path());
+        std::shared_ptr<call_expression> getattr_expr = std::make_shared<call_expression>(call_tok);
+        // first argument is a variable expression
+        getattr_expr -> add_argument(star_tok, lval);
+        // second argument is a string literal
+        std::shared_ptr<literal_expression> string_expr = std::make_shared<literal_expression>(rval_tok, STRING_EXPR, rval_tok.get_lexeme());
+        std::shared_ptr<expr> arg_two = string_expr;
+        getattr_expr -> add_argument(star_tok, arg_two);
+
+        return check_function_call(getattr_expr, l_scope, ns_name);
+    }
+
+    type_instance expression_checker::check_variable_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(lval);
+        std::shared_ptr<variable>& var_decl = l_scope -> get_variable(id_expr -> get_namespace(), id_expr -> get_name());
+        std::shared_ptr<expr>& var_value = var_decl -> get_value();
+
+        // if the lval contains an unnamed tuple
+        if(var_value -> is_tuple_expression()) {
+            return check_tuple_subscript(var_value, rval, l_scope, ns_name);
+        }
+        // if the lval contains a list
+        else if(var_value -> is_list_expression()) {
+            return check_list_subscript(var_value, rval, l_scope, ns_name);
+        }
+        // if the lval contains a map
+        else if(var_value -> is_map_expression()) {
+            return check_map_subscript(var_value, rval, l_scope, ns_name);
+        }
+        // anything else, we assume the user created the __getitem__ function
+        else {
+            return check_custom_subscript(lval, rval, l_scope, ns_name);
+        }
+    }
+
+    type_instance expression_checker::check_tuple_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<tuple_expression> const & tuple_expr = std::static_pointer_cast<tuple_expression>(lval_val);
+        std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tuple_expr -> get_elements();
+        const token& rval_tok = rval -> expr_token();
+        std::size_t key = 0;
+
+        // make sure the rval is a literal integer expression
+        if(rval -> is_literal_expression() == false) {
+            throw invalid_expression(rval_tok, "Expected an integer as key to access the tuple.");
+        }
+        else {
+            std::shared_ptr<literal_expression> const & key_expr = std::static_pointer_cast<literal_expression>(rval);
+            if(key_expr -> get_expression_type() == INTEGER_EXPR) {
+                std::sscanf(rval_tok.get_lexeme().c_str(), "%zu", &key);
+            }
+            else {
+                throw invalid_expression(rval_tok, "Expected an integer as key to access the tuple.");
+            }
+        }
+
+        // make sure the key exists
+        if(key >= elements.size()) {
+            throw invalid_expression(rval_tok, "This key is out of range within the tuple contained in the variable.");
+        }
+
+        // return the type instance
+        return check(elements[key].second, l_scope, ns_name);
+    }
+
+    type_instance expression_checker::check_list_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<list_expression> const & list_expr = std::static_pointer_cast<list_expression>(lval_val);
+        const token& rval_tok = rval -> expr_token();
+
+        // make sure the rval is a literal integer expression
+        if(rval -> is_literal_expression() == false) {
+            throw invalid_expression(rval_tok, "Expected an integer as key to access the list.");
+        }
+        else {
+            std::shared_ptr<literal_expression> const & key_expr = std::static_pointer_cast<literal_expression>(rval);
+            if(key_expr -> get_expression_type() != INTEGER_EXPR) {
+                throw invalid_expression(rval_tok, "Expected an integer as key to access the list.");
+            }
+        }
+
+        // return the type instance
+        type_instance& list_instance = list_expr -> get_type_instance();
+        std::vector<type_instance>& list_instance_params = list_instance.get_params();
+        return list_instance_params[0];
+    }
+
+    type_instance expression_checker::check_map_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<map_expression> const & map_expr = std::static_pointer_cast<map_expression>(lval_val);
+        type_instance& map_instance = map_expr -> get_type_instance();
+        std::vector<type_instance>& map_instance_params = map_instance.get_params();
+        type_instance& key_instance = map_instance_params[0];
+        type_instance& value_instance = map_instance_params[1];
+        const token& rval_tok = rval -> expr_token();
+
+        // make sure the rval has the expected type of the key
+        type_instance rval_instance = check(rval, l_scope, ns_name);
+        if(type_instance_strong_compare(rval_instance, key_instance) == false) {
+            throw invalid_expression(rval_tok, "Expected the index to be of type instance <" + mangle_type_instance(key_instance) + "> but it is instead of type instance <" + mangle_type_instance(rval_instance) + ">.");
+        }
+        
+        // return the type instance
+        return value_instance;
+    }
+
+    type_instance expression_checker::check_custom_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        // we check the lval and rval
+        check(lval, l_scope, ns_name);
+        check(rval, l_scope, ns_name);
+
+        // we build a function call expression for __getitem__ that will be validated
+        const token& rval_tok = rval -> expr_token();
+        std::string call_name = "__getitem_" + rval_tok.get_lexeme() + "__";
+        token call_tok(rval_tok.get_type(), call_name, rval_tok.get_line(), rval_tok.get_column(), rval_tok.get_source_path());
+        std::shared_ptr<call_expression> getitem_expr = std::make_shared<call_expression>(call_tok);
+        // first argument is a variable expression
+        getitem_expr -> add_argument(star_tok, lval);
+        // second argument is any expression the user desires
+        getitem_expr -> add_argument(star_tok, rval);
+        
+        return check_function_call(getitem_expr, l_scope, ns_name);
     }
 }

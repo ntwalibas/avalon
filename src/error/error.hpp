@@ -26,6 +26,14 @@ namespace avalon {
 
         /**
          * log
+         * this function expects the details including the source paht where the error occured and
+         * the message from the unit that raised the error. Since tokens do carry the source path, we use the same here.
+         */
+        void log(const std::string& source_path, const int line, const int column, const std::string& message);
+        void log(const std::string& source_path, const int line, const int column, const std::string& message) const;
+
+        /**
+         * log
          * this function expects the details of where the error occured and
          * the message from the unit that raised the error.
          */

@@ -32,6 +32,18 @@ namespace avalon {
         void add_namespace(const std::string& namespace_name);
 
         /**
+         * has_namespace
+         * returns true if this scope contains the given namespace
+         */
+        bool has_namespace(const std::string& namespace_name);
+
+        /**
+         * get_namespaces
+         * returns a vector of all namespaces available in this scope
+         */
+        std::vector<std::string> get_namespaces();
+
+        /**
          * get_dtable
          * returns the symbol table of declarations found in this scope
          */

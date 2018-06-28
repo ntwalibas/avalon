@@ -121,7 +121,7 @@ namespace avalon {
         }
 
         // tokenize the file
-        lexer lxr(source_abs_path, source, error_handler);
+        lexer lxr(source_path, source, error_handler);
         std::vector<std::shared_ptr<token> > tokens;
         try {
             tokens = lxr.lex();
@@ -157,7 +157,7 @@ namespace avalon {
         }
 
         // tokenize the file
-        lexer lxr(source_abs_path, source, error_handler);
+        lexer lxr(source_path, source, error_handler);
         std::vector<std::shared_ptr<token> > tokens;
         try {
             tokens = lxr.lex();
@@ -202,7 +202,7 @@ namespace avalon {
         }
 
         // tokenize the file
-        lexer lxr(source_abs_path, source, error_handler);
+        lexer lxr(source_path, source, error_handler);
         std::vector<std::shared_ptr<token> > tokens;
         try {
             tokens = lxr.lex();
@@ -262,7 +262,7 @@ namespace avalon {
         }
 
         // tokenize the file
-        lexer lxr(source_abs_path, source, error_handler);
+        lexer lxr(source_path, source, error_handler);
         std::vector<std::shared_ptr<token> > tokens;
         try {
             tokens = lxr.lex();

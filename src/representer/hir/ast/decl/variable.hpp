@@ -153,6 +153,13 @@ namespace avalon {
         }
 
         /**
+         * is_global
+         * sets and returns a boolean indicating whether this variable is a global variable
+         */
+        bool is_global();
+        void is_global(bool is_global);
+
+        /**
          * is_used
          * sets and returns a boolean indicating whether this declaration was used anywhere
          * this is useful during code generation to emit messages about unused declarations and to avoid generating dead code
@@ -230,7 +237,7 @@ namespace avalon {
         std::shared_ptr<expr> m_value;
 
         /*
-         * the current validation state of the type
+         * the current validation state of the variable
          */
         validation_state m_is_valid;
 
@@ -240,10 +247,15 @@ namespace avalon {
         bool m_is_function_param;
 
         /*
-         * whether this type is available for public use outside of the namespace where it was declared
+         * whether this variable is available for public use outside of the namespace where it was declared
          * true if it is, false otherwise
          */
         bool m_is_public;
+
+        /*
+         * whether this variable is a global one
+         */
+        bool m_is_global;
 
         /*
          * whether this variable has been used for any expression

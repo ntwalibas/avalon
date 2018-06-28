@@ -15,7 +15,6 @@
 /* Built-in types */
 #include "representer/hir/builtins/avalon_string.hpp"
 #include "representer/hir/builtins/avalon_float.hpp"
-#include "representer/hir/builtins/avalon_unit.hpp"
 #include "representer/hir/builtins/avalon_void.hpp"
 #include "representer/hir/builtins/avalon_bool.hpp"
 #include "representer/hir/builtins/avalon_dec.hpp"
@@ -81,7 +80,7 @@ import_error::import_error(error& error_handler, token tok, bool fatal, const st
      * calls the error handler error reporting function to display the error
      */
     void import_error::show() {
-        m_error_handler.log(m_tok . get_line(), m_tok . get_column(), what());
+        m_error_handler.log(m_tok . get_source_path(), m_tok . get_line(), m_tok . get_column(), what());
     }
 
 
@@ -246,11 +245,6 @@ importer::importer(program& prog, std::vector<std::string>& search_paths, error&
         avalon_void avl_void;
         program& void_prog = avl_void.get_program();
         import_declarations(void_prog, to, false);
-
-        // unit declarations
-        avalon_unit avl_unit;
-        program& unit_prog = avl_unit.get_program();
-        import_declarations(unit_prog, to, false);
 
         // bool declarations
         avalon_bool avl_bool;

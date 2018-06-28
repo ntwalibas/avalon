@@ -396,6 +396,18 @@ namespace avalon {
         const token& get_old_token() const;
 
         /**
+         * set_tag
+         * set the tag associated with this type instance
+         */
+        void set_tag(token& tag);
+
+        /**
+         * get_tag
+         * returns a token with a string representation of the tag associtated with this type instance
+         */
+        const token& get_tag() const;
+
+        /**
          * set_category
          * set the category to which this type instance belongs
          */
@@ -523,6 +535,14 @@ namespace avalon {
          * the old token when this type instance was an abstract instance
          */
         token m_old_tok;
+
+        /*
+         * the tag for tagged types such as named tuples
+         * e.g.: consider the tuple definitions <(measure : float, unit : string)> and (height : float, unit : string)
+         * even though bought have might have type <(float, string)>, we will not consider them to be the same.
+         * so we attach extra information to types in order to distinguish them. This allows comparision between 50Kg and 50meters to fail at the type level.
+         */
+        token m_tag;
 
         /*
          * the category to which this type instance belongs

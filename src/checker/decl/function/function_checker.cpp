@@ -35,7 +35,7 @@ static void fill_duplicates(std::vector<std::pair<std::size_t, std::size_t> >& w
     for(auto& weight : weights) {
         if(weight.second > max_weight) {
             if(duplicates.size() > 1) {
-                weights.clear();
+                duplicates.clear();
                 duplicates.push_back(weight.first);
             }
             else if(duplicates.size() == 0) {
@@ -125,7 +125,6 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
             }
             total_weights.emplace_back(fun_index, total_weight);
         }
-
         // 2.2. find all the duplicates so we can look at their return types for discrimination
         try {
             fill_duplicates(total_weights, duplicate_weights);
@@ -162,7 +161,6 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
             try {
                 fill_duplicates(ret_candidates, ret_duplicates);
             } catch(std::logic_error err) {
-                std::cout << "No return type found." << std::endl;
                 throw symbol_not_found("At least one function was found with the name <" + name + "> and given arguments but none that match the return type instance given.");
             }
 

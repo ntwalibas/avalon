@@ -1,0 +1,95 @@
+(-
+main function
+
+- author     ntwali bashige
+- copyright  2018 (c) ntwali bashige
+- license    MIT license
+-)
+
+import tests.io
+import tests.imports
+
+-- global variable --
+var message = "Hello World!"
+
+-- identity functions
+def id = (x : ()) -> string:
+    return message
+
+def id = (x : ()) -> ():
+    return x
+
+def id : a = (x : a) -> a:
+    return x
+
+-- cast function --
+def __cast__ = (e : int) -> string:
+    return "0"
+
+-- unary negation function --
+def __neg__ = (v : string) -> string:
+    return "olleh"
+
+-- main function --
+def __main__ = (val args : [string]) -> void:
+    -- generic test
+    val name    = io.settings.name
+    io.println(name)
+
+
+    -- literal expression
+    var a = 0
+
+    -- tuple expression
+    var b1 = (),
+        b2 = ("Jane Doe", 28)
+
+    -- list expression
+    var c1 = [None, None]:[maybe(int)],
+        c2 = [Just(None), Just(Just(0))]:[maybe(maybe(int))]
+
+    -- map expression
+    var d = {
+        "key" : 0
+    }
+
+    -- default constructor expression
+    var e1 = (),
+        e2 = Just(e1)
+
+    -- record constructor expression
+    var f = User(
+        name = "John Doe",
+        age  = 32,
+        sex  = None
+    ):user(sex)
+
+    -- variable expression
+    var g = sex_var
+
+    -- grouped expression
+    var h = (Male)
+
+    -- function call expression
+    var i1 = id(0),
+        i2 = id(None:maybe(sex)) -> maybe(sex)
+
+    -- cast expression
+    var j1 = cast(1'000) -> string,
+        j2 = cast(Male) -> maybe(sex)
+
+    -- unary expression
+    var k = -message
+
+    -- binary expressions
+    -- normal operators
+    var l1 = 1 + 2,
+        l2 = "Hello, " + "World"
+    -- attribute access
+    var l3 = settings.year, -- named tuple (must be from a global variable)
+        l4 = f.age          -- __getattr_age__
+    -- subscript access
+    var l5 = b2[0],         -- tuple
+        l6 = c1[0],         -- list
+        l7 = d["key"],      -- map
+        l8 = f["name"]      -- __getitem_name__

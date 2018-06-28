@@ -110,5 +110,5 @@ This code is licensed under the MIT license. Please see the LICENSE file for the
 
 I, Ntwali Bashige Toussaint, retain all copyrights in and of the entirety of the work (source code and other files) in this repository whether explicitly mentionned or not in any of the files in this project.
 
-In case you found code that is yours and I failed to give attribution or I am claiming copyright to the code, please do email to resolve the issue.
+In case you found code that is yours and I failed to give attribution or I am claiming copyright of the code, please do email to resolve the issue.
 

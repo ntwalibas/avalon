@@ -1,4 +1,4 @@
-#Avalon - a classical and quantum programming language
+# Avalon - a classical and quantum programming language
 
 Quantum computing is advancing faster and faster than expected.  
 Avalon is a new programming language and my goal in creating it is to have a programming language that works on classical as well quantum computers.  

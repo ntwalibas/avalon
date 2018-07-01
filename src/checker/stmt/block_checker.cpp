@@ -3,11 +3,16 @@
 
 /* AST */
 #include "representer/hir/ast/stmt/expression_stmt.hpp"
+#include "representer/hir/ast/stmt/return_stmt.hpp"
 #include "representer/hir/ast/stmt/block_stmt.hpp"
 #include "representer/hir/ast/stmt/pass_stmt.hpp"
 #include "representer/hir/ast/decl/statement.hpp"
 #include "representer/hir/ast/decl/variable.hpp"
+#include "representer/hir/ast/decl/type.hpp"
 #include "representer/hir/ast/decl/decl.hpp"
+
+/* Builtins */
+#include "representer/hir/builtins/avalon_void.hpp"
 
 /* Symbol table */
 #include "representer/hir/symtable/scope.hpp"
@@ -110,7 +115,7 @@ namespace avalon {
             check_pass(l_stmt);
         }
         else if(l_stmt -> is_return()) {
-            check_return(l_stmt);
+            check_return(l_stmt, l_scope, ns_name);
         }
         else if(l_stmt -> is_expression()) {
             check_expression(l_stmt, l_scope, ns_name);
@@ -166,8 +171,28 @@ namespace avalon {
      * check_return
      * given a statemnt, check if it is a valid return statement
      */
-    void block_checker::check_return(std::shared_ptr<stmt>& a_statement) {
+    void block_checker::check_return(std::shared_ptr<stmt>& a_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<return_stmt> const & ret_stmt = std::static_pointer_cast<return_stmt>(a_statement);
+        expression_checker expr_checker;
 
+        if(ret_stmt -> has_expression()) {
+            std::shared_ptr<expr>& ret_expr = ret_stmt -> get_expression();
+            try {
+                type_instance ret_instance = expr_checker.check(ret_expr, l_scope, ns_name);
+                if(type_instance_strong_compare(ret_instance, m_ret_instance) == false) {
+                    throw invalid_statement(ret_stmt -> get_token(), "The returned expression is of type <" + mangle_type_instance(ret_instance) + "> while the expected return type instance is <" + mangle_type_instance(m_ret_instance) + ">.");
+                }
+            } catch(invalid_expression err) {
+                throw err;
+            }            
+        }
+        else {
+            avalon_void avl_void;
+            type_instance& void_instance = avl_void.get_type_instance();
+            if(type_instance_strong_compare(m_ret_instance, void_instance) == false) {
+                throw invalid_statement(ret_stmt -> get_token(), "The return statement returns no expression while the expected return type instance is <" + mangle_type_instance(m_ret_instance) + ">.");
+            }
+        }
     }
 
     /**

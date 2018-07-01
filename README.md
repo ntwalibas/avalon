@@ -67,6 +67,7 @@ Here is what's be done and what's on the way topdown.
         - `While statements`: **not** done.
         - `If statements`: **not** done.
         - `Pass statements`: done.
+        - `Return statements`: done.
         - `Expression statements`:
             - `Literal expressionss`: done.
             - `Container expressions`: done.

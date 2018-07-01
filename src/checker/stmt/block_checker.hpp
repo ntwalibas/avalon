@@ -96,7 +96,7 @@ namespace avalon {
          * check_return
          * given a statemnt, check if it is a valid return statement
          */
-        void check_return(std::shared_ptr<stmt>& a_statement);
+        void check_return(std::shared_ptr<stmt>& a_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_expression

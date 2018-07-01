@@ -77,7 +77,7 @@ Here is what's be done and what's on the way topdown.
             - `Unary expressions`: done.
             - `Binary expressions`: done.
             - `Match expressions`: done.
-            - `Assignment expressions`: *working on it*.
+            - `Assignment expressions`: done.
 * `Code generation`: **not** done.
 
 **NOTE**: I have not included optimization right now as my priority is to get things that work first. Code optimization will come (dead) last.

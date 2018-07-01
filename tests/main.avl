@@ -93,3 +93,7 @@ def __main__ = (val args : [string]) -> void:
         l6 = c1[0],         -- list
         l7 = d["key"],      -- map
         l8 = f["name"]      -- __getitem_name__
+
+    -- assignment expression
+    var m1 = m2 = m3 = 10 -- note that this is *not* an assignment expression but rather a serial initialization
+    l1 = m3 = f.age  -- this on the other hand is an assignment expression where we perform multiple assignments in one line

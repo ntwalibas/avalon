@@ -600,7 +600,7 @@ parser::parser(
             var_decl -> is_public(is_public);
             var_decl -> is_global(!(parent_scope -> has_parent()));
             var_decl -> set_fqn(l_fqn);
-            var_decl -> set_namespace(m_namespace);            
+            var_decl -> set_namespace(m_namespace);
 
             // get the type if any
             if(match(COLON)) {
@@ -608,15 +608,47 @@ parser::parser(
                 var_decl -> set_type_instance(var_type_instance);
             }
 
-            // get the initializer if any
-            if(match(EQUAL)) {
-                std::shared_ptr<expr> val = parse_expression();
-                var_decl -> set_value(val);
+            // vector holding a series of variable declaration that were declared by serial initialization
+            std::vector<std::shared_ptr<variable> > series;
+            series.push_back(var_decl);
+
+            // perform serial initialization
+            while(match(EQUAL)) {
+                if(check(IDENTIFIER) && check_next(EQUAL)) {                    
+                    std::shared_ptr<token>& new_var_tok = consume(IDENTIFIER, "Expected a variable name");
+                    std::shared_ptr<variable> new_var_decl = std::make_shared<variable>(* new_var_tok, is_mutable);
+                    new_var_decl -> is_public(is_public);
+                    new_var_decl -> is_global(!(parent_scope -> has_parent()));
+                    new_var_decl -> set_fqn(l_fqn);
+                    new_var_decl -> set_namespace(m_namespace);
+                    
+                    // get the type if any
+                    if(match(COLON)) {
+                        type_instance var_type_instance = parse_type_instance();
+                        new_var_decl -> set_type_instance(var_type_instance);
+                    }
+
+                    // create an expression with the previous variable declaration
+                    token current_token = new_var_decl -> get_token();
+                    std::shared_ptr<identifier_expression> id_expr = std::make_shared<identifier_expression>(current_token);
+                    std::shared_ptr<expr> val = id_expr;
+                    series.back() -> set_value(val);
+                    
+                    series.push_back(new_var_decl);
+                }
+                else {
+                    std::shared_ptr<expr> val = parse_expression();
+                    series.back() -> set_value(val);
+                }
             }
 
-            // add the type declaration to the program
-            std::shared_ptr<decl> declaration = var_decl;
-            var_decls.push_back(declaration);
+            // add the variable declaration to the variables declarations vector
+            while(series.size() > 0) {
+                std::shared_ptr<variable>& var_declaration = series.back();
+                std::shared_ptr<decl> declaration = var_declaration;
+                var_decls.push_back(declaration);
+                series.pop_back();
+            }
         } while(match(COMMA));
 
         // we expect a new line after variable definitions

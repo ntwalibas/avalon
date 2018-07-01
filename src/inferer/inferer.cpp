@@ -7,6 +7,7 @@
 #include <map>
 
 /* Expressions */
+#include "representer/hir/ast/expr/assignment_expression.hpp"
 #include "representer/hir/ast/expr/underscore_expression.hpp"
 #include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/expr/grouped_expression.hpp"
@@ -399,6 +400,9 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
     }
     else if(an_expression -> is_match_expression()) {
         return inferer::infer_match(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_assignment_expression()) {
+        return inferer::infer_assignment(an_expression, l_scope, ns_name);
     }
     else {
         throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
@@ -1574,5 +1578,15 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
     type_instance inferer::infer_match(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
         avalon_bool avl_bool;
         return avl_bool.get_type_instance();
+    }
+
+    /**
+     * infer_assignment
+     * infers the type instance of an assigment expression
+     */
+    type_instance inferer::infer_assignment(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        std::shared_ptr<assignment_expression> const & assign_expr = std::static_pointer_cast<assignment_expression>(an_expression);
+        std::shared_ptr<expr>& lval = assign_expr -> get_lval();
+        return inferer::infer(lval, l_scope, ns_name);
     }
 }

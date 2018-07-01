@@ -8,6 +8,7 @@
 #include <map>
 
 /* Expressions */
+#include "representer/hir/ast/expr/assignment_expression.hpp"
 #include "representer/hir/ast/expr/identifier_expression.hpp"
 #include "representer/hir/ast/expr/grouped_expression.hpp"
 #include "representer/hir/ast/expr/literal_expression.hpp"
@@ -114,11 +115,13 @@ namespace avalon {
         else if(an_expression -> is_match_expression()) {
             return check_match(an_expression, l_scope, ns_name);
         }
+        else if(an_expression -> is_assignment_expression()) {
+            return check_assignment(an_expression, l_scope, ns_name);
+        }
         else {
             throw std::runtime_error("[compiler error] unexpected expression type in expression checker.");
         }
     }
-
 
     /**
      * check_underscore
@@ -1106,5 +1109,64 @@ namespace avalon {
         m_inside_match = false;
 
         return inferer::infer(an_expression, l_scope, ns_name);
+    }
+
+    /**
+     * check_assignment
+     * we make sure that the expression on the right side is valid
+     * and make sure that it's type is compatible with that of the variable on the left side
+     */
+    type_instance expression_checker::check_assignment(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<assignment_expression> const & assign_expr = std::static_pointer_cast<assignment_expression>(an_expression);
+        std::shared_ptr<expr>& lval = assign_expr -> get_lval();
+        std::shared_ptr<expr>& rval = assign_expr -> get_rval();
+
+        // we make sure the expression is not dependent on match expressions
+        if(assign_expr -> has_match_expression())
+            throw invalid_expression(assign_expr -> get_token(), "An assignment expression cannot depend on a match expression.");
+
+        // we make sure the lval is a variable expression
+        if(lval -> is_identifier_expression()) {
+            if(l_scope -> variable_exists(ns_name, lval -> expr_token().get_lexeme()) == false) {
+                throw invalid_expression(lval -> expr_token(), "The lval of an assignment expression must be a variable.");
+            }
+        }
+        else if(lval -> is_binary_expression()) {
+            std::shared_ptr<binary_expression> const & bin_expr = std::static_pointer_cast<binary_expression>(lval);
+            std::shared_ptr<expr>& bin_lval = bin_expr -> get_lval();
+            std::shared_ptr<expr>& bin_rval = bin_expr -> get_rval();
+            // validate the lval - we expect a namespace name
+            if(bin_lval -> is_identifier_expression()) {
+                // we have a namespace, we make sure it is followed by a constructor
+                const std::string& sub_ns_name = bin_lval -> expr_token().get_lexeme();
+                if(l_scope -> has_namespace(sub_ns_name)) {
+                    if(bin_rval -> is_identifier_expression()) {
+                        if(l_scope -> variable_exists(ns_name, lval -> expr_token().get_lexeme()) == false) {
+                            throw invalid_expression(bin_rval -> expr_token(), "The lval of an assignment expression must be a variable.");
+                        }
+                    }
+                    else {
+                        throw invalid_expression(bin_rval -> expr_token(), "The lval of an assignment expression must be a variable.");
+                    }
+                }
+                else {
+                    throw invalid_expression(bin_lval -> expr_token(), "Expected a namespace name before variable in assignment lval.");
+                }
+            }
+            else {
+                throw invalid_expression(bin_lval -> expr_token(), "Expected a namespace name before variable in assignment lval.");
+            }
+        }
+
+        // we check both the lval and the rval
+        type_instance lval_instance = check(lval, l_scope, ns_name);
+        type_instance rval_instance = check(rval, l_scope, ns_name);
+
+        // we make sure both the rval and lval type instance are equal
+        if(type_instance_strong_compare(lval_instance, rval_instance) == false) {
+            throw invalid_expression(lval -> expr_token(), "This lval expression has type instance <" + mangle_type_instance(lval_instance) + "> while the rval expression expression has type instance <" + mangle_type_instance(rval_instance) + ">. Both type instances but be equal.");
+        }
+
+        return lval_instance;
     }
 }

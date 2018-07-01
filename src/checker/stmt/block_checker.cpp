@@ -18,6 +18,7 @@
 
 /* Exceptions */
 #include "representer/exceptions/symbol_already_declared.hpp"
+#include "representer/exceptions/symbol_can_collide.hpp"
 #include "checker/exceptions/invalid_expression.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_block.hpp"
@@ -70,7 +71,9 @@ namespace avalon {
         try {
             l_scope -> add_variable(ns_name, variable_decl);
         } catch(symbol_already_declared err) {
-            throw err;
+            throw invalid_variable(variable_decl -> get_token(), err.what());
+        } catch(symbol_can_collide err) {
+            throw invalid_variable(variable_decl -> get_token(), err.what());
         }
 
         // check the variable

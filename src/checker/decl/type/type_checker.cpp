@@ -37,6 +37,13 @@ namespace avalon {
         std::pair<bool,bool> ret(false, false);
         instance.is_parametrized(false);
 
+        // if we have the star type instance, we don't bother looking for it in the symbol table
+        if(instance.is_star()) {
+            ret.first = true;
+            ret.second = true;
+            return ret;
+        }
+
         // we can only look for user defined type instances in the scope we have
         if(instance.get_category() == USER) {            
             // we try to find if the type instance has an associated type that builds

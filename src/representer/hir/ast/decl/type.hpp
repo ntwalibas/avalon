@@ -519,6 +519,7 @@ namespace avalon {
          * returns true if this type instance is the dummy type instance
          */
         bool is_star();
+        bool is_star() const;
 
     private:
         /*

@@ -76,7 +76,7 @@ Here is what's be done and what's on the way topdown.
             - `Cast expressions`: done.
             - `Unary expressions`: done.
             - `Binary expressions`: done.
-            - `Match expressions`: *working on it*.
+            - `Match expressions`: done.
             - `Assignment expressions`: *working on it*.
 * `Code generation`: **not** done.
 

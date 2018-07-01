@@ -17,7 +17,7 @@ namespace avalon {
      * - the token with source code information, including the variable name
      * - whether the variable is mutable
      */
-    variable::variable(token& tok, bool is_mutable) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_namespace("*"), m_type_instance(star_instance), m_value(nullptr), m_is_valid(UNKNOWN), m_is_function_param(false), m_is_public(true), m_is_used(false), m_reachable(false), m_terminates(false) {
+    variable::variable(token& tok, bool is_mutable) : m_name(tok.get_lexeme()), m_tok(tok), m_is_mutable(is_mutable), m_namespace("*"), m_type_instance(star_instance), m_value(nullptr), m_is_valid(UNKNOWN), m_check_initializer(true), m_is_public(true), m_is_used(false), m_reachable(false), m_terminates(false) {
     }
 
     /**
@@ -146,15 +146,15 @@ namespace avalon {
     }
 
     /**
-     * is_function_param
-     * returns true if this variable is a function parameter
+     * check_initializer
+     * returns true if we can skip the variable initializer checking
      */
-    void variable::is_function_param(bool is_function_param_) {
-        m_is_function_param = is_function_param_;
+    void variable::check_initializer(bool check_initializer_) {
+        m_check_initializer = check_initializer_;
     }
 
-    bool variable::is_function_param() {
-        return m_is_function_param;
+    bool variable::check_initializer() {
+        return m_check_initializer;
     }
 
     /**

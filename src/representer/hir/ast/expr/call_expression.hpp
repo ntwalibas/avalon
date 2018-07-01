@@ -142,6 +142,12 @@ namespace avalon {
         bool has_record_syntax();
 
         /**
+         * has_underscore
+         * returns true if this call expression was passed an underscore expression
+         */
+        bool has_underscore();
+
+        /**
          * token
          * returns this expression token
          * this is useful because it prevents us from casting each expression just to display error messages
@@ -156,6 +162,20 @@ namespace avalon {
          */
         virtual type_instance& expr_type_instance() {
             return m_instance;
+        }
+
+        /**
+         * has_match_expression
+         * returns true if the current expression depends on a match expression
+         * this is useful during checking to make sure that variables and function parameters are not initialized with expressions containing match expressions
+         */
+        virtual bool has_match_expression() {
+            for(const auto& argument : m_arguments) {
+                if(argument.second -> has_match_expression())
+                    return true;
+            }
+
+            return false;
         }
         
         /**

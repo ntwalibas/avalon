@@ -75,6 +75,15 @@ namespace avalon {
         virtual type_instance& expr_type_instance() {
             return m_instance;
         }
+
+        /**
+         * has_match_expression
+         * returns true if the current expression depends on a match expression
+         * this is useful during checking to make sure that variables and function parameters are not initialized with expressions containing match expressions
+         */
+        virtual bool has_match_expression() {
+            return m_val -> has_match_expression();
+        }
         
         /**
          * is_unary_expression

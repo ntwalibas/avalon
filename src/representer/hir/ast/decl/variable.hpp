@@ -114,11 +114,11 @@ namespace avalon {
         std::shared_ptr<expr>& get_value();
 
         /**
-         * is_function_param
-         * returns true if this variable is a function parameter
+         * check_initializer
+         * returns true if we can skip the variable initializer checking
          */
-        void is_function_param(bool is_function_param_);
-        bool is_function_param();
+        void check_initializer(bool check_initializer_);
+        bool check_initializer();
 
         /**
          * set_is_valid
@@ -242,9 +242,9 @@ namespace avalon {
         validation_state m_is_valid;
 
         /*
-         * this variable is true if this variable declaration is a function parameter
+         * true if we are to skip the initializer checks
          */
-        bool m_is_function_param;
+        bool m_check_initializer;
 
         /*
          * whether this variable is available for public use outside of the namespace where it was declared

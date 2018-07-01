@@ -1,6 +1,7 @@
 #include <memory>
 #include <string>
 
+#include "representer/hir/ast/expr/call_expression.hpp"
 #include "checker/decl/variable/variable_checker.hpp"
 #include "checker/exceptions/invalid_expression.hpp"
 #include "checker/expr/expression_checker.hpp"
@@ -34,7 +35,27 @@ namespace avalon {
         // we automatically mark the variable as invalid and let it be valid only after the checks below are finished running
         variable_decl -> set_is_valid(INVALID);
 
-        // we make sure it is initalized
+        // if the variable can be in an unitiazed state (such as function parameters), we don't bother checking the initializer if there is none
+        if(variable_decl -> check_initializer() == false && variable_val == nullptr) {
+            // if the variable has a type instance, we check it
+            if(variable_decl -> has_type_instance()) {
+                type_instance& var_instance = variable_decl -> get_type_instance();
+                try {
+                    type_instance_checker::complex_check(var_instance, l_scope, ns_name);
+                } catch(invalid_type err) {
+                    throw invalid_variable(err.get_token(), err.what());
+                }
+            }
+            // but if no initializer was provided, we ensure that the variable is typed
+            else {
+                throw invalid_variable(variable_decl -> get_token(), "Variable declarations must have a type instance.");
+            }
+
+            variable_decl -> set_is_valid(VALID);
+            return;
+        }
+
+        // we make sure the variable is initialized
         if(variable_val == nullptr) {
             throw invalid_variable(variable_decl -> get_token(), "Variable declarations must be initialized.");
         }
@@ -52,6 +73,20 @@ namespace avalon {
         // we check the initializer expression
         expression_checker checker;
         try {
+            // we make sure that if the initializer is a call expression, it doesn't depend on an underscore expression
+            if(variable_val -> is_call_expression()) {
+                std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(variable_val);
+                if(call_expr -> has_underscore()) {
+                    throw invalid_variable(variable_decl -> get_token(), "The variable initializer cannot depend on the underscore expression.");
+                }
+            }
+
+            // and of course, the initializer can't be the underscore expression
+            if(variable_val -> is_underscore_expression()) {
+                throw invalid_variable(variable_decl -> get_token(), "The variable initializer cannot be the underscore expression.");
+            }
+
+            // we check the type instance of the initializer
             type_instance expr_instance = checker.check(variable_val, l_scope, ns_name);
             
             // if the expression type instance is not complete after checking, we raise an error

@@ -642,6 +642,12 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
         else
             return false;
     }
+    bool type_instance::is_star() const {
+        if(m_name == "*")
+            return true;
+        else
+            return false;
+    }
 
     /*
      * a dummy type instance that can be used as the we use the star token
@@ -657,7 +663,10 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
         std::string mangled_name = "";
 
         if(instance.is_abstract()) {
-            mangled_name += instance.get_name() + "*";
+            if(instance.is_star())
+                mangled_name += "*";
+            else
+                mangled_name += instance.get_name() + "*";
         }
         else {
             if(instance.get_category() == USER) {

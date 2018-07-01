@@ -179,8 +179,11 @@ namespace avalon {
         type_instance check_map_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
         type_instance check_custom_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
         
-
-        
+        /**
+         * check_match
+         * we make sure that the rval of the match expression is a literal or a constructor expression
+         */
+        type_instance check_match(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_assignment
@@ -188,6 +191,13 @@ namespace avalon {
          * and make sure that it's type is compatible with that of the variable on the left side
          */
         type_instance check_assignment(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+
+
+        /*
+         * if we are checking a match expression, it is possible that a variable expression will be provided
+         * in that case, we keep this flag to inform the variable expression checker that this new variable expression is also a variable declaration.
+         */
+        bool m_inside_match;
     };
 }
 

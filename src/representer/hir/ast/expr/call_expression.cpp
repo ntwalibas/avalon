@@ -187,4 +187,24 @@ namespace avalon {
                 return true;
         }        
     }
+
+    /**
+     * has_underscore
+     * returns true if this call expression was passed an underscore expression
+     */
+    bool call_expression::has_underscore() {
+        for(auto& argument : m_arguments) {
+            if(argument.second -> is_underscore_expression()) {
+                return true;
+            }
+            else if(argument.second -> is_call_expression()) {
+                std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(argument.second);
+                if(call_expr -> has_underscore()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

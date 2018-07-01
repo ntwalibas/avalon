@@ -537,7 +537,7 @@ parser::parser(
                 
                 // a parameter is simply a variable declared inside a the function parameters list
                 variable param(* param_tok, is_mutable);
-                param.is_function_param(true);
+                param.check_initializer(false);
                 // if we match a colon then we can expect the parameter type instance
                 consume(COLON, "Expected a colon in anticipation of the function parameter type.");
                 type_instance param_type_instance = parse_type_instance();

@@ -13,12 +13,16 @@
 #include "representer/hir/ast/expr/literal_expression.hpp"
 #include "representer/hir/ast/expr/binary_expression.hpp"
 #include "representer/hir/ast/expr/unary_expression.hpp"
+#include "representer/hir/ast/expr/match_expression.hpp"
 #include "representer/hir/ast/expr/tuple_expression.hpp"
 #include "representer/hir/ast/expr/list_expression.hpp"
 #include "representer/hir/ast/expr/call_expression.hpp"
 #include "representer/hir/ast/expr/cast_expression.hpp"
 #include "representer/hir/ast/expr/map_expression.hpp"
 #include "representer/hir/ast/expr/expr.hpp"
+
+/* Builtins */
+#include "representer/hir/builtins/avalon_bool.hpp"
 
 /* Checker */
 #include "checker/decl/function/function_checker.hpp"
@@ -389,6 +393,12 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
     }
     else if(an_expression -> is_unary_expression()) {
         return inferer::infer_unary(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_binary_expression()) {
+        return inferer::infer_binary(an_expression, l_scope, ns_name);
+    }
+    else if(an_expression -> is_match_expression()) {
+        return inferer::infer_match(an_expression, l_scope, ns_name);
     }
     else {
         throw std::runtime_error("[compiler error] unexpected expression type in inference engine.");
@@ -1555,5 +1565,14 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         
         function binary_fun(star_tok);
         return infer_function_call(binary_fun, getitem_expr, l_scope, ns_name);
+    }
+
+    /**
+     * infer_match
+     * infers the type instance of a match expression
+     */
+    type_instance inferer::infer_match(std::shared_ptr<expr>& an_expression, std::shared_ptr<scope> l_scope, const std::string& ns_name) {
+        avalon_bool avl_bool;
+        return avl_bool.get_type_instance();
     }
 }

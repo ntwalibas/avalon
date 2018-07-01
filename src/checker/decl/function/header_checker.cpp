@@ -3,14 +3,22 @@
 #include <vector>
 #include <string>
 
-#include "checker/decl/function/header_checker.hpp"
-#include "checker/exceptions/invalid_function.hpp"
+
+/* AST */
 #include "representer/hir/ast/decl/function.hpp"
-#include "checker/exceptions/invalid_type.hpp"
-#include "checker/decl/type/type_checker.hpp"
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/ast/decl/type.hpp"
+
+/* Lexer */
 #include "lexer/token.hpp"
+
+/* Checker */
+#include "checker/decl/function/header_checker.hpp"
+#include "checker/decl/type/type_checker.hpp"
+
+/* Exceptions */
+#include "checker/exceptions/invalid_function.hpp"
+#include "checker/exceptions/invalid_type.hpp"
 
 
 namespace avalon {

@@ -9,6 +9,7 @@
 
 /* Exceptions */
 #include "checker/exceptions/invalid_expression.hpp"
+#include "checker/exceptions/invalid_statement.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_block.hpp"
 
@@ -34,6 +35,8 @@ namespace avalon {
             throw err;
         } catch(invalid_expression err) {
             // if any expression sucks
+            throw err;
+        } catch(invalid_statement err) {
             throw err;
         }
     }

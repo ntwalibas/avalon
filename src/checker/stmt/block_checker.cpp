@@ -4,6 +4,7 @@
 /* AST */
 #include "representer/hir/ast/stmt/expression_stmt.hpp"
 #include "representer/hir/ast/stmt/block_stmt.hpp"
+#include "representer/hir/ast/stmt/pass_stmt.hpp"
 #include "representer/hir/ast/decl/statement.hpp"
 #include "representer/hir/ast/decl/variable.hpp"
 #include "representer/hir/ast/decl/decl.hpp"
@@ -20,6 +21,7 @@
 #include "representer/exceptions/symbol_already_declared.hpp"
 #include "representer/exceptions/symbol_can_collide.hpp"
 #include "checker/exceptions/invalid_expression.hpp"
+#include "checker/exceptions/invalid_statement.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_block.hpp"
 
@@ -155,7 +157,9 @@ namespace avalon {
      * check if a pass statement occurs inside a block
      */
     void block_checker::check_pass(std::shared_ptr<stmt>& a_statement) {
-
+        std::shared_ptr<pass_stmt> const & p_stmt = std::static_pointer_cast<pass_stmt>(a_statement);
+        if(m_decls_count > 1)
+            throw invalid_statement(p_stmt -> get_token(), "A pass statement cannot occur within a block with other statements.");
     }
 
     /**

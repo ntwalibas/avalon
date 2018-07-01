@@ -22,6 +22,7 @@
 #include "representer/exceptions/symbol_can_collide.hpp"
 #include "representer/exceptions/symbol_not_found.hpp"
 #include "checker/exceptions/invalid_expression.hpp"
+#include "checker/exceptions/invalid_statement.hpp"
 #include "checker/exceptions/invalid_function.hpp"
 #include "checker/exceptions/invalid_variable.hpp"
 #include "checker/exceptions/invalid_block.hpp"
@@ -316,6 +317,8 @@ function_checker::function_checker() {
             throw invalid_function(err.get_token(), err.what());
         } catch(invalid_type err) {
             // temporary
+            throw invalid_function(err.get_token(), err.what());
+        } catch(invalid_statement err) {
             throw invalid_function(err.get_token(), err.what());
         }
     }

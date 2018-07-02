@@ -3,8 +3,10 @@
 
 /* AST */
 #include "representer/hir/ast/stmt/expression_stmt.hpp"
+#include "representer/hir/ast/stmt/continue_stmt.hpp"
 #include "representer/hir/ast/stmt/return_stmt.hpp"
 #include "representer/hir/ast/stmt/block_stmt.hpp"
+#include "representer/hir/ast/stmt/break_stmt.hpp"
 #include "representer/hir/ast/stmt/pass_stmt.hpp"
 #include "representer/hir/ast/decl/statement.hpp"
 #include "representer/hir/ast/decl/variable.hpp"
@@ -146,7 +148,10 @@ namespace avalon {
      * check if a break statement occurs inside a loop
      */
     void block_checker::check_break(std::shared_ptr<stmt>& a_statement) {
-
+        std::shared_ptr<break_stmt> const & br_stmt = std::static_pointer_cast<break_stmt>(a_statement);
+        if(m_inside_loop == false) {
+            throw invalid_statement(br_stmt -> get_token(), "Unexpected break statement. A break statement can only occur within a loop.");
+        }
     }
 
     /**
@@ -154,7 +159,10 @@ namespace avalon {
      * check if a continue statement occurs inside a loop
      */
     void block_checker::check_continue(std::shared_ptr<stmt>& a_statement) {
-
+        std::shared_ptr<continue_stmt> const & cont_stmt = std::static_pointer_cast<continue_stmt>(a_statement);
+        if(m_inside_loop == false) {
+            throw invalid_statement(cont_stmt -> get_token(), "Unexpected continue statement. A continue statement can only occur within a loop.");
+        }
     }
 
     /**

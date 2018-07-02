@@ -64,13 +64,12 @@ Here is what's be done and what's on the way topdown.
     - `Function declarations`: done.
     - `Variable declarations`: done.
     - `Statement declarations`:
-        - `While statements`: **not** done.
+        - `While statements`: done.
         - `If statements`: **not** done.
         - `Pass statements`: done.
         - `Return statements`: done.
         - `Break statements`: done.
         - `Continue statements`: done.
-        - `While statements`: done.
         - `Expression statements`:
             - `Literal expressionss`: done.
             - `Container expressions`: done.

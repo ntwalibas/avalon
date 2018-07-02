@@ -66,7 +66,7 @@ namespace avalon {
          * check_while
          * given a statement, check if it is a vali while statement
          */
-        void check_while(std::shared_ptr<stmt>& a_statement);
+        void check_while(std::shared_ptr<stmt>& a_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_if

@@ -6,6 +6,7 @@
 #include "representer/hir/ast/stmt/continue_stmt.hpp"
 #include "representer/hir/ast/stmt/return_stmt.hpp"
 #include "representer/hir/ast/stmt/block_stmt.hpp"
+#include "representer/hir/ast/stmt/while_stmt.hpp"
 #include "representer/hir/ast/stmt/break_stmt.hpp"
 #include "representer/hir/ast/stmt/pass_stmt.hpp"
 #include "representer/hir/ast/decl/statement.hpp"
@@ -15,6 +16,7 @@
 
 /* Builtins */
 #include "representer/hir/builtins/avalon_void.hpp"
+#include "representer/hir/builtins/avalon_bool.hpp"
 
 /* Symbol table */
 #include "representer/hir/symtable/scope.hpp"
@@ -102,7 +104,7 @@ namespace avalon {
         std::shared_ptr<stmt>& l_stmt = stmt_decl -> get_statement();
         
         if(l_stmt -> is_while()) {
-            check_while(l_stmt);
+            check_while(l_stmt, l_scope, ns_name);
         }
         else if(l_stmt -> is_if()) {
             check_if(l_stmt);
@@ -131,8 +133,34 @@ namespace avalon {
      * check_while
      * given a statement, check if it is a vali while statement
      */
-    void block_checker::check_while(std::shared_ptr<stmt>& a_statement) {
+    void block_checker::check_while(std::shared_ptr<stmt>& a_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        bool upper_loop_found = m_inside_loop;
+        m_inside_loop = true;
 
+        std::shared_ptr<while_stmt> const & wh_stmt = std::static_pointer_cast<while_stmt>(a_statement);
+        std::shared_ptr<expr>& wh_condition = wh_stmt -> get_condition();
+        block_stmt& wh_body = wh_stmt -> get_block();
+        std::shared_ptr<scope>& wh_scope = wh_stmt -> get_scope();
+        expression_checker expr_checker;
+        avalon_bool avl_bool;
+        type_instance& bool_instance = avl_bool.get_type_instance();
+
+        // we check and condition and make sure it is of bool type
+        try {
+            type_instance cond_instance = expr_checker.check(wh_condition, l_scope, ns_name);
+            if(type_instance_strong_compare(cond_instance, bool_instance) == false) {
+                throw invalid_statement(wh_stmt -> get_token(), "The condition for a while loop is of type instance <" + mangle_type_instance(cond_instance) + "> while the expected type instance is <bool>");
+            }
+        } catch(invalid_expression err) {
+            throw err;
+        }
+
+        // we check the body of the while loop
+        this -> check(wh_body, wh_scope, ns_name);
+
+        // we only clear the inside loop flag if no other upper loop exists
+        if(upper_loop_found == false)
+            m_inside_loop = false;
     }
 
     /**
@@ -192,7 +220,7 @@ namespace avalon {
                 }
             } catch(invalid_expression err) {
                 throw err;
-            }            
+            }
         }
         else {
             avalon_void avl_void;

@@ -1379,7 +1379,8 @@ parser::parser(
             std::shared_ptr<token>& id_tok = consume(IDENTIFIER, "Expected an identifier.");
             std::shared_ptr<identifier_expression> id_expr = std::make_shared<identifier_expression>(* id_tok);
             // if the expression is followed by a colon, then a type instance was provided
-            if(m_inside_map == false && match(COLON)) {
+            if(m_inside_map == false && check(COLON) && !check_next(NEWLINE)) {
+                consume(COLON, "Expected a colon before type instance");
                 type_instance expr_instance = parse_type_instance();
                 id_expr -> set_type_instance(expr_instance, true);
             }
@@ -1391,7 +1392,8 @@ parser::parser(
             if(match(RIGHT_PAREN)) {
                 std::shared_ptr<tuple_expression> tuple_expr = std::make_shared<tuple_expression>(* left_paren);
                 // if the expression is followed by a colon, then a type instance was provided
-                if(m_inside_map == false && match(COLON)) {
+                if(m_inside_map == false && check(COLON) && !check_next(NEWLINE)) {
+                    consume(COLON, "Expected a colon before type instance");
                     type_instance expr_instance = parse_type_instance();
                     tuple_expr -> set_type_instance(expr_instance, true);
                 }
@@ -1443,7 +1445,8 @@ parser::parser(
                 literal_expr = std::make_shared<literal_expression>(* literal_tok, STRING_EXPR, literal_tok -> get_lexeme());
 
             // if the expression is followed by a colon, then a type instance was provided
-            if(m_inside_map == false && match(COLON)) {
+            if(m_inside_map == false && check(COLON) && !check_next(NEWLINE)) {
+                consume(COLON, "Expected a colon before type instance");
                 type_instance expr_instance = parse_type_instance();
                 literal_expr -> set_type_instance(expr_instance, true);
             }
@@ -1498,7 +1501,8 @@ parser::parser(
         consume(RIGHT_PAREN, "Expected a closing parenthesis after the function call arguments.");
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(m_inside_map == false && match(COLON)) {
+        if(m_inside_map == false && check(COLON) && !check_next(NEWLINE)) {
+            consume(COLON, "Expected a colon before type instance");
             type_instance_provided = true;
             type_instance expr_instance = parse_type_instance();
             call_expr -> set_type_instance(expr_instance, true);
@@ -1555,7 +1559,8 @@ parser::parser(
         consume(RIGHT_PAREN, "Expected a closing parenthesis after tuple expression.");
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(m_inside_map == false && match(COLON)) {
+        if(m_inside_map == false && check(COLON) && !check_next(NEWLINE)) {
+            consume(COLON, "Expected a colon before type instance");
             type_instance expr_instance = parse_type_instance();
             tuple_expr -> set_type_instance(expr_instance, true);
         }
@@ -1583,7 +1588,8 @@ parser::parser(
         consume(RIGHT_BRACKET, "Excepted a closing bracket in list expression");
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(m_inside_map == false && match(COLON)) {
+        if(m_inside_map == false && check(COLON) && !check_next(NEWLINE)) {
+            consume(COLON, "Expected a colon before type instance");
             type_instance expr_instance = parse_type_instance();
             list_expr -> set_type_instance(expr_instance, true);
         }
@@ -1616,7 +1622,8 @@ parser::parser(
         consume(RIGHT_BRACE, "Excepted a closing bracket in map expression");        
 
         // if the expression is followed by a colon, then a type instance was provided
-        if(m_inside_map == false && match(COLON)) {
+        if(m_inside_map == false && check(COLON) && !check_next(NEWLINE)) {
+            consume(COLON, "Expected a colon before type instance");
             type_instance expr_instance = parse_type_instance();
             map_expr -> set_type_instance(expr_instance, true);
         }

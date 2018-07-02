@@ -70,6 +70,7 @@ Here is what's be done and what's on the way topdown.
         - `Return statements`: done.
         - `Break statements`: done.
         - `Continue statements`: done.
+        - `While statements`: done.
         - `Expression statements`:
             - `Literal expressionss`: done.
             - `Container expressions`: done.

@@ -77,6 +77,7 @@ namespace avalon {
         std::shared_ptr<function> string_concat_function = std::make_shared<function>(add_function_tok);
         string_concat_function -> set_fqn(l_fqn);
         string_concat_function -> is_public(true);
+        string_concat_function -> is_builtin(true);
         string_concat_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> string_concat_scope = std::make_shared<scope>();
         string_concat_scope -> set_parent(l_scope);
@@ -91,6 +92,7 @@ namespace avalon {
         std::shared_ptr<function> string_hash_function = std::make_shared<function>(hash_function_tok);
         string_hash_function -> set_fqn(l_fqn);
         string_hash_function -> is_public(true);
+        string_hash_function -> is_builtin(true);
         string_hash_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> string_hash_scope = std::make_shared<scope>();
         string_hash_scope -> set_parent(l_scope);

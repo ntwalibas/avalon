@@ -77,6 +77,7 @@ namespace avalon {
         std::shared_ptr<function> int_pos_function = std::make_shared<function>(pos_function_tok);
         int_pos_function -> set_fqn(l_fqn);
         int_pos_function -> is_public(true);
+        int_pos_function -> is_builtin(true);
         int_pos_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> int_pos_scope = std::make_shared<scope>();
         int_pos_scope -> set_parent(l_scope);
@@ -90,6 +91,7 @@ namespace avalon {
         std::shared_ptr<function> int_neg_function = std::make_shared<function>(neg_function_tok);
         int_neg_function -> set_fqn(l_fqn);
         int_neg_function -> is_public(true);
+        int_neg_function -> is_builtin(true);
         int_neg_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> int_neg_scope = std::make_shared<scope>();
         int_neg_scope -> set_parent(l_scope);
@@ -103,6 +105,7 @@ namespace avalon {
         std::shared_ptr<function> int_add_function = std::make_shared<function>(add_function_tok);
         int_add_function -> set_fqn(l_fqn);
         int_add_function -> is_public(true);
+        int_add_function -> is_builtin(true);
         int_add_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> int_add_scope = std::make_shared<scope>();
         int_add_scope -> set_parent(l_scope);
@@ -117,6 +120,7 @@ namespace avalon {
         std::shared_ptr<function> int_sub_function = std::make_shared<function>(sub_function_tok);
         int_sub_function -> set_fqn(l_fqn);
         int_sub_function -> is_public(true);
+        int_sub_function -> is_builtin(true);
         int_sub_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> int_sub_scope = std::make_shared<scope>();
         int_sub_scope -> set_parent(l_scope);
@@ -131,6 +135,7 @@ namespace avalon {
         std::shared_ptr<function> int_mul_function = std::make_shared<function>(mul_function_tok);
         int_mul_function -> set_fqn(l_fqn);
         int_mul_function -> is_public(true);
+        int_mul_function -> is_builtin(true);
         int_mul_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> int_mul_scope = std::make_shared<scope>();
         int_mul_scope -> set_parent(l_scope);
@@ -145,6 +150,7 @@ namespace avalon {
         std::shared_ptr<function> int_div_function = std::make_shared<function>(div_function_tok);
         int_div_function -> set_fqn(l_fqn);
         int_div_function -> is_public(true);
+        int_div_function -> is_builtin(true);
         int_div_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> int_div_scope = std::make_shared<scope>();
         int_div_scope -> set_parent(l_scope);
@@ -159,6 +165,7 @@ namespace avalon {
         std::shared_ptr<function> int_hash_function = std::make_shared<function>(hash_function_tok);
         int_hash_function -> set_fqn(l_fqn);
         int_hash_function -> is_public(true);
+        int_hash_function -> is_builtin(true);
         int_hash_function -> set_namespace(l_namespace -> get_name());
         std::shared_ptr<scope> int_hash_scope = std::make_shared<scope>();
         int_hash_scope -> set_parent(l_scope);

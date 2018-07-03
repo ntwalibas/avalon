@@ -166,6 +166,13 @@ namespace avalon {
         bool is_used() const;
 
         /**
+         * is_builtin
+         * sets and returns a boolean indicating whether this function is builtin
+         */
+        void is_builtin(bool builtin);
+        bool is_builtin() const;
+
+        /**
          * add_specialization
          * add a function that was generated from this function
          */
@@ -268,6 +275,11 @@ namespace avalon {
          * whether this function has been used for any expression
          */
         bool m_is_used;
+
+        /*
+         * marks whether this function is a built-in function
+         */
+        bool m_is_builtin;
 
         /*
          * map of functions generated from this one

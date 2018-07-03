@@ -71,7 +71,7 @@ dsymbols::dsymbols() {
         try {
             return m_types.at(type_key);
         } catch(std::out_of_range err) {
-            throw symbol_not_found("There is no type with the given name and arity.");
+            throw symbol_not_found("There is no type with the given name <" + type_ins.get_name() + "> and arity <" + std::to_string(type_ins.get_params().size()) + ">.");
         }
     }
 
@@ -84,7 +84,7 @@ dsymbols::dsymbols() {
         try {
             return m_types.at(type_key);
         } catch(std::out_of_range err) {
-            throw symbol_not_found("There is no type with the given name and arity.");
+            throw symbol_not_found("There is no type with the given name <" + name + "> and arity <" + std::to_string(arity) + ">.");
         }
     }
 
@@ -314,6 +314,8 @@ dtable::dtable() {
             return decl_symbols.get_type(type_ins);
         } catch(std::out_of_range err) {
             throw symbol_not_found("There is no type corresponding to the given type instance in this namespace.");
+        } catch(symbol_not_found err) {
+            throw symbol_not_found(std::string(err.what()) + " Namespace is <" + ns_name + ">.");
         }
     }
 
@@ -327,6 +329,8 @@ dtable::dtable() {
             return decl_symbols.get_type(type_name, arity);
         } catch(std::out_of_range err) {
             throw symbol_not_found("There is no type corresponding to the given name and arity in this namespace.");
+        } catch(symbol_not_found err) {
+            throw symbol_not_found(std::string(err.what()) + " Namespace is <" + ns_name + ">.");
         }
     }
 

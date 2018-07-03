@@ -268,8 +268,12 @@ function_checker::function_checker() {
      * - all branches do terminate normally (conservatively)
      */
     void function_checker::check(function& function_decl, const std::string& ns_name) {
-        std::shared_ptr<scope>& l_scope = function_decl.get_scope();
+        // if the function declaration is a builtin function, we don't run the checker
+        if(function_decl.is_builtin())
+            return;
 
+        // make sure a scope was set on the function
+        std::shared_ptr<scope>& l_scope = function_decl.get_scope();
         if(l_scope == nullptr) {
             throw invalid_function(function_decl.get_token(), "[compiler error] there is a function without a scope for it.");
         }

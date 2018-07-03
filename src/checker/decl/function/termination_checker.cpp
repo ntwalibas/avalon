@@ -3,8 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "checker/decl/function/termination_checker.hpp"
-#include "checker/exceptions/invalid_function.hpp"
+/* AST */
 #include "representer/hir/ast/stmt/while_stmt.hpp"
 #include "representer/hir/ast/stmt/block_stmt.hpp"
 #include "representer/hir/ast/decl/statement.hpp"
@@ -13,6 +12,15 @@
 #include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/ast/stmt/stmt.hpp"
 #include "representer/hir/ast/decl/decl.hpp"
+
+/* Builtins */
+#include "representer/hir/builtins/avalon_void.hpp"
+
+/* Checker */
+#include "checker/decl/function/termination_checker.hpp"
+#include "checker/exceptions/invalid_function.hpp"
+
+/* Lexer */
 #include "lexer/token.hpp"
 
 
@@ -33,8 +41,8 @@ namespace avalon {
         type_instance ret_type_instance = function_decl.get_return_type_instance();
 
         // if the function's body doesn't terminate and it doesn't return void, we raise an error
-        std::shared_ptr<type>& void_type = l_scope -> get_type("*", "void", 0);
-        type_instance void_type_instance(void_type_tok, void_type, "*");
+        avalon_void avl_void;
+        type_instance void_type_instance = avl_void.get_type_instance();
         if(terminates == false && type_instance_strong_compare(ret_type_instance, void_type_instance) == false)
             throw invalid_function(function_decl.get_token(), "This function's body is missing a <return> statement.");
     }

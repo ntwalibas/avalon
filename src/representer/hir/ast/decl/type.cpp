@@ -304,7 +304,7 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
             mangled_name += "{";
         }
         else {
-            mangled_name += "(";
+            mangled_name += name;
         }
 
         for(auto it = params.begin(), end = params.end(); it != end; ++it) {
@@ -322,9 +322,6 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
         }
         else if(name == "{") {
             mangled_name += "}";
-        }
-        else {
-            mangled_name += ")";
         }
 
         return mangled_name;

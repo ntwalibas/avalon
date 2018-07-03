@@ -273,7 +273,6 @@ token star_tok(MUL, "*", 0, 0, "__bit__");
  * Type tokens
  */
 token void_type_tok(TYPE, "void", 0, 0, "__bit__");
-token unit_type_tok(TYPE, "unit", 0, 0, "__bit__");
 token bool_type_tok(TYPE, "bool", 0, 0, "__bit__");
 token int_type_tok(TYPE, "int", 0, 0, "__bit__");
 token dec_type_tok(TYPE, "dec", 0, 0, "__bit__");
@@ -286,7 +285,6 @@ token map_type_tok(TYPE, "{", 0, 0, "__bit__");
 /**
  * constructor tokens
  */
-token unit_cons_tok(IDENTIFIER, "Unit", 0, 0, "__bic__");
 token true_cons_tok(IDENTIFIER, "True", 0, 0, "__bic__");
 token false_cons_tok(IDENTIFIER, "False", 0, 0, "__bic__");
 

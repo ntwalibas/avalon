@@ -56,13 +56,13 @@ namespace avalon {
     /**
      * the constructor expects the token with function information
      */
-    function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(UNKNOWN), m_is_public(true), m_is_used(false), m_terminates(false) {
+    function::function(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(UNKNOWN), m_is_public(true), m_is_used(false), m_is_builtin(false), m_terminates(false) {
     }
 
     /**
      * the constructor expects the token with function information and the validation state
      */
-    function::function(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true), m_is_used(false), m_terminates(false) {    
+    function::function(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true), m_is_used(false), m_is_builtin(false), m_terminates(false) {    
     }
 
     /**
@@ -239,6 +239,18 @@ namespace avalon {
 
     bool function::is_used() const {
         return m_is_used;
+    }
+
+    /**
+     * is_builtin
+     * sets and returns a boolean indicating whether this function is builtin
+     */
+    void function::is_builtin(bool builtin) {
+        m_is_builtin = builtin;
+    }
+
+    bool function::is_builtin() const {
+        return m_is_builtin;
     }
 
     /**

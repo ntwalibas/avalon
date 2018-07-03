@@ -270,6 +270,10 @@ function_checker::function_checker() {
     void function_checker::check(function& function_decl, const std::string& ns_name) {
         std::shared_ptr<scope>& l_scope = function_decl.get_scope();
 
+        if(l_scope == nullptr) {
+            throw invalid_function(function_decl.get_token(), "[compiler error] there is a function without a scope for it.");
+        }
+
         try {
             // we check the header aka function signature
             check_header(function_decl, l_scope, ns_name);

@@ -494,7 +494,7 @@ parser::parser(
         consume(NEWLINE, "Expected a new line after the function return type.");
 
         // get the function body
-        block_stmt body = block_statement(parent_scope); 
+        block_stmt body = block_statement(l_scope); 
         function_decl -> set_body(body);
 
         // set the the end of the current scope

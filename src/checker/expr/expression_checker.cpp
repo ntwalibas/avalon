@@ -1057,11 +1057,15 @@ namespace avalon {
         std::shared_ptr<expr>& rval = match_expr -> get_rval();
 
         // we make sure that the rval is an underscore expression, a literal expression expression or a constructor expression
-        if(rval -> is_underscore_expression() || rval -> is_literal_expression() || rval -> is_call_expression() || rval -> is_binary_expression()) {
-            if(rval -> is_call_expression()) {
-                std::shared_ptr<call_expression> const & call_expr = std::static_pointer_cast<call_expression>(rval);
-                if(l_scope -> function_exists(ns_name, call_expr -> get_name()) == true) {
-                    throw invalid_expression(call_expr -> get_token(), "A function call cannot be used as rval to a match expression");
+        if(rval -> is_underscore_expression() || rval -> is_literal_expression() || rval -> is_identifier_expression() || rval -> is_call_expression() || rval -> is_binary_expression()) {
+            if(rval -> is_identifier_expression()) {
+                if(l_scope -> default_constructor_exists(ns_name, rval -> expr_token().get_lexeme(), 0) == false) {
+                    throw invalid_expression(rval -> expr_token(), "Expected a default constructor.");
+                }
+            }
+            else if(rval -> is_call_expression()) {
+                if(l_scope -> function_exists(ns_name, rval -> expr_token().get_lexeme()) == true) {
+                    throw invalid_expression(rval -> expr_token(), "A function call cannot be used as rval to a match expression");
                 }
             }
             else if(rval -> is_binary_expression()) {
@@ -1073,10 +1077,14 @@ namespace avalon {
                     // we have a namespace, we make sure it is followed by a constructor
                     const std::string& sub_ns_name = bin_lval -> expr_token().get_lexeme();
                     if(l_scope -> has_namespace(sub_ns_name)) {
-                        if(bin_rval -> is_call_expression()) {
-                            std::shared_ptr<call_expression> const & rval_call_expr = std::static_pointer_cast<call_expression>(bin_rval);
-                            if(l_scope -> function_exists(sub_ns_name, rval_call_expr -> get_name()) == true) {
-                                throw invalid_expression(rval_call_expr -> get_token(), "A function call cannot be used as rval to a match expression");
+                        if(bin_rval -> is_identifier_expression()) {
+                            if(l_scope -> default_constructor_exists(ns_name, rval -> expr_token().get_lexeme(), 0) == false) {
+                                throw invalid_expression(rval -> expr_token(), "Expected a default constructor.");
+                            }
+                        }
+                        else if(bin_rval -> is_call_expression()) {
+                            if(l_scope -> function_exists(sub_ns_name, bin_rval -> expr_token().get_lexeme()) == true) {
+                                throw invalid_expression(bin_rval -> expr_token(), "A function call cannot be used as rval to a match expression");
                             }
                         }
                         else {

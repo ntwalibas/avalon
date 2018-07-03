@@ -11,6 +11,7 @@
 #include "representer/hir/ast/stmt/pass_stmt.hpp"
 #include "representer/hir/ast/decl/statement.hpp"
 #include "representer/hir/ast/decl/variable.hpp"
+#include "representer/hir/ast/stmt/if_stmt.hpp"
 #include "representer/hir/ast/decl/type.hpp"
 #include "representer/hir/ast/decl/decl.hpp"
 
@@ -107,7 +108,7 @@ namespace avalon {
             check_while(l_stmt, l_scope, ns_name);
         }
         else if(l_stmt -> is_if()) {
-            check_if(l_stmt);
+            check_if(l_stmt, l_scope, ns_name);
         }
         else if(l_stmt -> is_break()) {
             check_break(l_stmt);
@@ -145,7 +146,7 @@ namespace avalon {
         avalon_bool avl_bool;
         type_instance& bool_instance = avl_bool.get_type_instance();
 
-        // we check and condition and make sure it is of bool type
+        // we check the condition and make sure it is of bool type
         try {
             type_instance cond_instance = expr_checker.check(wh_condition, l_scope, ns_name);
             if(type_instance_strong_compare(cond_instance, bool_instance) == false) {
@@ -167,8 +168,56 @@ namespace avalon {
      * check_if
      * given a statement, check if it is a valid if statement
      */
-    void block_checker::check_if(std::shared_ptr<stmt>& a_statement) {
+    void block_checker::check_if(std::shared_ptr<stmt>& a_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::shared_ptr<if_stmt> const & f_stmt = std::static_pointer_cast<if_stmt>(a_statement);
+        std::shared_ptr<expr>& f_condition = f_stmt -> get_condition();
+        block_stmt& f_body = f_stmt -> get_block();
+        std::shared_ptr<scope>& f_scope = f_stmt -> get_scope();
+        expression_checker expr_checker;
+        avalon_bool avl_bool;
+        type_instance& bool_instance = avl_bool.get_type_instance();
 
+        // we check the condition and make sure it is of bool type
+        try {
+            type_instance cond_instance = expr_checker.check(f_condition, l_scope, ns_name);
+            if(type_instance_strong_compare(cond_instance, bool_instance) == false) {
+                throw invalid_statement(f_stmt -> get_token(), "The condition for an if conditional is of type instance <" + mangle_type_instance(cond_instance) + "> while the expected type instance is <bool>");
+            }
+        } catch(invalid_expression err) {
+            throw err;
+        }
+
+        // we check the body of the if conditional
+        this -> check(f_body, f_scope, ns_name);
+
+        // handle elifs
+        std::vector<elif_branch>& f_elifs = f_stmt -> get_elifs();
+        for(auto& f_elif : f_elifs) {
+            std::shared_ptr<expr>& elif_condition = f_elif.get_condition();
+            block_stmt& elif_body = f_elif.get_block();
+            std::shared_ptr<scope>& elif_scope = f_elif.get_scope();
+
+            // we check the condition and make sure it is of bool type
+            try {
+                type_instance cond_instance = expr_checker.check(elif_condition, elif_scope, ns_name);
+                if(type_instance_strong_compare(cond_instance, bool_instance) == false) {
+                    throw invalid_statement(f_elif.get_token(), "The condition for an elif branch is of type instance <" + mangle_type_instance(cond_instance) + "> while the expected type instance is <bool>");
+                }
+            } catch(invalid_expression err) {
+                throw err;
+            }
+
+            // we check the body of the elif branch
+            this -> check(elif_body, elif_scope, ns_name);
+        }
+
+        // handle else
+        if(f_stmt -> has_else()) {
+            else_branch e_branch = f_stmt -> get_else();
+            block_stmt& e_body = e_branch.get_block();
+            std::shared_ptr<scope>& e_scope = e_branch.get_scope();
+            this -> check(e_body, e_scope, ns_name);
+        }
     }
 
     /**

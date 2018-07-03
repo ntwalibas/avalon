@@ -72,7 +72,7 @@ namespace avalon {
          * check_if
          * given a statement, check if it is a valid if statement
          */
-        void check_if(std::shared_ptr<stmt>& a_statement);
+        void check_if(std::shared_ptr<stmt>& a_statement, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
         /**
          * check_break

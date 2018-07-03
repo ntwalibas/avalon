@@ -61,26 +61,41 @@ namespace avalon {
         std::shared_ptr<ns> l_namespace = std::make_shared<ns>(star_tok);
         l_namespace -> set_fqn(l_fqn);
 
-        /* add the type to the namespace */
+        /* add the type to the scope and the namespace */
+        l_scope -> add_type(l_namespace -> get_name(), m_string_type);
         std::shared_ptr<decl> type_decl = m_string_type;
         l_namespace -> add_declaration(type_decl);
 
         /* add function declarations to the namespace */
         // variables
-        variable string_param(var_one_tok, false);
-        string_param.set_type_instance(m_string_instance);
+        variable param_one(var_one_tok, false);
+        param_one.set_type_instance(m_string_instance);
+        variable param_two(var_two_tok, false);
+        param_two.set_type_instance(m_string_instance);
 
         // string concatenation
         std::shared_ptr<function> string_concat_function = std::make_shared<function>(add_function_tok);
-        string_concat_function -> add_param(string_param);
-        string_concat_function -> add_param(string_param);
+        string_concat_function -> set_fqn(l_fqn);
+        string_concat_function -> is_public(true);
+        string_concat_function -> set_namespace(l_namespace -> get_name());
+        std::shared_ptr<scope> string_concat_scope = std::make_shared<scope>();
+        string_concat_scope -> set_parent(l_scope);
+        string_concat_function -> set_scope(string_concat_scope);
+        string_concat_function -> add_param(param_one);
+        string_concat_function -> add_param(param_two);
         string_concat_function -> set_return_type_instance(m_string_instance);
         std::shared_ptr<decl> concat_function_decl = string_concat_function;
         l_namespace -> add_declaration(concat_function_decl);
 
         // string hashing
         std::shared_ptr<function> string_hash_function = std::make_shared<function>(hash_function_tok);
-        string_hash_function -> add_param(string_param);
+        string_hash_function -> set_fqn(l_fqn);
+        string_hash_function -> is_public(true);
+        string_hash_function -> set_namespace(l_namespace -> get_name());
+        std::shared_ptr<scope> string_hash_scope = std::make_shared<scope>();
+        string_hash_scope -> set_parent(l_scope);
+        string_hash_function -> set_scope(string_hash_scope);
+        string_hash_function -> add_param(param_one);
         string_hash_function -> set_return_type_instance(m_string_instance);
         std::shared_ptr<decl> hash_function_decl = string_hash_function;
         l_namespace -> add_declaration(hash_function_decl);

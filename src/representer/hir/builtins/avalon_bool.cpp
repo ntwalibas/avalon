@@ -66,33 +66,54 @@ namespace avalon {
         l_namespace -> set_fqn(l_fqn);
 
         /* add the type to the namespace */
+        l_scope -> add_type(l_namespace -> get_name(), m_bool_type);
         std::shared_ptr<decl> type_decl = m_bool_type;
         l_namespace -> add_declaration(type_decl);
 
         /* add function declarations to the namespace */
         // variables
-        variable bool_param(var_one_tok, false);
-        bool_param.set_type_instance(m_bool_instance);
+        variable param_one(var_one_tok, false);
+        param_one.set_type_instance(m_bool_instance);
+        variable param_two(var_two_tok, false);
+        param_two.set_type_instance(m_bool_instance);
 
         // boolean and
         std::shared_ptr<function> bool_and_function = std::make_shared<function>(and_function_tok);
-        bool_and_function -> add_param(bool_param);
-        bool_and_function -> add_param(bool_param);
+        bool_and_function -> set_fqn(l_fqn);
+        bool_and_function -> is_public(true);
+        bool_and_function -> set_namespace(l_namespace -> get_name());
+        std::shared_ptr<scope> bool_and_scope = std::make_shared<scope>();
+        bool_and_scope -> set_parent(l_scope);
+        bool_and_function -> set_scope(bool_and_scope);
+        bool_and_function -> add_param(param_one);
+        bool_and_function -> add_param(param_two);
         bool_and_function -> set_return_type_instance(m_bool_instance);
         std::shared_ptr<decl> and_function_decl = bool_and_function;
         l_namespace -> add_declaration(and_function_decl);
 
         // boolean or
         std::shared_ptr<function> bool_or_function = std::make_shared<function>(or_function_tok);
-        bool_or_function -> add_param(bool_param);
-        bool_or_function -> add_param(bool_param);
+        bool_or_function -> set_fqn(l_fqn);
+        bool_or_function -> is_public(true);
+        bool_or_function -> set_namespace(l_namespace -> get_name());
+        std::shared_ptr<scope> bool_or_scope = std::make_shared<scope>();
+        bool_or_scope -> set_parent(l_scope);
+        bool_or_function -> set_scope(bool_or_scope);
+        bool_or_function -> add_param(param_one);
+        bool_or_function -> add_param(param_two);
         bool_or_function -> set_return_type_instance(m_bool_instance);
         std::shared_ptr<decl> or_function_decl = bool_or_function;
         l_namespace -> add_declaration(or_function_decl);
 
         // boolean not
         std::shared_ptr<function> bool_not_function = std::make_shared<function>(not_function_tok);
-        bool_not_function -> add_param(bool_param);
+        bool_not_function -> set_fqn(l_fqn);
+        bool_not_function -> is_public(true);
+        bool_not_function -> set_namespace(l_namespace -> get_name());
+        std::shared_ptr<scope> bool_not_scope = std::make_shared<scope>();
+        bool_not_scope -> set_parent(l_scope);
+        bool_not_function -> set_scope(bool_not_scope);
+        bool_not_function -> add_param(param_one);
         bool_not_function -> set_return_type_instance(m_bool_instance);
         std::shared_ptr<decl> not_function_decl = bool_not_function;
         l_namespace -> add_declaration(not_function_decl);

@@ -62,6 +62,7 @@ namespace avalon {
         l_namespace -> set_fqn(l_fqn);
 
         /* add the type to the namespace */
+        l_scope -> add_type(l_namespace -> get_name(), m_void_type);
         std::shared_ptr<decl> type_decl = m_void_type;
         l_namespace -> add_declaration(type_decl);
 

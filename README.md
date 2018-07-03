@@ -65,7 +65,7 @@ Here is what's be done and what's on the way topdown.
     - `Variable declarations`: done.
     - `Statement declarations`:
         - `While statements`: done.
-        - `If statements`: **not** done.
+        - `If statements`: done.
         - `Pass statements`: done.
         - `Return statements`: done.
         - `Break statements`: done.

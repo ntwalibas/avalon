@@ -24,6 +24,16 @@ namespace avalon {
         const token& get_token() const;
 
         /**
+         * copy constructor
+         */
+        list_expression(const std::shared_ptr<list_expression>& list_expr);
+
+        /**
+         * assignment copy operator
+         */
+        list_expression& operator=(const std::shared_ptr<list_expression>& list_expr);
+
+        /**
          * set_type_instance
          * sets the type instance of this expression
          */

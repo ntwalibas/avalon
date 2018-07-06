@@ -20,6 +20,16 @@ namespace avalon {
         tuple_expression(token& tok);
 
         /**
+         * copy constructor
+         */
+        tuple_expression(const std::shared_ptr<tuple_expression>& tup_expr);
+
+        /**
+         * assignment copy operator
+         */
+        tuple_expression& operator=(const std::shared_ptr<tuple_expression>& tup_expr);
+
+        /**
          * get_token
          * returns a token with type source information
          */

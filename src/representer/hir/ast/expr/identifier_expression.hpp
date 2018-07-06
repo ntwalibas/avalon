@@ -1,6 +1,7 @@
 #ifndef AVALON_HIR_AST_EXPR_IDENTIFIER_EXPRESSION_HPP_
 #define AVALON_HIR_AST_EXPR_IDENTIFIER_EXPRESSION_HPP_
 
+#include <memory>
 #include <string>
 
 #include "representer/hir/ast/expr/expr.hpp"
@@ -20,6 +21,16 @@ namespace avalon {
          * the constructor expects the token with source code information
          */
         identifier_expression(token& tok);
+
+        /**
+         * copy constructor
+         */
+        identifier_expression(const std::shared_ptr<identifier_expression>& id_expr);
+
+        /**
+         * assignment copy operator
+         */
+        identifier_expression& operator=(const std::shared_ptr<identifier_expression>& id_expr);
 
         /**
          * get_token

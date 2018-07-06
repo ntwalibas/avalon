@@ -14,6 +14,11 @@ namespace avalon {
         continue_stmt(token& tok);
 
         /**
+         * copy constructor
+         */
+        continue_stmt(const std::shared_ptr<continue_stmt>& cont_stmt);
+
+        /**
          * get_token
          * returns a token with type source information
          */

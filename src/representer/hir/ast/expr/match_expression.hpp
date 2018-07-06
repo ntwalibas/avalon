@@ -25,10 +25,26 @@ namespace avalon {
         match_expression(token& tok, match_expression_type expr_type, std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval);
 
         /**
+         * copy constructor
+         */
+        match_expression(const std::shared_ptr<match_expression>& match_expr);
+
+        /**
+         * assignment copy operator
+         */
+        match_expression& operator=(const std::shared_ptr<match_expression>& match_expr);
+
+        /**
          * get_token
          * returns a token with type source information
          */
         const token& get_token() const;
+
+        /**
+         * get_type_instance
+         * returns the type instance of this expression
+         */
+        type_instance& get_type_instance();
 
         /**
          * get_expression_type

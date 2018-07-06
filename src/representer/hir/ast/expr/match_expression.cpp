@@ -1,8 +1,14 @@
 #include <memory>
 
+/* AST */
 #include "representer/hir/ast/expr/match_expression.hpp"
 #include "representer/hir/ast/expr/expr.hpp"
 #include "representer/hir/ast/decl/type.hpp"
+
+/* Builtins */
+#include "representer/hir/builtins/avalon_bool.hpp"
+
+/* Lexer */
 #include "lexer/token.hpp"
 
 
@@ -14,6 +20,26 @@ namespace avalon {
      * - and the right operand to match operator
      */
     match_expression::match_expression(token& tok, match_expression_type expr_type, std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval) : m_tok(tok), m_expr_type(expr_type), m_lval(lval), m_rval(rval) {
+        avalon_bool avl_bool;
+        m_instance = avl_bool.get_type_instance();
+    }
+
+    /**
+     * copy constructor
+     */
+    match_expression::match_expression(const std::shared_ptr<match_expression>& match_expr) : m_tok(match_expr -> get_token()), m_instance(match_expr -> get_type_instance()), m_expr_type(match_expr -> get_expression_type()), m_lval(match_expr -> get_lval() -> copy()), m_rval(match_expr -> get_rval() -> copy()) {
+    }
+
+    /**
+     * assignment copy operator
+     */
+    match_expression& match_expression::operator=(const std::shared_ptr<match_expression>& match_expr) {
+        m_tok = match_expr -> get_token();
+        m_expr_type = match_expr -> get_expression_type();
+        m_instance = match_expr -> get_type_instance();
+        m_lval = match_expr -> get_lval() -> copy();
+        m_rval = match_expr -> get_rval() -> copy();
+        return * this;
     }
 
     /**
@@ -22,6 +48,14 @@ namespace avalon {
      */
     const token& match_expression::get_token() const {
         return m_tok;
+    }
+
+    /**
+     * get_type_instance
+     * returns the type instance of this expression
+     */
+    type_instance& match_expression::get_type_instance() {
+        return m_instance;
     }
 
     /**

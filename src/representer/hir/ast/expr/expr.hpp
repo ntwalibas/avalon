@@ -1,12 +1,21 @@
 #ifndef AVALON_HIR_AST_EXPR_HPP_
 #define AVALON_HIR_AST_EXPR_HPP_
 
+#include <memory>
+
 #include "representer/hir/ast/decl/type.hpp"
 
 
 namespace avalon {
-    class expr {
+    class expr : public std::enable_shared_from_this<expr> {
     public:
+        /**
+         * copy
+         * creates a copy of an expression and returns it.
+         * ideally, this should be the assignment copy operator but I suck at C++ so please educate me when you see this if you inclined to do so.
+         */
+        std::shared_ptr<expr> copy();
+
         /**
          * token
          * returns this expression token

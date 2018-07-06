@@ -17,6 +17,16 @@ namespace avalon {
         cast_expression(token& tok, type_instance& cast_type_instance, std::shared_ptr<expr> val);
 
         /**
+         * copy constructor
+         */
+        cast_expression(const std::shared_ptr<cast_expression>& cast_expr);
+
+        /**
+         * assignment copy operator
+         */
+        cast_expression& operator=(const std::shared_ptr<cast_expression>& cast_expr);
+
+        /**
          * get_token
          * returns a token with type source information
          */

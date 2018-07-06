@@ -19,6 +19,11 @@ namespace avalon {
         while_stmt(token& tok);
 
         /**
+         * copy constructor
+         */
+        while_stmt(const std::shared_ptr<while_stmt>& wh_stmt, std::shared_ptr<scope>& parent_scope);
+
+        /**
          * get_token
          * returns a token with type source information
          */

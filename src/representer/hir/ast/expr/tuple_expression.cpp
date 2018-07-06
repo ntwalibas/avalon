@@ -18,6 +18,28 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    tuple_expression::tuple_expression(const std::shared_ptr<tuple_expression>& tup_expr) : m_tok(tup_expr -> get_token()), m_instance(tup_expr -> get_type_instance()), m_type_instance_from_parser(tup_expr -> type_instance_from_parser()) {
+        std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tup_expr -> get_elements();
+        for(const auto& element : elements)
+            m_elements.emplace_back(element.first, element.second -> copy());
+    }
+
+    /**
+     * assignment copy operator
+     */
+    tuple_expression& tuple_expression::operator=(const std::shared_ptr<tuple_expression>& tup_expr) {
+        m_tok = tup_expr -> get_token();
+        m_instance = tup_expr -> get_type_instance();
+        m_type_instance_from_parser = tup_expr -> type_instance_from_parser();
+        std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tup_expr -> get_elements();
+        for(const auto& element : elements)
+            m_elements.emplace_back(element.first, element.second -> copy());
+        return * this;
+    }
+
+    /**
      * get_token
      * returns a token with type source information
      */

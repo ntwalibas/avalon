@@ -66,6 +66,36 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    function::function(function& a_function) : m_name(a_function.get_name()), m_tok(a_function.get_token()), m_fqn(a_function.get_fqn()), m_namespace(a_function.get_namespace()), m_scope(std::make_shared<scope>(a_function.get_scope())), m_constraints(a_function.get_constraints()), m_params(a_function.get_params()), m_return_type_instance(a_function.get_return_type_instance()), m_body(a_function.get_body(), m_scope), m_is_valid(UNKNOWN), m_is_public(a_function.is_public()), m_is_used(a_function.is_used()), m_is_builtin(a_function.is_builtin()), m_specializations(0), m_terminates(a_function.terminates()) {
+    }
+
+    /**
+     * assignment copy operator
+     */
+    function& function::operator=(function& a_function) {
+        m_name = a_function.get_name();
+        m_tok = a_function.get_token();
+        m_fqn = a_function.get_fqn();
+        m_namespace = a_function.get_namespace();
+        m_scope = std::make_shared<scope>(a_function.get_scope());
+        m_constraints = a_function.get_constraints();
+        m_params = a_function.get_params();
+        m_return_type_instance = a_function.get_return_type_instance();
+        block_stmt new_body(a_function.get_body(), m_scope);
+        m_body = new_body;
+        m_is_valid = UNKNOWN;
+        m_is_public = a_function.is_public();
+        m_is_used = a_function.is_used();
+        m_is_builtin = a_function.is_builtin();
+        std::unordered_map<std::string, std::shared_ptr<function> > temp(0);
+        m_specializations = temp;
+        m_terminates = a_function.terminates();
+        return * this;
+    }
+
+    /**
      * set_name
      * updates the name of this function
      */
@@ -284,7 +314,8 @@ namespace avalon {
         mangled_name += "(";
 
         // we work on parameters first
-        for(auto it = params.begin(), end = params.end(); it != end; ++it) {
+        auto it = params.begin(), end = params.end();
+        for(; it != end; ++it) {
             mangled_name += mangle_type_instance(it -> second.get_type_instance());
 
             if(it != end && it + 1 != end)

@@ -49,6 +49,16 @@ namespace avalon {
         binary_expression(token& tok, binary_expression_type expr_type, std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval);
 
         /**
+         * copy constructor
+         */
+        binary_expression(const std::shared_ptr<binary_expression>& bin_expr);
+
+        /**
+         * assignment copy operator
+         */
+        binary_expression& operator=(const std::shared_ptr<binary_expression>& bin_expr);
+
+        /**
          * get_token
          * returns a token with type source information
          */

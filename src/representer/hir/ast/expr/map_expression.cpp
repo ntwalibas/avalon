@@ -16,6 +16,28 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    map_expression::map_expression(const std::shared_ptr<map_expression>& map_expr) : m_tok(map_expr -> get_token()), m_instance(map_expr -> get_type_instance()), m_type_instance_from_parser(map_expr -> type_instance_from_parser()) {
+        std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > >& elements = map_expr -> get_elements();
+        for(const auto& element : elements)
+            m_elements.emplace_back(element.first -> copy(), element.second -> copy());
+    }
+
+    /**
+     * assignment copy operator
+     */
+    map_expression& map_expression::operator=(const std::shared_ptr<map_expression>& map_expr) {
+        m_tok = map_expr -> get_token();
+        m_instance = map_expr -> get_type_instance();
+        m_type_instance_from_parser = map_expr -> type_instance_from_parser();
+        std::vector<std::pair<std::shared_ptr<expr>, std::shared_ptr<expr> > >& elements = map_expr -> get_elements();
+        for(const auto& element : elements)
+            m_elements.emplace_back(element.first -> copy(), element.second -> copy());
+        return * this;
+    }
+
+    /**
      * get_token
      * returns a token with type source information
      */

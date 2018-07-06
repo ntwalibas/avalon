@@ -24,6 +24,16 @@ namespace avalon {
         unary_expression(token& tok, unary_expression_type expr_type, std::shared_ptr<expr> val);
 
         /**
+         * copy constructor
+         */
+        unary_expression(const std::shared_ptr<unary_expression>& un_expr);
+
+        /**
+         * assignment copy operator
+         */
+        unary_expression& operator=(const std::shared_ptr<unary_expression>& un_expr);
+
+        /**
          * get_token
          * returns a token with type source information
          */

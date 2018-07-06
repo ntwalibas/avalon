@@ -1,6 +1,8 @@
 #ifndef AVALON_HIR_AST_EXPR_UNDERSCORE_EXPRESSION_HPP_
 #define AVALON_HIR_AST_EXPR_UNDERSCORE_EXPRESSION_HPP_
 
+#include <memory>
+
 #include "representer/hir/ast/expr/expr.hpp"
 #include "representer/hir/ast/decl/type.hpp"
 #include "lexer/token.hpp"
@@ -13,6 +15,16 @@ namespace avalon {
          * the constructor expects the token associated with this expression
          */
         underscore_expression(token& tok);
+
+        /**
+         * the copy constructor expects a pointer to the resource to copy
+         */
+        underscore_expression(std::shared_ptr<underscore_expression>const & under_expr);
+
+        /**
+         * the copy assignment operator expects a pointer to the source resource to copy
+         */
+        underscore_expression& operator=(std::shared_ptr<underscore_expression>const & under_expr);
 
         /**
          * get_token

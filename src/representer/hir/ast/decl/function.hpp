@@ -29,6 +29,16 @@ namespace avalon {
         function(token& tok, validation_state is_valid);
 
         /**
+         * copy constructor
+         */
+        function(function& a_function);
+
+        /**
+         * assignment copy operator
+         */
+        function& operator=(function& a_function);
+
+        /**
          * set_name
          * updates the name of this function
          */

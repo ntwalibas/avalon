@@ -10,6 +10,12 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    continue_stmt::continue_stmt(const std::shared_ptr<continue_stmt>& cont_stmt) : m_tok(cont_stmt -> get_token()) {        
+    }
+
+    /**
      * get_token
      * returns a token with type source information
      */

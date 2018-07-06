@@ -17,6 +17,11 @@ namespace avalon {
         return_stmt(token& tok);
 
         /**
+         * copy constructor
+         */
+        return_stmt(const std::shared_ptr<return_stmt>& ret_stmt);
+
+        /**
          * get_token
          * returns a token with type source information
          */

@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/ast/decl/decl.hpp"
 #include "representer/hir/ast/stmt/stmt.hpp"
 
@@ -14,6 +15,11 @@ namespace avalon {
          * the constructor expects nothing
          */
         statement();
+
+        /**
+         * copy constructor
+         */
+        statement(const std::shared_ptr<statement>& a_statement, std::shared_ptr<scope>& parent_scope);
 
         /**
          * set_statement

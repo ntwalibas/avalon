@@ -9,11 +9,18 @@
 
 
 namespace avalon {
-/**
- * the constructor expects the token with source code information
- */
-while_stmt::while_stmt(token& tok) : m_tok(tok), m_condition(nullptr) {    
-}
+    /**
+     * the constructor expects the token with source code information
+     */
+    while_stmt::while_stmt(token& tok) : m_tok(tok), m_condition(nullptr) {
+    }
+
+    /**
+     * copy constructor
+     */
+    while_stmt::while_stmt(const std::shared_ptr<while_stmt>& wh_stmt, std::shared_ptr<scope>& parent_scope) : m_tok(wh_stmt -> get_token()), m_scope(std::make_shared<scope>(wh_stmt -> get_scope())), m_condition(wh_stmt -> get_condition() -> copy()), m_blc(wh_stmt -> get_block(), m_scope) {
+        m_scope -> set_parent(parent_scope);
+    }
 
     /**
      * get_token

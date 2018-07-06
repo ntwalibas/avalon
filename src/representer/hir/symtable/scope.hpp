@@ -27,6 +27,16 @@ namespace avalon {
         scope();
 
         /**
+         * copy constructor
+         */
+        scope(const std::shared_ptr<scope>& l_scope);
+
+        /**
+         * assignment copy operator
+         */
+        scope& operator=(const std::shared_ptr<scope>& l_scope);
+
+        /**
          * add_namespace
          */
         void add_namespace(const std::string& namespace_name);
@@ -39,9 +49,9 @@ namespace avalon {
 
         /**
          * get_namespaces
-         * returns a vector of all namespaces available in this scope
+         * returns a map of all namespaces available in this scope
          */
-        std::vector<std::string> get_namespaces();
+        std::map<std::string, std::string>& get_namespaces();
 
         /**
          * get_dtable

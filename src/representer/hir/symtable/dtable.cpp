@@ -396,7 +396,7 @@ dtable::dtable() {
             try {
                 decl_symbols.insert_function(function_decl);
             } catch(symbol_can_collide err) {
-                throw symbol_can_collide("There already exist another function with the same name, parameters and return type in the current namespace.");
+                throw symbol_can_collide("There already exist another function <" + mangle_function(* function_decl) + "> with the same name, parameters and return type in the current namespace.");
             } catch(symbol_already_declared err) {
                 throw symbol_already_declared("There already exist another declaration (type or variable) with the nsame name as this function.");
             }

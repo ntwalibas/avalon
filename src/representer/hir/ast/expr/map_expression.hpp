@@ -19,6 +19,16 @@ namespace avalon {
         map_expression(token& tok);
 
         /**
+         * copy constructor
+         */
+        map_expression(const std::shared_ptr<map_expression>& map_expr);
+
+        /**
+         * assignment copy operator
+         */
+        map_expression& operator=(const std::shared_ptr<map_expression>& map_expr);
+
+        /**
          * get_token
          * returns a token with type source information
          */

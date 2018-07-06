@@ -1,8 +1,13 @@
 #ifndef AVALON_HIR_AST_DECL_HPP_
 #define AVALON_HIR_AST_DECL_HPP_
 
+#include <memory>
+
 
 namespace avalon {
+    /* Forward declarations */
+    class scope;
+
     /*
      * checking data
      * valid    : the object is in a consistent state
@@ -17,8 +22,14 @@ namespace avalon {
     };
 
 
-    class decl {
+    class decl : public std::enable_shared_from_this<decl> {
     public:
+        /**
+         * copy
+         * copies a declaration and returns the copied one
+         */
+        std::shared_ptr<decl> copy(std::shared_ptr<scope>& parent_scope);
+
         virtual bool is_import() {
             return false;
         }

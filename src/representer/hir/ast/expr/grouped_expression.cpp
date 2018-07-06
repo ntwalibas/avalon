@@ -14,6 +14,22 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    grouped_expression::grouped_expression(const std::shared_ptr<grouped_expression>& gr_expr) : m_tok(gr_expr -> get_token()), m_instance(gr_expr -> get_type_instance()), m_val(gr_expr -> get_value() -> copy()) {
+    }
+
+    /**
+     * assignment copy operator
+     */
+    grouped_expression& grouped_expression::operator=(const std::shared_ptr<grouped_expression>& gr_expr) {
+        m_tok = gr_expr -> get_token();
+        m_instance = gr_expr -> get_type_instance();
+        m_val = gr_expr -> get_value() -> copy();
+        return * this;
+    }
+
+    /**
      * get_token
      * returns a token with type source information
      */

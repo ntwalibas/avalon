@@ -28,6 +28,11 @@ namespace avalon {
          * - the validation state of the variable
          */
         variable(token& tok, bool is_mutable, validation_state is_valid);
+
+        /**
+         * copy constructor
+         */
+        variable(const std::shared_ptr<variable>& a_variable);
         
         /**
          * set_name
@@ -132,6 +137,7 @@ namespace avalon {
          * this function returns true if the variable has the given validation state.
          */
         bool is_valid(validation_state state);
+        validation_state is_valid();
 
         /**
          * is_variable

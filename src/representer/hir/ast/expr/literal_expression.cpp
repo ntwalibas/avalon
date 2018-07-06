@@ -14,6 +14,24 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    literal_expression::literal_expression(const std::shared_ptr<literal_expression>& lit_expr) : m_tok(lit_expr -> get_token()), m_instance(lit_expr -> get_type_instance()), m_type_instance_from_parser(lit_expr -> type_instance_from_parser()), m_expr_type(lit_expr -> get_expression_type()), m_val(lit_expr -> get_value()) {        
+    }
+
+    /**
+     * assignment copy operator
+     */
+    literal_expression& literal_expression::operator=(const std::shared_ptr<literal_expression>& lit_expr) {
+        m_tok = lit_expr -> get_token();
+        m_instance = lit_expr -> get_type_instance();
+        m_type_instance_from_parser = lit_expr -> type_instance_from_parser();
+        m_expr_type = lit_expr -> get_expression_type();
+        m_val = lit_expr -> get_value();
+        return * this;
+    }
+
+    /**
      * get_token
      * returns a token with type source information
      */

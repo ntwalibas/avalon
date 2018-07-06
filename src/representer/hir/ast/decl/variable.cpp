@@ -30,6 +30,12 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    variable::variable(const std::shared_ptr<variable>& a_variable) : m_name(a_variable -> get_name()), m_tok(a_variable -> get_token()), m_is_mutable(a_variable -> is_mutable()), m_fqn(a_variable -> get_fqn()), m_namespace(a_variable -> get_namespace()), m_type_instance(a_variable -> get_type_instance()), m_value(a_variable -> get_value() -> copy()), m_is_valid(a_variable -> is_valid()), m_check_initializer(a_variable -> check_initializer()), m_is_public(a_variable -> is_public()), m_is_global(a_variable -> is_global()), m_is_used(a_variable -> is_used()), m_reachable(a_variable -> is_reachable()), m_terminates(a_variable -> terminates()) {
+    }
+
+    /**
      * set_name
      * updates the name of this variable
      */
@@ -171,6 +177,10 @@ namespace avalon {
      * this function returns true if the variable has the given validation state.
      */
     bool variable::is_valid(validation_state state) {
+        return m_is_valid == state;
+    }
+
+    validation_state variable::is_valid() {
         return m_is_valid;
     }
 

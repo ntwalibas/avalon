@@ -17,6 +17,34 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    call_expression::call_expression(const std::shared_ptr<call_expression>& call_expr) : m_tok(call_expr -> get_token()), m_namespace(call_expr -> get_namespace()), m_name(call_expr -> get_name()), m_instance(call_expr -> get_type_instance()), m_expr_type(call_expr -> get_expression_type()), m_type_instance_from_parser(call_expr -> type_instance_from_parser()), m_return_type(call_expr -> get_return_type_instance()) {
+        m_specializations = call_expr -> get_specializations();
+        std::vector<std::pair<token, std::shared_ptr<expr> > >& arguments = call_expr -> get_arguments();
+        for(const auto& argument : arguments)
+            m_arguments.emplace_back(argument.first, argument.second -> copy());
+    }
+
+    /**
+     * assignment copy operator
+     */
+    call_expression& call_expression::operator=(const std::shared_ptr<call_expression>& call_expr) {
+        m_tok = call_expr -> get_token();
+        m_namespace = call_expr -> get_namespace();
+        m_name = call_expr -> get_name();
+        m_instance = call_expr -> get_type_instance();
+        m_specializations = call_expr -> get_specializations();
+        m_expr_type = call_expr -> get_expression_type();
+        m_type_instance_from_parser = call_expr -> type_instance_from_parser();
+        std::vector<std::pair<token, std::shared_ptr<expr> > >& arguments = call_expr -> get_arguments();
+        for(const auto& argument : arguments)
+            m_arguments.emplace_back(argument.first, argument.second -> copy());
+        m_return_type = call_expr -> get_return_type_instance();
+        return * this;
+    }
+
+    /**
      * get_token
      * returns a token with type source information
      */

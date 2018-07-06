@@ -16,6 +16,11 @@ namespace avalon {
         expression_stmt();
 
         /**
+         * copy constructor
+         */
+        expression_stmt(const std::shared_ptr<expression_stmt>& expr_stmt);
+
+        /**
          * set_expression
          * when storing expressions in the AST, everything must decay into a declaration.
          * this function decays any of those expressions above into a simple expression statement

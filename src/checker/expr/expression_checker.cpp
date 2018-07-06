@@ -37,7 +37,6 @@
 #include "representer/hir/symtable/scope.hpp"
 
 /* Checker */
-#include "checker/decl/function/function_checker.hpp"
 #include "checker/decl/variable/variable_checker.hpp"
 #include "checker/expr/expression_checker.hpp"
 #include "checker/decl/type/type_checker.hpp"
@@ -437,15 +436,6 @@ namespace avalon {
             }
         }
 
-        // 4. check the generated function
-        function_checker f_checker;
-        try {
-            const std::string& fun_ns_name = new_fun.get_namespace();
-            f_checker.check(new_fun, fun_ns_name);
-        } catch(invalid_function err) {
-            throw invalid_expression(err.get_token(), err.what());
-        }
-
         return instance;
     }
 
@@ -594,19 +584,7 @@ namespace avalon {
 
         // infer the type instance
         function cast_fun(star_tok);
-        type_instance instance = inferer::infer_cast(cast_fun, cast_expr, l_scope, ns_name);
-
-        // check the generated function
-        function_checker f_checker;
-        try {
-            const std::string& fun_ns_name = cast_fun.get_namespace();
-            f_checker.check(cast_fun, fun_ns_name);
-        } catch(invalid_function err) {
-            throw invalid_expression(err.get_token(), err.what());
-        }
-
-        // return the infered type instance
-        return instance;
+        return inferer::infer_cast(cast_fun, cast_expr, l_scope, ns_name);
     }
 
     /**
@@ -637,18 +615,7 @@ namespace avalon {
 
         // infer the type instance
         function unary_fun(star_tok);
-        type_instance instance = inferer::infer_unary(unary_fun, unary_expr, l_scope, ns_name);
-
-        // check the generated function
-        function_checker f_checker;
-        try {
-            const std::string& fun_ns_name = unary_fun.get_namespace();
-            f_checker.check(unary_fun, fun_ns_name);
-        } catch(invalid_function err) {
-            throw invalid_expression(err.get_token(), err.what());
-        }
-
-        return instance;
+        return inferer::infer_unary(unary_fun, unary_expr, l_scope, ns_name);
     }
 
     /**
@@ -735,18 +702,7 @@ namespace avalon {
 
         // infer the type instance
         function binary_fun(star_tok);
-        type_instance instance = inferer::infer_functional_binary(expr_type, binary_fun, binary_expr, l_scope, ns_name);
-
-        // check the generated function
-        function_checker f_checker;
-        try {
-            const std::string& fun_ns_name = binary_fun.get_namespace();
-            f_checker.check(binary_fun, fun_ns_name);
-        } catch(invalid_function err) {
-            throw invalid_expression(err.get_token(), err.what());
-        }
-
-        return instance;
+        return inferer::infer_functional_binary(expr_type, binary_fun, binary_expr, l_scope, ns_name);
     }
 
     /**

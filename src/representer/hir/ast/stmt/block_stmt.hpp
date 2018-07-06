@@ -17,6 +17,11 @@ namespace avalon {
         block_stmt();
 
         /**
+         * copy constructor
+         */
+        block_stmt(const block_stmt& blc, std::shared_ptr<scope>& parent_scope);
+
+        /**
          * add_declaration
          * add a declaration to this block
          */
@@ -27,6 +32,7 @@ namespace avalon {
          * return a vector of declarations that make up this block
          */
         std::vector<std::shared_ptr<decl> >& get_declarations();
+        const std::vector<std::shared_ptr<decl> >& get_declarations() const;
 
         /**
          * is_empty

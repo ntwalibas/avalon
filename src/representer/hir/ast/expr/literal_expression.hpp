@@ -1,6 +1,7 @@
 #ifndef AVALON_HIR_AST_EXPR_LITERAL_EXPRESSION_HPP_
 #define AVALON_HIR_AST_EXPR_LITERAL_EXPRESSION_HPP_
 
+#include <memory>
 #include <string>
 
 #include "representer/hir/ast/expr/expr.hpp"
@@ -22,6 +23,16 @@ namespace avalon {
          * the constructor expects the token with source code information
          */
         literal_expression(token& tok, literal_expression_type expr_type, const std::string& val);
+
+        /**
+         * copy constructor
+         */
+        literal_expression(const std::shared_ptr<literal_expression>& lit_expr);
+
+        /**
+         * assignment copy operator
+         */
+        literal_expression& operator=(const std::shared_ptr<literal_expression>& lit_expr);
 
         /**
          * get_token

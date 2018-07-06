@@ -342,8 +342,19 @@ static type_instance build_function(function& new_fun, const token& error_tok, c
         throw invalid_expression(err.get_token(), err.what());
     }
 
-    // add the specialization to the root function
+    // set a new name that reflects the arguments instances
     new_fun.set_name(mangle_function(new_fun));
+
+    // check the new function
+    function_checker f_checker;
+    try {
+        const std::string& fun_ns_name = new_fun.get_namespace();
+        f_checker.check(new_fun, fun_ns_name);
+    } catch(invalid_function err) {
+        throw invalid_expression(err.get_token(), err.what());
+    }
+
+    // add the specialization to the root function
     fun -> add_specialization(new_fun);
     fun -> is_used(true);
 

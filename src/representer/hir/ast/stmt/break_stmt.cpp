@@ -10,6 +10,12 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    break_stmt::break_stmt(const std::shared_ptr<break_stmt>& br_stmt) : m_tok(br_stmt -> get_token()) {        
+    }
+
+    /**
      * get_token
      * returns a token with type source information
      */

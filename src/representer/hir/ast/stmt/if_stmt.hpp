@@ -23,6 +23,11 @@ namespace avalon {
         if_stmt(token& tok);
 
         /**
+         * copy constructor
+         */
+        if_stmt(const std::shared_ptr<if_stmt>& f_stmt, std::shared_ptr<scope>& parent_scope);
+
+        /**
          * get_token
          * returns a token with type source information
          */
@@ -144,6 +149,11 @@ namespace avalon {
         elif_branch(token& tok);
 
         /**
+         * copy constructor
+         */
+        elif_branch(elif_branch& elf_branch, std::shared_ptr<scope>& parent_scope);
+
+        /**
          * get_token
          * returns a token with type source information
          */
@@ -214,6 +224,11 @@ namespace avalon {
          * the constructor expects the token with source code information
          */
         else_branch(token& tok);
+
+        /**
+         * copy constructor
+         */
+        else_branch(else_branch& els_branch, std::shared_ptr<scope>& parent_scope);
 
         /**
          * set_scope

@@ -16,7 +16,25 @@ namespace avalon {
 /**
  * the constructor expects the token with source code information
  */
-if_stmt::if_stmt(token& tok) : m_tok(tok), m_condition(nullptr), m_else(nullptr) {    
+if_stmt::if_stmt(token& tok) : m_tok(tok), m_condition(nullptr), m_else(nullptr) {
+}
+
+/**
+ * copy constructor
+ */
+if_stmt::if_stmt(const std::shared_ptr<if_stmt>& f_stmt, std::shared_ptr<scope>& parent_scope) : m_tok(f_stmt -> get_token()), m_scope(std::make_shared<scope>(f_stmt -> get_scope())), m_condition(f_stmt -> get_condition() -> copy()), m_blc(f_stmt -> get_block(), m_scope), m_else(nullptr) {
+    m_scope -> set_parent(parent_scope);
+
+    std::vector<elif_branch>& elf_branches = f_stmt -> get_elifs();
+    for(auto& elf_branch : elf_branches) {
+        elif_branch ei_branch(elf_branch, parent_scope);
+        m_elifs.push_back(ei_branch);
+    }
+
+    if(f_stmt -> has_else()) {
+        else_branch es_branch = f_stmt -> get_else();
+        m_else = std::make_shared<else_branch>(es_branch, parent_scope);
+    }        
 }
 
     /**
@@ -128,6 +146,13 @@ if_stmt::if_stmt(token& tok) : m_tok(tok), m_condition(nullptr), m_else(nullptr)
 elif_branch::elif_branch(token& tok) : m_tok(tok) {    
 }
 
+/**
+ * copy constructor
+ */
+elif_branch::elif_branch(elif_branch& elf_branch, std::shared_ptr<scope>& parent_scope) : m_tok(elf_branch.get_token()), m_scope(std::make_shared<scope>(elf_branch.get_scope())), m_condition(elf_branch.get_condition() -> copy()), m_blc(elf_branch.get_block(), m_scope) {
+    m_scope -> set_parent(parent_scope);
+}
+
     /**
      * get_token
      * returns a token with type source information
@@ -188,6 +213,13 @@ elif_branch::elif_branch(token& tok) : m_tok(tok) {
  * the constructor expects the token with source code information
  */
 else_branch::else_branch(token& tok) : m_tok(tok) {    
+}
+
+/**
+ * copy constructor
+ */
+else_branch::else_branch(else_branch& els_branch, std::shared_ptr<scope>& parent_scope) : m_tok(els_branch.get_token()), m_scope(std::make_shared<scope>(els_branch.get_scope())), m_blc(els_branch.get_block(), m_scope) {
+    m_scope -> set_parent(parent_scope);
 }
 
     /**

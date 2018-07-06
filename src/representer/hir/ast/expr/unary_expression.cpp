@@ -14,6 +14,23 @@ namespace avalon {
     }
 
     /**
+     * copy constructor
+     */
+    unary_expression::unary_expression(const std::shared_ptr<unary_expression>& un_expr) : m_tok(un_expr -> get_token()), m_expr_type(un_expr -> get_expression_type()), m_instance(un_expr -> get_type_instance()), m_val(un_expr -> get_val() -> copy()) {
+    }
+
+    /**
+     * assignment copy operator
+     */
+    unary_expression& unary_expression::operator=(const std::shared_ptr<unary_expression>& un_expr) {
+        m_tok = un_expr -> get_token();
+        m_expr_type = un_expr -> get_expression_type();
+        m_instance = un_expr -> get_type_instance();
+        m_val = un_expr -> get_val() -> copy();
+        return * this;
+    }
+
+    /**
      * get_token
      * returns a token with type source information
      */

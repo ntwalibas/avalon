@@ -309,6 +309,13 @@ importer::importer(program& prog, std::vector<std::string>& search_paths, error&
                     // if "include_privates" is true, it doesn't matter whether the declaration is public, we import it
                     // if "include_privates" is false, we only import the declaration if it is public
                     if(include_privates || function_decl -> is_public()) {
+                        try {
+                            std::shared_ptr<scope>& f_scope = function_decl -> get_scope();
+                            const std::string& ns_name = function_decl -> get_namespace();
+                            header_checker::prepare_header(* function_decl, f_scope, ns_name);
+                        } catch(invalid_function err) {
+                            throw importing_error(true, err.get_token(), err.what());
+                        }
                         import_function(function_decl, to_scope, namespace_decl -> get_name());
                     }
                 }

@@ -1,3 +1,4 @@
+#include <memory>
 #include <string>
 
 #include "representer/hir/ast/expr/identifier_expression.hpp"
@@ -11,6 +12,25 @@ namespace avalon {
      * the constructor expects the token with source code information
      */
     identifier_expression::identifier_expression(token& tok) : m_name(tok.get_lexeme()), m_tok(tok), m_namespace("*"), m_type_instance_from_parser(false), m_expr_type(VAR_EXPR) {
+    }
+
+    /**
+     * copy constructor
+     */
+    identifier_expression::identifier_expression(const std::shared_ptr<identifier_expression>& id_expr) : m_name(id_expr -> get_name()), m_tok(id_expr -> get_token()), m_namespace(id_expr -> get_namespace()), m_type_instance_from_parser(id_expr -> type_instance_from_parser()), m_instance(id_expr -> get_type_instance()), m_expr_type(id_expr -> get_expression_type()) {        
+    }
+
+    /**
+     * assignment copy operator
+     */
+    identifier_expression& identifier_expression::operator=(const std::shared_ptr<identifier_expression>& id_expr) {
+        m_name = id_expr -> get_name();
+        m_tok = id_expr -> get_token();
+        m_namespace = id_expr -> get_namespace();
+        m_type_instance_from_parser = id_expr -> type_instance_from_parser();
+        m_instance = id_expr -> get_type_instance();
+        m_expr_type = id_expr -> get_expression_type();
+        return * this;
     }
 
     /**

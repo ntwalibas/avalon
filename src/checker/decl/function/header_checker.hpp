@@ -17,6 +17,12 @@ namespace avalon {
          */
         static void check_header(function& function_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
 
+        /**
+         * prepare_header
+         * this functions validates all type instances found in the function's header
+         */
+        static void prepare_header(function& function_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name);
+
     private:
         /**
          * we don't allow instatiation of this class

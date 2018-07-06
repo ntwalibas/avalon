@@ -1,10 +1,18 @@
 #ifndef AVALON_HIR_AST_STMT_HPP_
 #define AVALON_HIR_AST_STMT_HPP_
 
+#include "representer/hir/symtable/scope.hpp"
+
 
 namespace avalon {
-    class stmt {
+    class stmt : public std::enable_shared_from_this<stmt> {
     public:
+        /**
+         * copy
+         * copies a statement and returns the copied one
+         */
+        std::shared_ptr<stmt> copy(std::shared_ptr<scope>& parent_scope);
+
         virtual bool is_while() {
             return false;
         }

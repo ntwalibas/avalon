@@ -19,11 +19,28 @@
 
 
 namespace avalon {
-/**
- * the constructor expects nothing
- */
-scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
-}
+    /**
+     * the constructor expects nothing
+     */
+    scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
+    }
+
+    /**
+     * copy constructor
+     */
+    scope::scope(const std::shared_ptr<scope>& l_scope) : m_namespaces(l_scope -> get_namespaces()), m_parent(l_scope -> get_parent()), m_start_line(l_scope -> get_start_line()), m_end_line(l_scope -> get_end_line()) {
+    }
+
+    /**
+     * assignment copy operator
+     */
+    scope& scope::operator=(const std::shared_ptr<scope>& l_scope) {
+        m_namespaces = l_scope -> get_namespaces();
+        m_parent = l_scope -> get_parent();
+        m_start_line = l_scope -> get_start_line();
+        m_end_line = l_scope -> get_end_line();
+        return * this;
+    }
     
     /**
      * add_namespace
@@ -50,13 +67,10 @@ scope::scope() : m_parent(nullptr), m_start_line(0), m_end_line(0) {
 
     /**
      * get_namespaces
-     * returns a vector of all namespaces available in this scope
+     * returns a map of all namespaces available in this scope
      */
-    std::vector<std::string> scope::get_namespaces() {
-        std::vector<std::string> namespaces;
-        for(auto& l_namespace : m_namespaces)
-            namespaces.push_back(l_namespace.first);
-        return namespaces;
+    std::map<std::string, std::string>& scope::get_namespaces() {
+        return m_namespaces;
     }
 
     /**

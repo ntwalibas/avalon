@@ -148,7 +148,7 @@ namespace avalon {
 
         // we check the condition and make sure it is of bool type
         try {
-            type_instance cond_instance = expr_checker.check(wh_condition, l_scope, ns_name);
+            type_instance cond_instance = expr_checker.check(wh_condition, wh_scope, ns_name);
             if(type_instance_strong_compare(cond_instance, bool_instance) == false) {
                 throw invalid_statement(wh_stmt -> get_token(), "The condition for a while loop is of type instance <" + mangle_type_instance(cond_instance) + "> while the expected type instance is <bool>");
             }
@@ -179,7 +179,7 @@ namespace avalon {
 
         // we check the condition and make sure it is of bool type
         try {
-            type_instance cond_instance = expr_checker.check(f_condition, l_scope, ns_name);
+            type_instance cond_instance = expr_checker.check(f_condition, f_scope, ns_name);
             if(type_instance_strong_compare(cond_instance, bool_instance) == false) {
                 throw invalid_statement(f_stmt -> get_token(), "The condition for an if conditional is of type instance <" + mangle_type_instance(cond_instance) + "> while the expected type instance is <bool>");
             }

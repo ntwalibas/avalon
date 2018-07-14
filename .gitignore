@@ -2,4 +2,6 @@ bin/
 build/
 data/
 temp/
+src/
+tests/
 /*.avl

@@ -1,13 +1,13 @@
-(-
-main function
+-[
+while statement
 
 - author     ntwali bashige
 - copyright  2018 (c) ntwali bashige
 - license    MIT license
--)
+]-
+
 
 def __main__ = (val args : [string]) -> void:
-    var condition = True
-    -- while loop test
+    val condition = True
     while condition:
         return

@@ -1,5 +1,5 @@
-#ifndef AVALON_BUILTINS_LIST_HPP_
-#define AVALON_BUILTINS_LIST_HPP_
+#ifndef AVALON_BUILTINS_MAP_HPP_
+#define AVALON_BUILTINS_MAP_HPP_
 
 #include <memory>
 
@@ -12,46 +12,46 @@
 
 
 namespace avalon {
-    class avalon_list {
+    class avalon_map {
     public:
         /**
          * the default constructor expects nothing
          */
-        avalon_list(type_instance& param);
+        avalon_map(type_instance& key_instance, type_instance& value_instance);
 
         /**
          * get_type
-         * returns the list type
+         * returns the map type
          */
         std::shared_ptr<type>& get_type();
 
         /**
          * get_type_instance
-         * returns the list type instance
+         * returns the map type instance
          */
         type_instance get_type_instance();
 
         /**
          * get_program
-         * returns a program that defines the list type and all functions that operate on lists
+         * returns a program that defines the map type and all functions that operate on maps
          */
         program& get_program();
 
     private:
         /*
-         * the list type
+         * the map type
          */
-        std::shared_ptr<type> m_list_type;
+        std::shared_ptr<type> m_map_type;
 
         /*
-         * the type instance built from the list type
+         * the type instance built from the map type
          */
-        type_instance m_list_instance;
+        type_instance m_map_instance;
 
         /*
-         * the program with listean functions and type
+         * the program with mapean functions and type
          */
-        program m_list_prog;
+        program m_map_prog;
     };
 }
 

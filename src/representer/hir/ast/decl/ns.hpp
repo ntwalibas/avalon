@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 
+#include "representer/hir/symtable/scope.hpp"
 #include "representer/hir/ast/decl/decl.hpp"
 #include "representer/hir/symtable/fqn.hpp"
 #include "lexer/token.hpp"
@@ -18,10 +19,32 @@ namespace avalon {
         ns(token& tok);
 
         /**
+         * copy constructor
+         */
+        ns(ns& ns_decl);
+
+        /**
+         * copy assignment operator
+         */
+        ns& operator=(ns& ns_decl);
+
+        /**
+         * set_name
+         * sets the name of the namespace
+         */
+        void set_name(const std::string& name);
+
+        /**
          * get_name
          * returns the name of the namespace
          */
         const std::string& get_name() const;
+
+        /**
+         * set_token
+         * sets a token with the namespace source information
+         */
+        void set_token(const token& tok);
 
         /**
          * get_token
@@ -40,6 +63,12 @@ namespace avalon {
          * returns the fqn where this declaration was found
          */
         fqn& get_fqn();
+
+        /**
+         * set_scope
+         * specify the scope of all declarations found in this namespace
+         */
+        void set_scope(std::shared_ptr<scope>& l_scope);
 
         /**
          * add_declaration

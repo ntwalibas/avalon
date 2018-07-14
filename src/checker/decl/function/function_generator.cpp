@@ -49,6 +49,7 @@
 
 
 namespace avalon {
+    /*
     static void replace_instance(type_instance& dest, type_instance& orig) {
         std::vector<type_instance>& orig_params = orig.get_params();
 
@@ -83,6 +84,7 @@ namespace avalon {
         for(auto& orig_param : orig_params)
             dest.add_param(orig_param);
     }
+    */
 
     /**
      * the default constructor expects nothing
@@ -97,7 +99,7 @@ namespace avalon {
      */
     void function_generator::generate(std::vector<type_instance>& param_instances, type_instance& ret_instance) {        
         std::vector<token>& constraints = m_fun_decl.get_constraints();
-        std::vector<std::pair<std::string, variable> >& params = m_fun_decl.get_params();
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params = m_fun_decl.get_params();
         type_instance& fun_ret_instance = m_fun_decl.get_return_type_instance();
         block_stmt& body = m_fun_decl.get_body();        
 
@@ -139,13 +141,13 @@ namespace avalon {
      * generate_params
      * generates a new set of the function parameters replacing the constraints with the given type instances
      */
-    void function_generator::generate_params(std::vector<std::pair<std::string, variable> >& params, std::vector<type_instance>& param_instances) {
+    void function_generator::generate_params(std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params, std::vector<type_instance>& param_instances) {
         auto param_it = params.begin(), param_end = params.end();
         auto param_ins_it = param_instances.begin(), param_ins_end = param_instances.end();
         std::vector<token>& constraints = m_fun_decl.get_constraints();
 
         for(; param_it != param_end && param_ins_it != param_ins_end; ++param_it, ++param_ins_end) {
-            type_instance& param_instance = param_it -> second.get_type_instance();
+            type_instance& param_instance = param_it -> second -> get_type_instance();
             if(param_instance.depends_on(constraints)) {
                 build_instance(param_instance, * param_ins_it);
             }
@@ -626,11 +628,13 @@ namespace avalon {
                     }
 
                     // perform the replacement
-                    replace_instance(dest, orig);
+                    dest.copy(orig);
+                    //replace_instance(dest, orig);
                 }
                 // if the origin type instance is abstract, we don't mind and make the replacement based on what we have in the constraint map
                 else {
-                    replace_instance(dest, exist_instance);
+                    dest.copy(exist_instance);
+                    //replace_instance(dest, exist_instance);
                 }
             } catch(std::out_of_range err) {
                 // if the origin type instance is incomplete (parametrized or abstract), reject it
@@ -646,7 +650,8 @@ namespace avalon {
                 }
 
                 // perform the replacement
-                replace_instance(dest, orig);
+                dest = dest.copy(orig);
+                //replace_instance(dest, orig);
 
                 // we update the map with this new constraint type instance
                 m_constraint_instances.emplace(dest.get_old_token().get_lexeme(), orig);
@@ -655,10 +660,16 @@ namespace avalon {
         // if the destination type instance is not abstract, we check if it is parametrized (which means it depends on an abstract type instance)
         else {
             if(dest.is_parametrized()) {
-                auto dest_it = dest_params.begin(), dest_end = dest_params.end();
-                auto orig_it = orig_params.begin(), orig_end = orig_params.end();
-                for(; dest_it != dest_end && orig_it != orig_end; ++dest_it, ++orig_it) {
-                    build_instance(* dest_it, * orig_it);
+                if(orig.is_star() == false) {
+                    auto dest_it = dest_params.begin(), dest_end = dest_params.end();
+                    auto orig_it = orig_params.begin(), orig_end = orig_params.end();
+                    for(; dest_it != dest_end && orig_it != orig_end; ++dest_it, ++orig_it) {
+                        build_instance(* dest_it, * orig_it);
+                    }
+                }
+                else {
+                    for(auto& dest_param : dest_params)
+                        build_instance(dest_param, orig);
                 }
             }
         }

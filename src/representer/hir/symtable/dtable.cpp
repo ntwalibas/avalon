@@ -398,7 +398,7 @@ dtable::dtable() {
             } catch(symbol_can_collide err) {
                 throw symbol_can_collide("There already exist another function <" + mangle_function(* function_decl) + "> with the same name, parameters and return type in the current namespace.");
             } catch(symbol_already_declared err) {
-                throw symbol_already_declared("There already exist another declaration (type or variable) with the nsame name as this function.");
+                throw symbol_already_declared("There already exist another declaration (type or variable) with the same name as this function.");
             }
         } catch(std::out_of_range err) {
             // if we don't have a symbol table attached to the given namespace, we create an entry for it
@@ -472,9 +472,9 @@ dtable::dtable() {
             try {
                 decl_symbols.insert_variable(variable_decl);
             } catch(symbol_already_declared err) {
-                throw symbol_already_declared("There already exists another variable with the same name declared in this namespace.");
+                throw symbol_already_declared("There already exists another variable with the same name <" + variable_decl -> get_name() + "> declared in the namespace <" + ns_name + ">.");
             } catch(symbol_can_collide err) {
-                throw symbol_can_collide("There already exist another declaration (type or function) with the same name in this namespace.");
+                throw symbol_can_collide("There already exist another declaration (type or function) with the same name <" + variable_decl -> get_name() + "> in the namespace <" + ns_name + ">.");
             }
         } catch(std::out_of_range err) {
             // if we don't have a symbol table attached to the given namespace, we create an entry for it

@@ -6,11 +6,27 @@
 
 
 namespace avalon {
-/**
- * the constructor expects the import token and the fqn to import declaration from
- */
-import::import(token& tok, const std::string& fqn_name) : m_tok(tok), m_fqn_name(fqn_name) {
-}
+    /**
+     * the constructor expects the import token and the fqn to import declaration from
+     */
+    import::import(token& tok, const std::string& fqn_name) : m_tok(tok), m_fqn_name(fqn_name) {
+    }
+
+    /**
+     * copy constructor
+     */
+    import::import(import& imp) : m_tok(imp.get_token()), m_fqn(imp.get_fqn()), m_fqn_name(imp.get_fqn_name()) {
+    }
+
+    /**
+     * copy assignment operator
+     */
+    import& import::operator=(import& imp) {
+        m_tok = imp.get_token();
+        m_fqn = imp.get_fqn();
+        m_fqn_name = imp.get_fqn_name();
+        return * this;
+    }
 
     /**
      * get_token

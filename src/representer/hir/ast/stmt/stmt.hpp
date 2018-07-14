@@ -2,6 +2,7 @@
 #define AVALON_HIR_AST_STMT_HPP_
 
 #include "representer/hir/symtable/scope.hpp"
+#include "lexer/token.hpp"
 
 
 namespace avalon {
@@ -12,6 +13,12 @@ namespace avalon {
          * copies a statement and returns the copied one
          */
         std::shared_ptr<stmt> copy(std::shared_ptr<scope>& parent_scope);
+
+        /**
+         * token
+         * returns this statement token
+         */
+        virtual const token& stmt_token() const = 0;
 
         virtual bool is_while() {
             return false;

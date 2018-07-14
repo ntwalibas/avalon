@@ -66,6 +66,14 @@ namespace avalon {
         block_stmt& get_block();
 
         /**
+         * token
+         * returns this statement token
+         */
+        virtual const token& stmt_token() const {
+            return m_tok;
+        }
+
+        /**
          * is_while
          * returns true as this is a while statement
          */

@@ -1,5 +1,5 @@
-#ifndef AVALON_BUILTINS_LIST_HPP_
-#define AVALON_BUILTINS_LIST_HPP_
+#ifndef AVALON_BUILTINS_TUPLE_HPP_
+#define AVALON_BUILTINS_TUPLE_HPP_
 
 #include <memory>
 
@@ -12,46 +12,46 @@
 
 
 namespace avalon {
-    class avalon_list {
+    class avalon_tuple {
     public:
         /**
          * the default constructor expects nothing
          */
-        avalon_list(type_instance& param);
+        avalon_tuple();
 
         /**
          * get_type
-         * returns the list type
+         * returns the tuple type
          */
         std::shared_ptr<type>& get_type();
 
         /**
          * get_type_instance
-         * returns the list type instance
+         * returns the tuple type instance
          */
         type_instance get_type_instance();
 
         /**
          * get_program
-         * returns a program that defines the list type and all functions that operate on lists
+         * returns a program that defines the tuple type and all functions that operate on tuples
          */
         program& get_program();
 
     private:
         /*
-         * the list type
+         * the tuple type
          */
-        std::shared_ptr<type> m_list_type;
+        std::shared_ptr<type> m_tuple_type;
 
         /*
-         * the type instance built from the list type
+         * the type instance built from the tuple type
          */
-        type_instance m_list_instance;
+        type_instance m_tuple_instance;
 
         /*
-         * the program with listean functions and type
+         * the program with tupleean functions and type
          */
-        program m_list_prog;
+        program m_tuple_prog;
     };
 }
 

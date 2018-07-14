@@ -25,6 +25,14 @@ namespace avalon {
         const token& get_token() const;
 
         /**
+         * token
+         * returns this statement token
+         */
+        virtual const token& stmt_token() const {
+            return m_tok;
+        }
+
+        /**
          * is_pass_stmt
          * returns true as this is a pass statement
          */

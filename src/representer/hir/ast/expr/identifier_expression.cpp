@@ -126,4 +126,20 @@ namespace avalon {
     const identifier_expression_type& identifier_expression::get_expression_type() const {
         return m_expr_type;
     }
+
+    /**
+     * set_callee
+     * sets the name of the constructor or function that this identifier expression resolves to in case it is a default constructor
+     */
+    void  identifier_expression::set_callee(const std::string& callee) {
+        m_callee = callee;
+    }
+
+    /**
+     * get_callee
+     * returns the name of the constructor or function that this identifier expression resolves to in case it is a default constructor
+     */
+    const std::string& identifier_expression::get_callee() {
+        return m_callee;
+    }
 }

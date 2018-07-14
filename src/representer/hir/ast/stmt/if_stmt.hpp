@@ -101,6 +101,14 @@ namespace avalon {
         bool has_else() const;
 
         /**
+         * token
+         * returns this statement token
+         */
+        virtual const token& stmt_token() const {
+            return m_tok;
+        }
+
+        /**
          * is_if
          * returns true as this is an if statement
          */

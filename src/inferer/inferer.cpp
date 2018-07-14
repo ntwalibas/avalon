@@ -24,6 +24,13 @@
 
 /* Builtins */
 #include "representer/hir/builtins/avalon_bool.hpp"
+#include "representer/hir/builtins/avalon_int.hpp"
+#include "representer/hir/builtins/avalon_dec.hpp"
+#include "representer/hir/builtins/avalon_float.hpp"
+#include "representer/hir/builtins/avalon_string.hpp"
+#include "representer/hir/builtins/avalon_tuple.hpp"
+#include "representer/hir/builtins/avalon_list.hpp"
+#include "representer/hir/builtins/avalon_map.hpp"
 
 /* Checker */
 #include "checker/decl/function/function_checker.hpp"
@@ -463,24 +470,20 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         
         type_instance inferred_type_instance;
         if(lit_expr -> get_expression_type() == INTEGER_EXPR) {
-            std::shared_ptr<type>& int_type = l_scope -> get_type("*", "int", 0);
-            type_instance int_type_instance(int_type_tok, int_type, "*");
-            inferred_type_instance = int_type_instance;
+            avalon_int avl_int;
+            inferred_type_instance =  avl_int.get_type_instance();
         }
         else if(lit_expr -> get_expression_type() == DECIMAL_EXPR) {
-            std::shared_ptr<type>& dec_type = l_scope -> get_type("*", "dec", 0);
-            type_instance dec_type_instance(dec_type_tok, dec_type, "*");
-            inferred_type_instance = dec_type_instance;
+            avalon_dec avl_dec;
+            inferred_type_instance =  avl_dec.get_type_instance();
         }
         else if(lit_expr -> get_expression_type() == FLOATING_POINT_EXPR) {
-            std::shared_ptr<type>& float_type = l_scope -> get_type("*", "float", 0);
-            type_instance float_type_instance(float_type_tok, float_type, "*");
-            inferred_type_instance = float_type_instance;
+            avalon_float avl_float;
+            inferred_type_instance =  avl_float.get_type_instance();
         }
         else if(lit_expr -> get_expression_type() == STRING_EXPR) {
-            std::shared_ptr<type>& string_type = l_scope -> get_type("*", "string", 0);
-            type_instance string_type_instance(string_type_tok, string_type, "*");            
-            inferred_type_instance = string_type_instance;
+            avalon_string avl_string;
+            inferred_type_instance =  avl_string.get_type_instance();
         }
         else {
             throw std::runtime_error("[compiler error] unexpected literal expression in inference engine.");
@@ -541,10 +544,8 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         }
 
         // we create a type and type instance out of the expression dynamically
-        token tok = tup_expr -> get_token();
-        std::shared_ptr<type> tup_type = std::make_shared<type>(tok, VALID);
-        type_instance inferred_type_instance(tok, tup_type, "*");
-        inferred_type_instance.set_category(TUPLE);
+        avalon_tuple avl_tuple;
+        type_instance inferred_type_instance =  avl_tuple.get_type_instance();
         inferred_type_instance.is_parametrized(false);
 
         // we fill in the type instance parameters
@@ -630,11 +631,9 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         const std::vector<token>& standins = first_element_instance.get_type() -> get_params();
 
         // we build the list type instance
-        token tok = list_expr -> get_token();
-        std::shared_ptr<type> list_type = std::make_shared<type>(tok, VALID);
-        type_instance inferred_type_instance(tok, list_type, "*");
-        inferred_type_instance.set_category(LIST);
-        inferred_type_instance.add_param(first_element_instance);
+        avalon_list avl_list(first_element_instance);
+        type_instance inferred_type_instance =  avl_list.get_type_instance();
+        inferred_type_instance.is_parametrized(false);
         for(auto& element : elements) {
             type_instance elem_instance = inferer::infer(element, l_scope, ns_name);
             if(elem_instance.is_parametrized())
@@ -715,12 +714,10 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         type_instance first_element_value_instance = inferer::infer(first_element.second, l_scope, ns_name);
 
         // we build the list type instance
-        token tok = map_expr -> get_token();
-        std::shared_ptr<type> map_type = std::make_shared<type>(tok, VALID);
-        type_instance inferred_type_instance(tok, map_type, "*");
-        inferred_type_instance.set_category(MAP);
-        inferred_type_instance.add_param(first_element_key_instance);
-        inferred_type_instance.add_param(first_element_value_instance);
+        avalon_map avl_map(first_element_key_instance, first_element_value_instance);
+        type_instance inferred_type_instance =  avl_map.get_type_instance();
+        if(first_element_key_instance.is_parametrized() || first_element_value_instance.is_parametrized())
+            inferred_type_instance.is_parametrized(true);
 
         // typecheck the inferred type instance
         try {
@@ -1509,12 +1506,8 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         std::string call_name = "__getattr_" + rval_tok.get_lexeme() + "__";
         token call_tok(rval_tok.get_type(), call_name, rval_tok.get_line(), rval_tok.get_column(), rval_tok.get_source_path());
         std::shared_ptr<call_expression> getattr_expr = std::make_shared<call_expression>(call_tok);
-        // first argument is a variable expression
+        // argument is a variable expression
         getattr_expr -> add_argument(star_tok, lval);
-        // second argument is a string literal
-        std::shared_ptr<literal_expression> string_expr = std::make_shared<literal_expression>(rval_tok, STRING_EXPR, rval_tok.get_lexeme());
-        std::shared_ptr<expr> arg_two = string_expr;
-        getattr_expr -> add_argument(star_tok, arg_two);
 
         function binary_fun(star_tok);
         return infer_function_call(binary_fun, getattr_expr, l_scope, ns_name);
@@ -1523,48 +1516,42 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
     type_instance inferer::infer_variable_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(lval);
         std::shared_ptr<variable>& var_decl = l_scope -> get_variable(id_expr -> get_namespace(), id_expr -> get_name());
-        std::shared_ptr<expr>& var_value = var_decl -> get_value();
+        type_instance& var_instance = var_decl -> get_type_instance();
 
-        // if the lval contains an unnamed tuple
-        if(var_value -> is_tuple_expression()) {
-            return infer_tuple_subscript(var_value, rval, l_scope, ns_name);
+        if(var_instance.get_category() == TUPLE) {
+            return infer_tuple_subscript(var_instance, rval, l_scope, ns_name);
         }
-        // if the lval contains a list
-        else if(var_value -> is_list_expression()) {
-            return infer_list_subscript(var_value, rval, l_scope, ns_name);
+        else if(var_instance.get_category() == LIST) {
+            return infer_list_subscript(var_instance, rval, l_scope, ns_name);
         }
-        // if the lval contains a map
-        else if(var_value -> is_map_expression()) {
-            return infer_map_subscript(var_value, rval, l_scope, ns_name);
+        else if(var_instance.get_category() == MAP) {
+            return infer_map_subscript(var_instance, rval, l_scope, ns_name);
         }
-        // anything else, we assume the user created the __getitem__ function
         else {
-            return infer_custom_attribute(lval, rval, l_scope, ns_name);
+            return infer_custom_subscript(lval, rval, l_scope, ns_name);
         }
     }
 
-    type_instance inferer::infer_tuple_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::shared_ptr<tuple_expression> const & tuple_expr = std::static_pointer_cast<tuple_expression>(lval_val);
-        std::shared_ptr<literal_expression> const & key_expr = std::static_pointer_cast<literal_expression>(rval);
-        std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tuple_expr -> get_elements();
+    type_instance inferer::infer_tuple_subscript(type_instance& var_instance, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         const token& rval_tok = rval -> expr_token();
         std::size_t key = 0;        
         std::sscanf(rval_tok.get_lexeme().c_str(), "%zu", &key);
-        return infer(elements[key].second, l_scope, ns_name);
+        std::vector<type_instance>& params = var_instance.get_params();
+        try {
+            return params.at(key);
+        } catch(std::out_of_range err) {
+            throw invalid_expression(rval_tok, "This index is not accessible on the tuple.");
+        }
     }
 
-    type_instance inferer::infer_list_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::shared_ptr<list_expression> const & list_expr = std::static_pointer_cast<list_expression>(lval_val);
-        type_instance& list_instance = list_expr -> get_type_instance();
-        std::vector<type_instance>& list_instance_params = list_instance.get_params();
-        return list_instance_params[0];
+    type_instance inferer::infer_list_subscript(type_instance& var_instance, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::vector<type_instance>& params = var_instance.get_params();
+        return params[0];
     }
 
-    type_instance inferer::infer_map_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::shared_ptr<map_expression> const & map_expr = std::static_pointer_cast<map_expression>(lval_val);
-        type_instance& map_instance = map_expr -> get_type_instance();
-        std::vector<type_instance>& map_instance_params = map_instance.get_params();
-        return map_instance_params[1];
+    type_instance inferer::infer_map_subscript(type_instance& var_instance, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::vector<type_instance>& params = var_instance.get_params();
+        return params[1];
     }
 
     type_instance inferer::infer_custom_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
@@ -1573,10 +1560,8 @@ type_instance inferer::infer(std::shared_ptr<expr>& an_expression, std::shared_p
         std::string call_name = "__getitem_" + rval_tok.get_lexeme() + "__";
         token call_tok(rval_tok.get_type(), call_name, rval_tok.get_line(), rval_tok.get_column(), rval_tok.get_source_path());
         std::shared_ptr<call_expression> getitem_expr = std::make_shared<call_expression>(call_tok);
-        // first argument is a variable expression
+        // argument is a variable expression
         getitem_expr -> add_argument(star_tok, lval);
-        // second argument is any expression the user desires
-        getitem_expr -> add_argument(star_tok, rval);
         
         function binary_fun(star_tok);
         return infer_function_call(binary_fun, getitem_expr, l_scope, ns_name);

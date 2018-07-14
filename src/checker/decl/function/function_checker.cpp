@@ -75,18 +75,18 @@ static std::shared_ptr<function> internal_find_function(const std::string& name,
 
     // 1. we calculate the weights of all candidate functions relative to the given parameters
     for(auto it = candidates.begin(), end = candidates.end(); it != end; ++it) {
-        std::vector<std::pair<std::string, variable> >& fun_params = (* it) -> get_params();
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& fun_params = (* it) -> get_params();
         std::vector<token>& fun_standins = (* it) -> get_constraints();
         auto fun_it = fun_params.begin(), fun_end = fun_params.end();
         auto param_it = param_instances.begin(), param_end = param_instances.end();
 
         for(; fun_it != fun_end && param_it != param_end; ++fun_it, ++param_it) {
-            type_instance& fun_instance = fun_it -> second.get_type_instance();
+            type_instance& fun_instance = fun_it -> second -> get_type_instance();
             try {
                 std::pair<bool,bool> res = type_instance_checker::complex_check(fun_instance, l_scope, ns_name, fun_standins);
                 if(res.second == true)
                     fun_instance.is_parametrized(true);
-                fun_it -> second.set_type_instance(fun_instance);
+                fun_it -> second -> set_type_instance(fun_instance);
             } catch(invalid_type err) {
                 throw err;
             }

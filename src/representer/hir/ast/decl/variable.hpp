@@ -33,6 +33,13 @@ namespace avalon {
          * copy constructor
          */
         variable(const std::shared_ptr<variable>& a_variable);
+        variable(variable& a_variable);
+
+        /**
+         * copy assignment operator
+         */
+        variable& operator=(const std::shared_ptr<variable>& a_variable);
+        variable& operator=(variable& a_variable);
         
         /**
          * set_name
@@ -278,6 +285,12 @@ namespace avalon {
          */
         bool m_terminates;
     };
+
+    /**
+     * mangle_variable
+     * returns a string that represents the variable
+     */
+    std::string mangle_variable(const variable& var_decl);
 }
 
 

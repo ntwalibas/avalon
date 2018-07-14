@@ -17,6 +17,16 @@ namespace avalon {
         import(token& tok, const std::string& fqn_name);
 
         /**
+         * copy constructor
+         */
+        import(import& imp);
+
+        /**
+         * copy assignment operator
+         */
+        import& operator=(import& imp);
+
+        /**
          * get_token
          * returns a token with import source information
          */

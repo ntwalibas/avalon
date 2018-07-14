@@ -6,6 +6,7 @@
 
 #include "representer/hir/ast/stmt/stmt.hpp"
 #include "representer/hir/ast/decl/decl.hpp"
+#include "lexer/token.hpp"
 
 
 namespace avalon {
@@ -39,6 +40,14 @@ namespace avalon {
          * returns true if this block contains no declarations
          */
         bool is_empty();
+
+        /**
+         * token
+         * returns this statement token
+         */
+        virtual const token& stmt_token() const {
+            return star_tok;
+        }
 
     private:
         /**

@@ -136,7 +136,7 @@ ctable::ctable() {
             try {
                 cons_symbols.insert_default_constructor(def_cons);
             } catch(symbol_already_declared err) {
-                throw symbol_already_declared("There already exists another default constructor with the same name and arity declared in this namespace.");
+                throw symbol_already_declared("There already exists another default constructor with the same name and arity <" + def_cons.get_mangled_name() + "> declared in the namespace <" + ns_name + ">.");
             }
         } catch(std::out_of_range err) {
             // if we don't have a symbol table attached to the given namespace, we create an entry for it
@@ -157,7 +157,7 @@ ctable::ctable() {
             try {
                 cons_symbols.insert_record_constructor(rec_cons);
             } catch(symbol_already_declared err) {
-                throw symbol_already_declared("There already exists another record constructor with the same name and arity declared in this namespace.");
+                throw symbol_already_declared("There already exists another record constructor with the same name and arity <" + rec_cons.get_mangled_name() + "> declared in the namespace <" + ns_name + ">.");
             }
         } catch(std::out_of_range err) {
             // if we don't have a symbol table attached to the given namespace, we create an entry for it

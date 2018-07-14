@@ -235,4 +235,20 @@ namespace avalon {
 
         return false;
     }
+
+    /**
+     * set_callee
+     * sets the name of the constructor or function that this call expression resolves to
+     */
+    void  call_expression::set_callee(const std::string& callee) {
+        m_callee = callee;
+    }
+
+    /**
+     * get_callee
+     * returns the name of the constructor or function that this call expression resolves to
+     */
+    const std::string& call_expression::get_callee() {
+        return m_callee;
+    }
 }

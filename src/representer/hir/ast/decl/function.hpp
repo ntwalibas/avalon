@@ -114,8 +114,8 @@ namespace avalon {
          * get_params
          * returns a vector of parameters
          */
-        std::vector<std::pair<std::string, variable> >& get_params();
-        const std::vector<std::pair<std::string, variable> >& get_params() const;
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& get_params();
+        const std::vector<std::pair<std::string, std::shared_ptr<variable> > >& get_params() const;
 
         /**
          * set_return_type_instance
@@ -258,7 +258,7 @@ namespace avalon {
         /*
          * map of this function parameters' indexed by their names
          */
-        std::vector<std::pair<std::string, variable> > m_params;
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > > m_params;
 
         /*
          * the return type of this function
@@ -307,8 +307,8 @@ namespace avalon {
      * compares two functions for equality
      */
     inline bool operator==(const function& lhs, const function& rhs) {
-        const std::vector<std::pair<std::string, variable> >& lhs_params = lhs.get_params();
-        const std::vector<std::pair<std::string, variable> >& rhs_params = rhs.get_params();
+        const std::vector<std::pair<std::string, std::shared_ptr<variable> > >& lhs_params = lhs.get_params();
+        const std::vector<std::pair<std::string, std::shared_ptr<variable> > >& rhs_params = rhs.get_params();
 
         // if both functions have different names, they are not equal
         if(lhs.get_name() != rhs.get_name())
@@ -322,7 +322,7 @@ namespace avalon {
         auto lhs_it = lhs_params.begin(), lhs_end = lhs_params.end();
         auto rhs_it = rhs_params.begin(), rhs_end = rhs_params.end();
         for(; lhs_it != lhs_end && rhs_it != rhs_end; ++lhs_it, ++rhs_it) {
-            if(type_instance_strong_compare(lhs_it -> second.get_type_instance(), rhs_it -> second.get_type_instance()) == false)
+            if(type_instance_strong_compare(lhs_it -> second -> get_type_instance(), rhs_it -> second -> get_type_instance()) == false)
                 return false;
         }
 

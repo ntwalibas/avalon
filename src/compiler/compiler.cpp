@@ -12,6 +12,9 @@
 #include "representer/hir/symtable/gtable.hpp"
 #include "representer/hir/ast/program.hpp"
 
+/* Cleaner */
+#include "cleaner/cleaner.hpp"
+
 /* Checker */
 #include "checker/checker.hpp"
 
@@ -301,6 +304,86 @@ namespace avalon {
         try {
             ckr.check();
         } catch(check_error err) {
+            err.show();
+        }
+
+        return;
+    }
+
+    /**
+     * clean
+     * calls the cleaner to ensure all declarations are used
+     */
+    void compiler::clean(const std::string& source_path) {
+        error error_handler(source_path);
+        file_util futil(m_search_paths);
+
+        // make sure the file given exists and the absolute path to it
+        std::string source_abs_path;
+        try {
+            source_abs_path = futil.get_source_path(source_path);
+        } catch(file_not_found err) {
+            throw err;
+        }
+
+        // scan the file for content
+        scanner scr(source_abs_path);
+        std::string source;
+        try {
+            source = scr.scan();
+        } catch(file_not_found err) {
+            error_handler.log(err.what());
+            return;
+        }
+
+        // tokenize the file
+        lexer lxr(source_path, source, error_handler);
+        std::vector<std::shared_ptr<token> > tokens;
+        try {
+            tokens = lxr.lex();
+        } catch(lex_error err) {
+            err.show();
+            return;
+        }
+
+        // parse the file
+        parser psr(tokens, source_path, error_handler);
+        program prog;
+        try {            
+            prog = psr.parse();
+        } catch(parse_error err) {
+            err.show();
+            return;
+        }
+
+        // import all dependencies
+        importer ipr(prog, m_search_paths, error_handler);
+        gtable gtab;
+        try {
+            gtab = ipr.import_all();
+        } catch(import_error err) {
+            err.show();
+        } catch(parse_error err) {
+            err.show();
+        } catch(lex_error err) {
+            err.show();
+        } catch(std::runtime_error err) {
+            error_handler.log(err.what());
+        }
+
+        // check the program
+        checker ckr(prog, gtab, source_path, error_handler);
+        try {
+            ckr.check();
+        } catch(check_error err) {
+            err.show();
+        }
+
+        // clean all programs
+        cleaner clr(gtab, error_handler);
+        try {
+            clr.clean();
+        } catch(clean_error err) {
             err.show();
         }
 

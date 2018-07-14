@@ -35,6 +35,14 @@ namespace avalon {
         std::shared_ptr<expr>& get_expression();
 
         /**
+         * token
+         * returns this statement token
+         */
+        virtual const token& stmt_token() const {
+            return m_expression -> expr_token();
+        }
+
+        /**
          * is_expression
          * returns true since we are dealing with a statement expression
          */

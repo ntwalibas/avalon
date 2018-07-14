@@ -39,15 +39,15 @@ namespace avalon {
         return true;
     }
 
-    static bool params_collide(std::vector<std::pair<std::string, variable> >& this_params, std::vector<std::pair<std::string, variable> >& that_params) {
+    static bool params_collide(std::vector<std::pair<std::string, std::shared_ptr<variable> > >& this_params, std::vector<std::pair<std::string, std::shared_ptr<variable> > >& that_params) {
         std::vector<type_instance> this_instances;
         std::vector<type_instance> that_instances;
 
         auto this_it = this_params.begin(), this_end = this_params.end();
         auto that_it = that_params.begin(), that_end = that_params.end();
         for(; this_it != this_end && that_it != that_end; ++this_it, ++that_it) {
-            this_instances.push_back(this_it -> second.get_type_instance());
-            that_instances.push_back(that_it -> second.get_type_instance());
+            this_instances.push_back(this_it -> second -> get_type_instance());
+            that_instances.push_back(that_it -> second -> get_type_instance());
         }
 
         return instances_collide(this_instances, that_instances);
@@ -68,7 +68,11 @@ namespace avalon {
     /**
      * copy constructor
      */
-    function::function(function& a_function) : m_name(a_function.get_name()), m_tok(a_function.get_token()), m_fqn(a_function.get_fqn()), m_namespace(a_function.get_namespace()), m_scope(std::make_shared<scope>(a_function.get_scope())), m_constraints(a_function.get_constraints()), m_params(a_function.get_params()), m_return_type_instance(a_function.get_return_type_instance()), m_body(a_function.get_body(), m_scope), m_is_valid(UNKNOWN), m_is_public(a_function.is_public()), m_is_used(a_function.is_used()), m_is_builtin(a_function.is_builtin()), m_specializations(0), m_terminates(a_function.terminates()) {
+    function::function(function& a_function) : m_name(a_function.get_name()), m_tok(a_function.get_token()), m_fqn(a_function.get_fqn()), m_namespace(a_function.get_namespace()), m_scope(std::make_shared<scope>(a_function.get_scope())), m_constraints(a_function.get_constraints()), m_return_type_instance(a_function.get_return_type_instance()), m_body(a_function.get_body(), m_scope), m_is_valid(UNKNOWN), m_is_public(a_function.is_public()), m_is_used(a_function.is_used()), m_is_builtin(a_function.is_builtin()), m_specializations(0), m_terminates(a_function.terminates()) {
+        // we do a manual copy otherwise the pointer to the variable will be copied
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params = a_function.get_params();
+        for(auto& param : params)
+            m_params.emplace_back(param.first, std::make_shared<variable>(* (param.second)));
     }
 
     /**
@@ -80,8 +84,7 @@ namespace avalon {
         m_fqn = a_function.get_fqn();
         m_namespace = a_function.get_namespace();
         m_scope = std::make_shared<scope>(a_function.get_scope());
-        m_constraints = a_function.get_constraints();
-        m_params = a_function.get_params();
+        m_constraints = a_function.get_constraints();        
         m_return_type_instance = a_function.get_return_type_instance();
         block_stmt new_body(a_function.get_body(), m_scope);
         m_body = new_body;
@@ -92,6 +95,10 @@ namespace avalon {
         std::unordered_map<std::string, std::shared_ptr<function> > temp(0);
         m_specializations = temp;
         m_terminates = a_function.terminates();
+        // we do a manual copy otherwise the pointer to the variable will be copied
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params = a_function.get_params();
+        for(auto& param : params)
+            m_params.emplace_back(param.first, std::make_shared<variable>(* (param.second)));
         return * this;
     }
 
@@ -188,18 +195,18 @@ namespace avalon {
      * adds a parameter to the function
      */
     void function::add_param(variable& param) {
-        m_params.emplace_back(param.get_name(), param);
+        m_params.emplace_back(param.get_name(), std::make_shared<variable>(param));
     }
 
     /**
      * get_params
      * returns a map of parameters indexed by their names
      */
-    std::vector<std::pair<std::string, variable> >& function::get_params() {
+    std::vector<std::pair<std::string, std::shared_ptr<variable> > >& function::get_params() {
         return m_params;
     }
 
-    const std::vector<std::pair<std::string, variable> >& function::get_params() const {
+    const std::vector<std::pair<std::string, std::shared_ptr<variable> > >& function::get_params() const {
         return m_params;
     }
 
@@ -244,8 +251,8 @@ namespace avalon {
      * return true if this function can collide with the given function
      */
     bool function::collides_with(function& that) {
-        std::vector<std::pair<std::string, variable> >& this_params = get_params();
-        std::vector<std::pair<std::string, variable> >& that_params = that.get_params();
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& this_params = get_params();
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& that_params = that.get_params();
         if(this_params.size() != that_params.size())
             return false;
 
@@ -307,7 +314,7 @@ namespace avalon {
      */
     std::string mangle_function(const function& fun_decl) {
         const std::string& name = fun_decl.get_name();
-        const std::vector<std::pair<std::string, variable> >& params = fun_decl.get_params();
+        const std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params = fun_decl.get_params();
         const type_instance& ret_instance = fun_decl.get_return_type_instance();
 
         std::string mangled_name = name;
@@ -316,7 +323,7 @@ namespace avalon {
         // we work on parameters first
         auto it = params.begin(), end = params.end();
         for(; it != end; ++it) {
-            mangled_name += mangle_type_instance(it -> second.get_type_instance());
+            mangled_name += mangle_type_instance(it -> second -> get_type_instance());
 
             if(it != end && it + 1 != end)
                 mangled_name += ", ";

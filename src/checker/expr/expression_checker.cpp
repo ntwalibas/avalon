@@ -253,9 +253,9 @@ namespace avalon {
             else {
                 bool function_found = false;
                 for(auto& hash_function : hash_functions) {
-                    std::vector<std::pair<std::string, variable> >& function_params = hash_function -> get_params();
-                    std::pair<std::string, variable>& function_param = function_params[0];
-                    type_instance param_type_instance = function_param.second.get_type_instance();
+                    std::vector<std::pair<std::string, std::shared_ptr<variable> > >& function_params = hash_function -> get_params();
+                    std::pair<std::string, std::shared_ptr<variable> >& function_param = function_params[0];
+                    type_instance param_type_instance = function_param.second -> get_type_instance();
                     if(type_instance_weak_compare(param_type_instance, key_type_instance) == true) {
                         function_found = true;
                         break;
@@ -317,6 +317,9 @@ namespace avalon {
             throw invalid_expression(call_expr -> get_token(), "Failed to find a default constructor with the given name and arity in the given namespace.");
         }
 
+        // set up a vector of type instances that we would have if the constructor was complete
+        std::vector<type_instance> params;
+
         // we check the constructor's parameters
         for(auto& arg : args) {
             token& arg_tok = arg.first;
@@ -328,11 +331,18 @@ namespace avalon {
             }
 
             // we check the argument value
-            check(arg_val, l_scope, ns_name);
+            params.push_back(check(arg_val, l_scope, ns_name));
         }
 
-        // so we have a default constructor with the given name and arity; we deduce its type instance
-        return inferer::infer_default_constructor(call_expr, l_scope, ns_name);
+        // infer the type instance of the constructor
+        type_instance instance = inferer::infer_default_constructor(call_expr, l_scope, ns_name);
+
+        // set the constructor name on the call expression
+        std::string mangled_name = mangle_constructor(call_name, params, instance);
+        call_expr -> set_callee(mangled_name);
+
+        // return the infered type of the record constructor
+        return instance;
     }
 
     /**
@@ -356,6 +366,7 @@ namespace avalon {
         // get the constructor
         record_constructor& cons = l_scope -> get_record_constructor(sub_ns_name, call_name, args.size());
         std::map<token,type_instance>& cons_params = cons.get_params();
+        std::vector<type_instance> params;
 
         // we check the constructor's parameters
         for(auto& arg : args) {
@@ -374,11 +385,18 @@ namespace avalon {
             }
 
             // we check the argument value
-            check(arg_val, l_scope, ns_name);
+            params.push_back(check(arg_val, l_scope, ns_name));
         }
 
+        // infer the type instance of the constructor
+        type_instance instance = inferer::infer_record_constructor(call_expr, l_scope, ns_name);
+
+        // set the constructor name on the call expression
+        std::string mangled_name = mangle_constructor(call_name, params, instance);
+        call_expr -> set_callee(mangled_name);
+
         // return the infered type of the record constructor
-        return inferer::infer_record_constructor(call_expr, l_scope, ns_name);
+        return instance;
     }
 
     /**
@@ -419,7 +437,7 @@ namespace avalon {
         if(args.size() > 0) {
             std::pair<token, std::shared_ptr<expr> > first_arg = args[0];
             bool check_names = first_arg.first != star_tok ? true : false;
-            std::vector<std::pair<std::string, variable> >& params = new_fun.get_params();
+            std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params = new_fun.get_params();
             auto arg_it = args.begin(), arg_end = args.end();
             auto param_it = params.begin(), param_end = params.end();
             for(; arg_it != arg_end && param_it != param_end; ++arg_it, ++param_it) {
@@ -435,6 +453,9 @@ namespace avalon {
                 }
             }
         }
+
+        // 4. set the callee name on the call expression
+        call_expr -> set_callee(new_fun.get_name());
 
         return instance;
     }
@@ -523,7 +544,11 @@ namespace avalon {
      * we make sure that the default constructor associated with this identifier expression is valid
      */
     type_instance expression_checker::check_constructor(std::shared_ptr<identifier_expression> const & id_expr, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        return inferer::infer_constructor(id_expr, l_scope, ns_name);
+        type_instance instance = inferer::infer_constructor(id_expr, l_scope, ns_name);
+        std::vector<type_instance> params;
+        std::string mangled_name = mangle_constructor(id_expr -> get_name(), params, instance);
+        id_expr -> set_callee(mangled_name);
+        return instance;
     }
 
     /**
@@ -919,12 +944,8 @@ namespace avalon {
         std::string call_name = "__getattr_" + rval_tok.get_lexeme() + "__";
         token call_tok(rval_tok.get_type(), call_name, rval_tok.get_line(), rval_tok.get_column(), rval_tok.get_source_path());
         std::shared_ptr<call_expression> getattr_expr = std::make_shared<call_expression>(call_tok);
-        // first argument is a variable expression
+        // argument is a variable expression
         getattr_expr -> add_argument(star_tok, lval);
-        // second argument is a string literal
-        std::shared_ptr<literal_expression> string_expr = std::make_shared<literal_expression>(rval_tok, STRING_EXPR, rval_tok.get_lexeme());
-        std::shared_ptr<expr> arg_two = string_expr;
-        getattr_expr -> add_argument(star_tok, arg_two);
 
         return check_function_call(getattr_expr, l_scope, ns_name);
     }
@@ -932,29 +953,24 @@ namespace avalon {
     type_instance expression_checker::check_variable_subscript(std::shared_ptr<expr>& lval, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         std::shared_ptr<identifier_expression> const & id_expr = std::static_pointer_cast<identifier_expression>(lval);
         std::shared_ptr<variable>& var_decl = l_scope -> get_variable(id_expr -> get_namespace(), id_expr -> get_name());
-        std::shared_ptr<expr>& var_value = var_decl -> get_value();
+        type_instance& var_instance = var_decl -> get_type_instance();
 
-        // if the lval contains an unnamed tuple
-        if(var_value -> is_tuple_expression()) {
-            return check_tuple_subscript(var_value, rval, l_scope, ns_name);
+        if(var_instance.get_category() == TUPLE) {
+            return check_tuple_subscript(var_instance, rval, l_scope, ns_name);
         }
-        // if the lval contains a list
-        else if(var_value -> is_list_expression()) {
-            return check_list_subscript(var_value, rval, l_scope, ns_name);
+        else if(var_instance.get_category() == LIST) {
+            return check_list_subscript(var_instance, rval, l_scope, ns_name);
         }
-        // if the lval contains a map
-        else if(var_value -> is_map_expression()) {
-            return check_map_subscript(var_value, rval, l_scope, ns_name);
+        else if(var_instance.get_category() == MAP) {
+            return check_map_subscript(var_instance, rval, l_scope, ns_name);
         }
-        // anything else, we assume the user created the __getitem__ function
         else {
             return check_custom_subscript(lval, rval, l_scope, ns_name);
         }
     }
 
-    type_instance expression_checker::check_tuple_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::shared_ptr<tuple_expression> const & tuple_expr = std::static_pointer_cast<tuple_expression>(lval_val);
-        std::vector<std::pair<std::string, std::shared_ptr<expr> > >& elements = tuple_expr -> get_elements();
+    type_instance expression_checker::check_tuple_subscript(type_instance& var_instance, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::vector<type_instance>& params = var_instance.get_params();
         const token& rval_tok = rval -> expr_token();
         std::size_t key = 0;
 
@@ -973,16 +989,15 @@ namespace avalon {
         }
 
         // make sure the key exists
-        if(key >= elements.size()) {
+        if(key >= params.size()) {
             throw invalid_expression(rval_tok, "This key is out of range within the tuple contained in the variable.");
         }
 
         // return the type instance
-        return check(elements[key].second, l_scope, ns_name);
+        return inferer::infer_tuple_subscript(var_instance, rval, l_scope, ns_name);
     }
 
-    type_instance expression_checker::check_list_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::shared_ptr<list_expression> const & list_expr = std::static_pointer_cast<list_expression>(lval_val);
+    type_instance expression_checker::check_list_subscript(type_instance& var_instance, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
         const token& rval_tok = rval -> expr_token();
 
         // make sure the rval is a literal integer expression
@@ -997,17 +1012,13 @@ namespace avalon {
         }
 
         // return the type instance
-        type_instance& list_instance = list_expr -> get_type_instance();
-        std::vector<type_instance>& list_instance_params = list_instance.get_params();
-        return list_instance_params[0];
+        return inferer::infer_list_subscript(var_instance, rval, l_scope, ns_name);
     }
 
-    type_instance expression_checker::check_map_subscript(std::shared_ptr<expr>& lval_val, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::shared_ptr<map_expression> const & map_expr = std::static_pointer_cast<map_expression>(lval_val);
-        type_instance& map_instance = map_expr -> get_type_instance();
-        std::vector<type_instance>& map_instance_params = map_instance.get_params();
-        type_instance& key_instance = map_instance_params[0];
-        type_instance& value_instance = map_instance_params[1];
+    type_instance expression_checker::check_map_subscript(type_instance& var_instance, std::shared_ptr<expr>& rval, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
+        std::vector<type_instance>& instance_params = var_instance.get_params();
+        type_instance& key_instance = instance_params[0];
+        type_instance& value_instance = instance_params[1];
         const token& rval_tok = rval -> expr_token();
 
         // make sure the rval has the expected type of the key
@@ -1030,10 +1041,8 @@ namespace avalon {
         std::string call_name = "__getitem_" + rval_tok.get_lexeme() + "__";
         token call_tok(rval_tok.get_type(), call_name, rval_tok.get_line(), rval_tok.get_column(), rval_tok.get_source_path());
         std::shared_ptr<call_expression> getitem_expr = std::make_shared<call_expression>(call_tok);
-        // first argument is a variable expression
+        // argument is a variable expression
         getitem_expr -> add_argument(star_tok, lval);
-        // second argument is any expression the user desires
-        getitem_expr -> add_argument(star_tok, rval);
         
         return check_function_call(getitem_expr, l_scope, ns_name);
     }
@@ -1121,6 +1130,7 @@ namespace avalon {
         std::shared_ptr<assignment_expression> const & assign_expr = std::static_pointer_cast<assignment_expression>(an_expression);
         std::shared_ptr<expr>& lval = assign_expr -> get_lval();
         std::shared_ptr<expr>& rval = assign_expr -> get_rval();
+        const std::string& lval_name = lval -> expr_token().get_lexeme();
 
         // we make sure the expression is not dependent on match expressions
         if(assign_expr -> has_match_expression())
@@ -1128,8 +1138,13 @@ namespace avalon {
 
         // we make sure the lval is a variable expression
         if(lval -> is_identifier_expression()) {
-            if(l_scope -> variable_exists(ns_name, lval -> expr_token().get_lexeme()) == false) {
+            if(l_scope -> variable_exists(ns_name, lval_name) == false) {
                 throw invalid_expression(lval -> expr_token(), "The lval of an assignment expression must be a variable.");
+            }
+            else {
+                std::shared_ptr<variable>& var_decl = l_scope -> get_variable(ns_name, lval_name);
+                if(var_decl -> is_mutable() == false)
+                    throw invalid_expression(lval -> expr_token(), "The variable <" + mangle_variable(* var_decl) + "> is immutable hence is not a valid lval to an assignment.");
             }
         }
         else if(lval -> is_binary_expression()) {
@@ -1142,8 +1157,13 @@ namespace avalon {
                 const std::string& sub_ns_name = bin_lval -> expr_token().get_lexeme();
                 if(l_scope -> has_namespace(sub_ns_name)) {
                     if(bin_rval -> is_identifier_expression()) {
-                        if(l_scope -> variable_exists(ns_name, lval -> expr_token().get_lexeme()) == false) {
+                        if(l_scope -> variable_exists(sub_ns_name, bin_rval -> expr_token().get_lexeme()) == false) {
                             throw invalid_expression(bin_rval -> expr_token(), "The lval of an assignment expression must be a variable.");
+                        }
+                        else {
+                            std::shared_ptr<variable>& var_decl = l_scope -> get_variable(sub_ns_name, bin_rval -> expr_token().get_lexeme());
+                            if(var_decl -> is_mutable() == false)
+                                throw invalid_expression(bin_rval -> expr_token(), "The variable <" + mangle_variable(* var_decl) + "> is immutable hence is not a valid lval to an assignment.");
                         }
                     }
                     else {

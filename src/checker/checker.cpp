@@ -104,7 +104,7 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
 
         // list type instance
         avalon_list avl_list(string_instance);
-        type_instance& list_instance = avl_list.get_type_instance();
+        type_instance list_instance = avl_list.get_type_instance();
 
         // main function name, parameters and return type
         const std::string& function_name = "__main__";
@@ -155,10 +155,10 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
         }
 
         // we make sure the function only parameter is a value parameter
-        const std::vector<std::pair<std::string, variable> >& params = new_fun.get_params();
-        variable param_var = params[0].second;
-        if(param_var.is_mutable())
-            throw checking_error(true, param_var.get_token(), "The only parameter to <__main__> must be a value parameter.");
+        const std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params = new_fun.get_params();
+        const std::shared_ptr<variable>& param_var = params[0].second;
+        if(param_var -> is_mutable())
+            throw checking_error(true, param_var -> get_token(), "The only parameter to <__main__> must be a value parameter.");
 
         // we are here, it means we have a function that doesn't depend on constraints anymore, we perform proper semantic analysis
         function_checker f_checker;
@@ -167,6 +167,10 @@ checker::checker(program& prog, gtable& gtab, const std::string& source_path, er
         } catch(invalid_function err) {
             throw checking_error(true, err.get_token(), err.what());
         }
+
+        // add the specialization to the root function
+        fun -> add_specialization(new_fun);
+        fun -> is_used(true);
     }
 
     /**

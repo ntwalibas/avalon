@@ -26,7 +26,7 @@ namespace avalon {
         std::vector<type_instance>& ins_params = instance.get_params();
         
         // we create the new constructor
-        default_constructor new_cons(tok, new_type);
+        default_constructor new_cons(tok, new_type);        
 
         // we add parameters if any, replacing type constraints with new type instances from the one we have
         for(auto& cons_param : cons_params) {
@@ -41,6 +41,10 @@ namespace avalon {
                 new_cons.add_param(cons_param);
             }
         }
+
+        // set a new name for the constructor
+        std::string new_name = new_cons.get_mangled_name();
+        new_cons.set_name(new_name);
 
         return new_cons;
     }
@@ -68,6 +72,10 @@ namespace avalon {
             }
         }
 
+        // set a new name for the constructor
+        std::string new_name = new_cons.get_mangled_name();
+        new_cons.set_name(new_name);
+
         return new_cons;
     }
 
@@ -86,7 +94,8 @@ namespace avalon {
         std::shared_ptr<type> new_type = std::make_shared<type>(tok, VALID);
         new_type -> set_name(new_name);
         new_type -> set_fqn(type_decl -> get_fqn());
-        new_type -> set_namespace(type_decl -> get_namespace());        
+        new_type -> set_namespace(type_decl -> get_namespace());
+        new_type -> set_builder_instance(instance);
 
         // we generate new default constructors
         std::vector<default_constructor> def_cons = type_decl -> get_default_constructors();

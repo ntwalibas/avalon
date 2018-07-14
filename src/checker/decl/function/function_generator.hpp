@@ -62,7 +62,7 @@ namespace avalon {
          * generate_params
          * generates a new set of the function parameters replacing the constraints with the given type instances
          */
-        void generate_params(std::vector<std::pair<std::string, variable> >& params, std::vector<type_instance>& param_instances);
+        void generate_params(std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params, std::vector<type_instance>& param_instances);
 
         /**
          * generate_return

@@ -23,7 +23,7 @@ namespace avalon {
  * - the token with type information
  * - the validation state
  */
-type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true), m_is_used(false) {
+type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_tok(tok), m_is_valid(is_valid), m_is_public(true), m_is_used(false), m_builder_instance(nullptr) {
 }
     /**
      * set_name
@@ -284,6 +284,22 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
     }
 
     /**
+     * set_builder_instance
+     * set the type instance builder that built this type if it is complete
+     */
+    void type::set_builder_instance(type_instance& builder_instance) {
+        m_builder_instance = std::make_shared<type_instance>(builder_instance);
+    }
+
+    /**
+     * get_builder_instance
+     * returns the type instance builder that built this type if it is complete
+     */
+    std::shared_ptr<type_instance>& type::get_builder_instance() {
+        return m_builder_instance;
+    }
+
+    /**
      * mangle_type
      * give a type name and the number of type parameters accepts,
      * we create a string that represents the true type name as
@@ -305,6 +321,7 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
         }
         else {
             mangled_name += name;
+            mangled_name += "(";
         }
 
         for(auto it = params.begin(), end = params.end(); it != end; ++it) {
@@ -323,6 +340,9 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
         else if(name == "{") {
             mangled_name += "}";
         }
+        else {
+            mangled_name += ")";
+        }
 
         return mangled_name;
     }
@@ -334,20 +354,46 @@ type::type(token& tok, validation_state is_valid) : m_name(tok.get_lexeme()), m_
 /**
  * the default constructor expects nothing
  */
-type_instance::type_instance() : m_name(star_tok.get_lexeme()), m_tok(star_tok), m_old_tok(star_tok), m_tag(star_tok), m_category(USER), m_namespace("*"), m_type(nullptr), m_count(0), m_is_parametrized(false) {    
+type_instance::type_instance() : m_name(star_tok.get_lexeme()), m_tok(star_tok), m_old_tok(star_tok), m_tag(star_tok), m_category(USER), m_namespace("*"), m_type(nullptr), m_count(0), m_has_count(false), m_is_parametrized(false) {    
 }
 
 /*
  * type instance
  */
-type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_tag(star_tok), m_category(USER), m_namespace(namespace_name), m_type(nullptr), m_count(0), m_is_parametrized(false) {
+type_instance::type_instance(token& tok, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_tag(star_tok), m_category(USER), m_namespace(namespace_name), m_type(nullptr), m_count(0), m_has_count(false), m_is_parametrized(false) {
 }
 
 /**
  * this constructor expects the token with source code information, the type that buils this instance and the namespace where to find that type
  */
-type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_tag(star_tok), m_category(USER), m_namespace(namespace_name), m_type(ty), m_count(0), m_is_parametrized(false)  {
+type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name) : m_name(tok.get_lexeme()), m_tok(tok), m_old_tok(tok), m_tag(star_tok), m_category(USER), m_namespace(namespace_name), m_type(ty), m_count(0), m_has_count(false), m_is_parametrized(false)  {
 }
+
+    /**
+     * copy assignment operator
+     */
+    type_instance& type_instance::copy(type_instance& instance) {
+        m_name = instance.get_name();
+        m_tok = instance.get_token();
+        //m_old_tok = instance.get_old_token();
+        m_tag = instance.get_tag();
+        m_category = instance.get_category();
+        m_namespace = instance.get_namespace();
+        m_type = instance.get_type();
+        m_is_parametrized = instance.is_parametrized();
+        /*
+        // we avoid copying the count for now since we don't want to screw up generated functions
+        // if we copied the count, we'd have to generate a new function to each count
+        if(instance.has_count()) {
+            m_count = instance.get_count();
+            m_has_count = instance.has_count();
+        }
+        */
+        std::vector<type_instance>& params = instance.get_params();
+        for(auto& param : params)
+            m_params.push_back(param);
+        return * this;
+    }
 
     /**
      * set_name
@@ -535,6 +581,21 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
     std::size_t type_instance::get_count() {
         return m_count;
     }
+    std::size_t type_instance::get_count() const {
+        return m_count;
+    }
+
+    /**
+     * has_count
+     * sets and returns a boolean indicating whether an element count was specified for lists and maps
+     */
+    void type_instance::has_count(bool has_count_) {
+        m_has_count = has_count_;
+    }
+
+    bool type_instance::has_count() {
+        return m_has_count;
+    }
 
     /**
      * add_param
@@ -692,12 +753,18 @@ type_instance::type_instance(token& tok, std::shared_ptr<type>& ty, const std::s
                 mangled_name += ")";
             }
             else if(instance.get_category() == LIST) {
+                //const std::size_t count = instance.get_count();
                 mangled_name += "[";
+                mangled_name += std::to_string(instance.get_count());
+                mangled_name += ":";
                 mangled_name += mangle_type_instance(params[0]);
                 mangled_name += "]";
             }
             else if(instance.get_category() == MAP) {
+                //const std::size_t count = instance.get_count();
                 mangled_name += "{";
+                mangled_name += std::to_string(instance.get_count());
+                mangled_name += ":";
                 mangled_name += mangle_type_instance(params[0]);
                 mangled_name += ":";
                 mangled_name += mangle_type_instance(params[1]);
@@ -913,6 +980,14 @@ default_constructor::default_constructor(token& tok, std::shared_ptr<type>& ty) 
     }
 
     /**
+     * get_mangled_name
+     * returns the mangled name of this constructor
+     */
+    std::string default_constructor::get_mangled_name() {
+        return mangle_constructor(* this);
+    }
+
+    /**
      * get_token
      * returns the token that contains the name of this constructor.
      */
@@ -996,6 +1071,14 @@ record_constructor::record_constructor(token& tok, std::shared_ptr<type>& ty) : 
     }
 
     /**
+     * get_mangled_name
+     * returns the mangled name of this constructor
+     */
+    std::string record_constructor::get_mangled_name() {
+        return mangle_constructor(* this);
+    }
+
+    /**
      * get_type
      * returns the type that this constructor creates
      */
@@ -1059,21 +1142,67 @@ record_constructor::record_constructor(token& tok, std::shared_ptr<type>& ty) : 
  * mangle_constructor
  * produces a string version of a constructor for use within maps, usually
  */
-std::string mangle_constructor(const std::string& name, std::vector<type_instance>& params) {
-    std::string mangled_name = std::string("__");
-    mangled_name += name;
+std::string mangle_constructor(default_constructor& def_cons) {
+    const std::string& name = def_cons.get_name();
+    std::vector<type_instance>& params = def_cons.get_params();
+    std::shared_ptr<type>& type_decl = def_cons.get_type();
 
-    for(auto it = params.begin(); it != params.end(); ++it) {
+    std::string mangled_name = mangle_constructor(name, params);
+
+    if(type_decl != nullptr) {
+        std::shared_ptr<type_instance>& builder_instance = type_decl -> get_builder_instance();
+        if(builder_instance != nullptr) {
+            mangled_name += ":";
+            mangled_name += mangle_type_instance(* builder_instance);
+        }
+    }
+
+    return mangled_name;
+}
+
+std::string mangle_constructor(record_constructor& rec_cons) {
+    const std::string& name = rec_cons.get_name();
+    std::vector<type_instance>& params = rec_cons.get_params_as_vector();
+    std::shared_ptr<type>& type_decl = rec_cons.get_type();    
+
+    std::string mangled_name = mangle_constructor(name, params);
+
+    if(type_decl != nullptr) {
+        std::shared_ptr<type_instance>& builder_instance = type_decl -> get_builder_instance();
+        if(builder_instance != nullptr) {
+            mangled_name += ":";
+            mangled_name += mangle_type_instance(* builder_instance);
+        }
+    }
+
+    return mangled_name;
+}
+
+std::string mangle_constructor(const std::string& name, std::vector<type_instance>& params) {
+    std::string mangled_name = "";
+    mangled_name += name;    
+
+    auto it = params.begin(), end = params.end();
+    for(; it != end; ++it) {
         if(it == params.begin())
-            mangled_name += std::string("_");
+            mangled_name += "(";
 
         mangled_name += mangle_type_instance(* it);
 
-        if((it != params.end()) && (it + 1 != params.end()))
-            mangled_name += std::string("_");
-    }
+        if(it != end && it + 1 != end)
+            mangled_name += std::string(", ");
 
-    mangled_name += std::string("__");
+        if(it == end || it + 1 == end)
+            mangled_name += ")";
+    }
+    
+    return mangled_name;
+}
+
+std::string mangle_constructor(const std::string& name, std::vector<type_instance>& params, type_instance& builder_instance) {
+    std::string mangled_name = mangle_constructor(name, params);
+    mangled_name += ":";
+    mangled_name += mangle_type_instance(builder_instance);
     return mangled_name;
 }
 }

@@ -1688,22 +1688,14 @@ parser::parser(
         else if(match(LEFT_BRACKET)) {
             std::shared_ptr<token>& instance_tok = lookback();
 
-            // we try to get the size of the list
-            std::size_t count = 0;
-            if(match(INTEGER)) {
-                std::shared_ptr<token>& count_tok = lookback();
-                std::string count_str = count_tok -> get_lexeme();                
-                count_str.erase(std::remove(count_str.begin(), count_str.end(), '\''), count_str.end());
-                std::sscanf(count_str.c_str(), "%zu", &count);
-            }
-
             // we only continue if no custom namespace is set
             if(namespace_name != "*")
                 throw parsing_error(true, instance_tok, "Built-in list type instance can only appear in the global namespace. Please don't specify a namespace before it.");
             
             type_instance instance(* instance_tok, namespace_name);
-            instance.set_count(count);
+            instance.set_count(0);
             instance.set_category(LIST);
+            instance.has_count(false);
 
             type_instance param = parse_type_instance();
             instance.add_param(param);
@@ -1715,22 +1707,14 @@ parser::parser(
         else if(match(LEFT_BRACE)) {
             std::shared_ptr<token>& instance_tok = lookback();
 
-            // we try to get the size of the list
-            std::size_t count = 0;
-            if(match(INTEGER)) {
-                std::shared_ptr<token>& count_tok = lookback();
-                std::string count_str = count_tok -> get_lexeme();                
-                count_str.erase(std::remove(count_str.begin(), count_str.end(), '\''), count_str.end());
-                std::sscanf(count_str.c_str(), "%zu", &count);
-            }
-
             // we only continue if no custom namespace is set
             if(namespace_name != "*")
                 throw parsing_error(true, instance_tok, "Built-in map type instance can only appear in the global namespace. Please don't specify a namespace before it.");
             
             type_instance instance(* instance_tok, namespace_name);
-            instance.set_count(count);
+            instance.set_count(0);
             instance.set_category(MAP);
+            instance.has_count(false);
 
             type_instance param_key = parse_type_instance();
             instance.add_param(param_key);

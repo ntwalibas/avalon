@@ -217,6 +217,18 @@ namespace avalon {
         std::unordered_map<std::string, std::shared_ptr<type> >& get_specializations();
 
         /**
+         * set_builder_instance
+         * set the type instance builder that built this type if it is complete
+         */
+        void set_builder_instance(type_instance& builder_instance);
+
+        /**
+         * get_builder_instance
+         * returns the type instance builder that built this type if it is complete
+         */
+        std::shared_ptr<type_instance>& get_builder_instance();
+
+        /**
          * is_reachable
          * sets and returns a boolean indicating whether this type declaration will be executed
          */
@@ -301,6 +313,11 @@ namespace avalon {
          * map of types generated from this one
          */
         std::unordered_map<std::string, std::shared_ptr<type> > m_specializations;
+
+        /*
+         * builder type instance
+         */
+        std::shared_ptr<type_instance> m_builder_instance;
     };
     
     /**
@@ -348,6 +365,11 @@ namespace avalon {
          * this constructor expects the token with source code information and the type that buils this instance
          */
         type_instance(token& tok, std::shared_ptr<type>& ty, const std::string& namespace_name);
+
+        /**
+         * copy assignment operator
+         */
+        type_instance& copy(type_instance& instance);
 
         /**
          * set_name
@@ -469,6 +491,14 @@ namespace avalon {
          * returns the number of elements allowed for this type instance
          */
         std::size_t get_count();
+        std::size_t get_count() const;
+
+        /**
+         * has_count
+         * sets and returns a boolean indicating whether an element count was specified for lists and maps
+         */
+        void has_count(bool has_count_);
+        bool has_count();
 
         /**
          * add_param
@@ -560,12 +590,17 @@ namespace avalon {
          */
         std::shared_ptr<type> m_type;
 
-        /**
+        /*
          * the number of elements of this type instance
          * if we worked with dependent types, this would have made perfect sense.
-         * anyways, this is only applicable to lists and maps
+         * anyways, this is only applicable to lists and maps since their sizes can carry at runtime
          */
         std::size_t m_count;
+
+        /*
+         * if the number of elements was specified by the user
+         */
+        bool m_has_count;
 
         /*
          * type instances this type instance depends on
@@ -644,6 +679,12 @@ namespace avalon {
          * returns a string with the name of the constructor
          */
         const std::string& get_name() const;
+
+        /**
+         * get_mangled_name
+         * returns the mangled name of this constructor
+         */
+        std::string get_mangled_name();
 
         /**
          * get_token
@@ -733,6 +774,12 @@ namespace avalon {
         const std::string& get_name() const;
 
         /**
+         * get_mangled_name
+         * returns the mangled name of this constructor
+         */
+        std::string get_mangled_name();
+
+        /**
          * get_token
          * returns the token that contains the name of this constructor.
          */
@@ -815,7 +862,10 @@ namespace avalon {
      * mangle_constructor
      * produces a string version of a constructor for use within maps, usually
      */
+    std::string mangle_constructor(default_constructor& def_cons);
+    std::string mangle_constructor(record_constructor& rec_cons);
     std::string mangle_constructor(const std::string& name, std::vector<type_instance>& params);
+    std::string mangle_constructor(const std::string& name, std::vector<type_instance>& params, type_instance& parent_type_instance);
 }
 
 #endif

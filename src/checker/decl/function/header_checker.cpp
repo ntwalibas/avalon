@@ -28,12 +28,12 @@ namespace avalon {
      * this function ensures that the function's header (parameters and return type) is of the correct form
      */
     void header_checker::check_header(function& function_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::vector<std::pair<std::string, variable> >& params = function_decl.get_params();
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params = function_decl.get_params();
         std::vector<token>& constraints = function_decl.get_constraints();
 
         // we make sure all the function's parameters type instances are valid
         for(auto& param : params) {
-            type_instance param_type_instance = param.second.get_type_instance();
+            type_instance param_type_instance = param.second -> get_type_instance();
 
             try {
                 std::shared_ptr<type> param_instance_type = nullptr;
@@ -47,16 +47,15 @@ namespace avalon {
                 }
 
                 // if the type instance checked out, we replace the one on the parameter with the updated on
-                param.second.set_type_instance(param_type_instance);
+                param.second -> set_type_instance(param_type_instance);
 
                 // add the parameter to the function scope
-                std::shared_ptr<variable> variable_decl = std::make_shared<variable>(param.second);
                 try {
-                    l_scope -> add_variable(ns_name, variable_decl);
+                    l_scope -> add_variable(ns_name, param.second);
                 } catch(symbol_already_declared err) {
-                    throw invalid_function(variable_decl -> get_token(), err.what());
+                    throw invalid_function(param.second -> get_token(), err.what());
                 } catch(symbol_can_collide err) {                    
-                    throw invalid_function(variable_decl -> get_token(), err.what());
+                    throw invalid_function(param.second -> get_token(), err.what());
                 }
             } catch(invalid_type err) {
                 throw invalid_function(err.get_token(), err.what());
@@ -88,12 +87,12 @@ namespace avalon {
      * this functions validates all type instances found in the function's header
      */
     void header_checker::prepare_header(function& function_decl, std::shared_ptr<scope>& l_scope, const std::string& ns_name) {
-        std::vector<std::pair<std::string, variable> >& params = function_decl.get_params();
+        std::vector<std::pair<std::string, std::shared_ptr<variable> > >& params = function_decl.get_params();
         std::vector<token>& constraints = function_decl.get_constraints();
 
         // we make sure all the function's parameters type instances are valid
         for(auto& param : params) {
-            type_instance param_type_instance = param.second.get_type_instance();
+            type_instance param_type_instance = param.second -> get_type_instance();
 
             try {
                 std::shared_ptr<type> param_instance_type = nullptr;
@@ -107,7 +106,7 @@ namespace avalon {
                 }
 
                 // if the type instance checked out, we replace the one on the parameter with the updated on
-                param.second.set_type_instance(param_type_instance);
+                param.second -> set_type_instance(param_type_instance);
             } catch(invalid_type err) {
                 throw invalid_function(err.get_token(), err.what());
             }

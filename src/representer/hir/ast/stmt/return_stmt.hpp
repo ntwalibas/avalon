@@ -46,6 +46,14 @@ namespace avalon {
         bool has_expression();
 
         /**
+         * token
+         * returns this statement token
+         */
+        virtual const token& stmt_token() const {
+            return m_tok;
+        }
+
+        /**
          * is_return
          * returns true as this is a return statement
          */

@@ -158,6 +158,18 @@ namespace avalon {
         bool has_underscore();
 
         /**
+         * set_callee
+         * sets the name of the constructor or function that this call expression resolves to
+         */
+        void set_callee(const std::string& callee);
+
+        /**
+         * get_callee
+         * returns the name of the constructor or function that this call expression resolves to
+         */
+        const std::string& get_callee();
+
+        /**
          * token
          * returns this expression token
          * this is useful because it prevents us from casting each expression just to display error messages
@@ -243,6 +255,11 @@ namespace avalon {
          * the return type of the function call
          */
         type_instance m_return_type;
+
+        /*
+         * the name of the constructor or function that this call resolves to
+         */
+        std::string m_callee;
     };
 }
 

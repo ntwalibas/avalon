@@ -64,6 +64,12 @@ namespace avalon {
          */
         void check(const std::string& source_path);
 
+        /**
+         * clean
+         * calls the cleaner to ensure all declarations are used
+         */
+        void clean(const std::string& source_path);
+
     private:
         /**
          * a vector of possible search paths

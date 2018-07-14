@@ -40,11 +40,33 @@ namespace avalon {
          */
         bool program_exists(const std::string& fqn_name);
 
+        /**
+         * set_main_fqn
+         * set the fqn to the program with the main function
+         */
+        void set_main_fqn(const std::string& fqn_name);
+
+        /**
+         * returns true if the program with the main fqn has been set
+         */
+        bool has_main_fqn();
+
+        /**
+         * get_main_program
+         * returns the main program if one has been set, else it throws a runtime error
+         */
+        program& get_main_program();
+
     private:
         /*
          * map between fqn(fully qualified name) and the programs within them
          */        
         std::unordered_map<std::string, program> m_programs;
+
+        /*
+         * fqn to the program with the main function
+         */
+        std::string m_main_fqn;
     };
 }
 

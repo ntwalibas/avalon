@@ -1,10 +1,11 @@
-(-
-main function
+-[
+if statement
 
 - author     ntwali bashige
 - copyright  2018 (c) ntwali bashige
 - license    MIT license
--)
+]-
+
 
 import d
 
